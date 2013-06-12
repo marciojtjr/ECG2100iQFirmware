@@ -2,16 +2,16 @@
 #define iq_h
 
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
-#define HANG_ON_ERROR 1	// set non-zero if you want error conditions to hang and display the error code in the LED, rather than restart.
 
-#define VERSION 1.04
+#define VERSION 1.05
 
+// 1.05 - Built for bluetooth (no change to original prototype)
 // 1.04 - unit no longer powers off if an erase command is launched via USB and the unit is unplugged
 //				USB ev and ee commands have been removed, they were not used
 //				EE_Wr() now checks for valid offsets. They must be long aligned and not include EE_APP_CRC.
 // 1.03 - bluetooth fork added
 // 1.02 - internal version
-// 1.01 - internal version
+// 1.01 - first update
 // 1.00 - initial release
 
 

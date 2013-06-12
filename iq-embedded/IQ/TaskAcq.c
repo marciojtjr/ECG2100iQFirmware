@@ -89,10 +89,13 @@ unsigned int B1, B2, B3; // Thresholds (obtained from EEPROM) for 2/3 bars due t
 
 long AbandonTimer; // used to timeout pre-acquisition if the unit is abandoned
 unsigned char LFReady; // used by the acquisition interrupt to tell the LF checker that data is ready
+unsigned char BTEnable;	// 1 enables bluetooth transmission
 unsigned char BTReady;	// 1 = a leadfail bias model is ready for decimation, 0 = not ready
 unsigned char BTBufPhase; // 0 = decimation of LFBiasModel[0] loads the BTBuf, 1 = decimation of LFBiasModel[1] adds to BTBuf, after which /8 produces an average of both models
 unsigned int BTBuf[8];	// holds all eight channels of data, decimated from 1KHz to 125Hz.
-unsigned char BTString[29]; // room to store the Bluetooth sample output string.
+// unsigned char BTString[29]; // room to store the Bluetooth sample output string.
+unsigned char BTString[6+1+1+1+2+8*12+2]; // Bigger now.
+unsigned char BTStatus;
 
 //unsigned int test;
 
@@ -677,7 +680,7 @@ BEGIN_TASK(TaskAcq)
 	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
 
 		AnalogPowerOn();
-		// at the top of this loop, we should be empty. if we're not, we erase flash while flashing 'b'
+		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
 		// if the button is still pressed after erasing, we wait for it to be released
 
 
@@ -847,6 +850,8 @@ BEGIN_TASK(TaskAcq)
 		}
 
 		BTBufPhase = 0;
+        BTStatus = 0;               // Added by PRV
+		BTEnable = 1;				// allow Bluetooth to send data
 
 		while(!ButtonPressed()){	// pre-acquire while the button is not pressed
 
@@ -914,21 +919,27 @@ BEGIN_TASK(TaskAcq)
 				break;
 			}
 		}
-		if(ButtonTimer < LONG_BUTTON_TIME){	// start acquisition on a short button press
+		if(ButtonTimer < LONG_BUTTON_TIME)
+            {	// start acquisition on a short button press
 			osWAIT(30); //make sure button is released so we don't catch a bounce
 			LFBiasOff();	// disable lead fail bias for acquisition, so we don't interfere with other instruments (defib?)
 			Seg7LP('A');
+
 			FlashPageNumber = FLASH_ECG_START_PAGE;
 			Buf1.Status = BUF_EMPTY;
 			Buf2.Status = BUF_EMPTY;
 			EnableBuffering();
-			BTBufPhase = 0;
-			while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 ){ // run while there's still room in flash and button is not pressed
+			// BTBufPhase = 0;
+            BTStatus |= 4;
+			while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 )
+                { // run while there's still room in flash and button is not pressed
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
+                /*
 					TaskFlashCmd = TF_WRITE_BUF1;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
+                */
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
@@ -937,10 +948,12 @@ BEGIN_TASK(TaskAcq)
 					}
 				}
 				if(Buf2.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
+                /*
 					TaskFlashCmd = TF_WRITE_BUF2;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
+                */
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
@@ -948,10 +961,16 @@ BEGIN_TASK(TaskAcq)
 						break;
 					}
 				}
-			}
+                osYIELD;
+			    }
+            
+            BTStatus &= ~4;
+            osWAIT(250);
 			// we ran to the end of the ECG buffer, or the button was pressed
 			StopAcq();
+#if BLUETOOTH
 			BTOff();
+#endif
 			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
 
 			// determine if the button is being pressed, and for how long
@@ -963,6 +982,11 @@ BEGIN_TASK(TaskAcq)
 					break; // this will cause us to rerun the outer while(1)
 				}
 			}
+
+            //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
+            break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+            //=====================================================================================
+
 			if(ButtonTimer<LONG_BUTTON_TIME){	// a short or no press means stop and show 'F'
 				Seg7LP('F');
 				ShutoffTimer = SHUTOFF_TIME;
