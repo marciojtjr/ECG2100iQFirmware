@@ -15,7 +15,7 @@ COMMON = -mmcu=$(MCU)
 
 ## Compile options common for all C compilation units.
 CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1 -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
 
 ## Assembly specific flags
@@ -40,7 +40,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 LIBS = -lm -lprintf_flt -lscanf_flt 
 
 ## Objects that must be built in order to link
-OBJECTS = rtos.o wdt_driver.o clksys_driver.o TC_driver.o iq.o TaskAcq.o usart_driver.o adc_driver.o eeprom_driver.o TaskUSB.o TaskFlash.o spi_driver.o lowpower.o rtc_driver.o sleepmgr.o ccpwrite.o seg7.o buffers.o ulaw.o eeprom.o crc.o TaskBT.o TaskWatchDog.o 
+OBJECTS = rtos.o wdt_driver.o clksys_driver.o TC_driver.o iq.o TaskAcq.o usart_driver.o adc_driver.o eeprom_driver.o TaskUSB.o TaskFlash.o spi_driver.o lowpower.o rtc_driver.o sleepmgr.o ccpwrite.o seg7.o buffers.o ulaw.o eeprom.o TaskBT.o TaskWatchDog.o crc.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -109,13 +109,13 @@ ulaw.o: ../ulaw.c
 eeprom.o: ../eeprom.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-crc.o: ../crc.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
 TaskBT.o: ../TaskBT.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 TaskWatchDog.o: ../TaskWatchDog.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+crc.o: ../crc.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link

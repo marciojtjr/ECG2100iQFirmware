@@ -28,6 +28,7 @@ enum {
 	EE_LB,											// low battery threshold, in units of mV
 	EE_BOOT_VERSION,						// written by the bootstrap loader to indicate the boot version (0xff means version 1)
 	EE_APP_CRC,									// CRC of the application section of Flash, compared at startup by the bootstrap loaded to determine app integrity
+	EE_IN_BOOT,									// Marker set by bootstrap loader. If we get a watchdog reset and this marker is non-zero, we clear it and go to the application if it's valid.
 };
 
 #endif
