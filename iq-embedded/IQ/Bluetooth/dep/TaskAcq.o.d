@@ -8,11 +8,12 @@ TaskAcq.o: ../TaskAcq.c \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/common.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/version.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/fuse.h \
-  c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h ../rtos.h \
-  ../iq.h ../adc_driver.h ../avr_compiler.h \
+  c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h \
+  c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h \
+  c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h \
+  ../rtos.h ../iq.h ../adc_driver.h ../avr_compiler.h \
   c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdbool.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdlib.h \
-  c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/interrupt.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h \
@@ -45,6 +46,10 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/fuse.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h:
 
+c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h:
+
+c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
+
 ../rtos.h:
 
 ../iq.h:
@@ -56,8 +61,6 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h:
 c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdbool.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdlib.h:
-
-c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h:
 

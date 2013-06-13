@@ -1,4 +1,5 @@
 #include <avr/io.h>
+#include <string.h>
 #include "rtos.h"
 #include "iq.h"
 #include "adc_driver.h"
@@ -14,6 +15,14 @@
 #include "taskUSB.h"
 #include "taskBT.h"
 #include "TaskWatchDog.h"
+
+//--------------------------------------------------------------------------------------------------------------
+//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------
+#define LOGGING_TO_FLASH // Define if we want to log to flash memory during preAcq
+//--------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------
 
 
 // ECG Lead assignments for PortA and PortB
@@ -57,7 +66,7 @@ extern unsigned char AcqIrqState;	// a place to remember what the acquistion int
 //  AcqState is incremented each interrupt to keep track of the accumulation
 // when AcqState incrments to ACQ_DECIMATION, the sub-sample accumulators are scaled back to 12 bits and the eight leads are sent off to an available buffer
 //   if neither buffer is available, SystemError.BUF_OVERRUN is flagged
-enum {ACQ_IRQ_IDLE,  ACQ_IRQ_VOICE, ACQ_IRQ_ECG, ACQ_IRQ_ECG_DECIMATE=ACQ_IRQ_ECG+15};	// ACQ_IRQ_ECG increments into ACQ_IRQ_DECIMATE, then rolls back to ACQ_IRQ_ECG
+enum {ACQ_IRQ_IDLE, ACQ_IRQ_LOGGING, ACQ_IRQ_VOICE, ACQ_IRQ_ECG, ACQ_IRQ_ECG_DECIMATE=ACQ_IRQ_ECG+15};	// ACQ_IRQ_ECG increments into ACQ_IRQ_DECIMATE, then rolls back to ACQ_IRQ_ECG
 
 unsigned char AcqIrqState = ACQ_IRQ_IDLE;	// used to hold the current acquisition interrupt state, a task may control acquisition via this "semaphore"
 enum {LOCKED, UNLOCKED};
@@ -278,6 +287,68 @@ void StopAcq(void){
 	DisableBuffering();
 }
 
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	void LogMessage(char *message) {
+		size_t len = strlen(message);
+
+		// If our message + newline won't fit into the buffer, just return
+		if(len >= FLASH_SIZE_BYTES-2 || FlashPageNumber>FLASH_VOICE_END_PAGE)
+			return;
+
+		// If we're ready to start writing out...
+		if(AcqIrqState != ACQ_IRQ_IDLE) {
+			//... and buffer 1 is empty
+			if(Buf1.Status == BUF_EMPTY) {
+				
+				// Append a newline and set the buffer to the message
+				// This is inefficient by design. We want to dump messages out
+				// as soon as possible, so wasting page space isn't too big of a deal.
+				// We have 14k pages anyway
+				message[len-1] = '\n';
+				message[len] = '\0';
+				strcpy(Buf1.Data.Byte, message);
+
+				// Tell TaskFlash we're ready to write
+				TaskFlashCmd = TF_WRITE_BUF1;
+				Buf1.Status = BUF_FULL;
+
+				while(TaskFlashCmd != TF_IDLE) {
+					osYIELD;
+				}
+
+				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
+                FlashPageNumber++;
+                if(FlashPageNumber>FLASH_VOICE_END_PAGE){
+                    return;
+                }
+			}
+			//... and buffer 2 is empty
+			else if (Buf2.Status == BUF_EMPTY) {
+				message[len-1] = '\n';
+				message[len] = '\0';
+				strcpy(Buf2.Data.Byte, message);
+
+				TaskFlashCmd = TF_WRITE_BUF2;
+				Buf2.Status = BUF_FULL;
+
+				while(TaskFlashCmd != TF_IDLE) {
+					osYIELD;
+				}
+
+				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
+                FlashPageNumber++;
+                if(FlashPageNumber>FLASH_VOICE_END_PAGE){
+                    return;
+                }
+			}
+		}
+	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------------------
 // this function is called by the SysTick interrupt
 void AcqInterrupt(){
@@ -292,6 +363,15 @@ void AcqInterrupt(){
 	// For ECG, during decimation (mode == DECIMATION), we transfer the decimated ECG/monitoring values into the output buffers
 	// most times (mode >= ACCUMULATE and < ACQ_DECIMATE) we just accumulate new ECG measurements into the decimation accumulators
 	// During voice acquisition, we transfer the voice sample into the output buffer
+
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+#ifndef LOGGING // If we're logging, don't throw anything out to the buffers
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+
 
 		if(ADC_Ch_Conversion_Complete(&ADCB.CH3)){	// the ADCs should be ready, no harm in checking
 
@@ -635,6 +715,14 @@ void AcqInterrupt(){
 		// Start both converters on all channels for the next Lead/Voice sampling interrupt
 		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm |ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm) );
 		ADC_Conversions_Start(&ADCB, (ADC_CH0START_bm |ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm) );
+
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+#endif 
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
 	}// if(mode)
 	else{ // we're idle
 		index = 0;
@@ -678,6 +766,20 @@ BEGIN_TASK(TaskAcq)
 	Flags.AcqActive = 1;
 
 	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
+
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
+
+				// Start throwing logs out to the FLASH_ECG pages
+				FlashPageNumber = FLASH_ECG_START_PAGE;
+				StartAcq(ACQ_IRQ_LOGGING);
+
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
+
+			LogMessage("This is a debugging message! We are starting the acquisition process!");
 
 		AnalogPowerOn();
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
@@ -750,9 +852,9 @@ BEGIN_TASK(TaskAcq)
 		osWAIT(30);	// wait for button to stop bouncing
 
 		LFBiasOff();
-		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
-		Buf1.Status = BUF_EMPTY; // make the buffers ready
-		Buf2.Status = BUF_EMPTY;
+		//StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
+		//Buf1.Status = BUF_EMPTY; // make the buffers ready
+		//Buf2.Status = BUF_EMPTY;
 
 		// wait for another button press, shut off if it never comes
 		ShutoffTimer = 0;
@@ -779,12 +881,19 @@ BEGIN_TASK(TaskAcq)
 				osWAIT(1);
 			}
 		}
-		FlashPageNumber = FLASH_VOICE_START_PAGE;	// start from the beginning
+
+		// COMMENTED OUT FOR LOGGING
+		//FlashPageNumber = FLASH_VOICE_START_PAGE;	// start from the beginning
+		// COMMENTED OUT FOR LOGGING
+
 		Seg7LP('r');	// we're recording
+		LogMessage("We're recording voice data now");
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
 			osWAIT(1);
 
+			// DON'T DUMP ANYTHING SINCE WE'RE DUMPING LOGGING INFORMATION
+			/*
 			if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 16ms
 				TaskFlashCmd = TF_WRITE_BUF1;
 				while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
@@ -807,6 +916,7 @@ BEGIN_TASK(TaskAcq)
 					break;
 				}
 			}
+			*/
 		}
 		EE_Wr(EE_VOICE_RECORD_LENGTH,FlashPageNumber-FLASH_VOICE_START_PAGE-1);	// remember how much voice we recorded
 
@@ -833,7 +943,7 @@ BEGIN_TASK(TaskAcq)
 		AbandonTimer = EE_Rd(EE_ABANDON_TIME)*250L;	// set the abandonment timer
 		LFReady=0;
 
-		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
+		//StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
 
 		// Flash
 		while(FlashPageNumber>FLASH_VOICE_END_PAGE && ButtonPressed()){
@@ -849,12 +959,12 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 
+		LogMessage("Now we are at preacquisition");
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
 		BTEnable = 1;				// allow Bluetooth to send data
 
 		while(!ButtonPressed()){	// pre-acquire while the button is not pressed
-
 			osYIELD;
 			if(LFReady){	// this will happen every four milliseconds
 				LFReady=0;
@@ -925,10 +1035,13 @@ BEGIN_TASK(TaskAcq)
 			LFBiasOff();	// disable lead fail bias for acquisition, so we don't interfere with other instruments (defib?)
 			Seg7LP('A');
 
-			FlashPageNumber = FLASH_ECG_START_PAGE;
-			Buf1.Status = BUF_EMPTY;
-			Buf2.Status = BUF_EMPTY;
-			EnableBuffering();
+			// COMMENTED OUT FOR LOGGING
+				//FlashPageNumber = FLASH_ECG_START_PAGE;
+				//Buf1.Status = BUF_EMPTY;
+				//Buf2.Status = BUF_EMPTY;
+				//EnableBuffering();
+			// COMMENTED OUT FOR LOGGING
+
 			// BTBufPhase = 0;
             BTStatus |= 4;
 			while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 )
