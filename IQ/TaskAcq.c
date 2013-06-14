@@ -1,5 +1,4 @@
 #include <avr/io.h>
-#include <string.h>
 #include "rtos.h"
 #include "iq.h"
 #include "adc_driver.h"
@@ -20,6 +19,10 @@
 //--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------
 #define LOGGING_TO_FLASH // Define if we want to log to flash memory during preAcq
+
+#ifdef LOGGING_TO_FLASH
+#include <string.h>
+#endif
 //--------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------
@@ -291,28 +294,26 @@ void StopAcq(void){
 	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
-		size_t len = strlen(message);
+#ifdef LOGGING_TO_FLASH
+		size_t len = strlen(message) + 1;
 
 		// If our message + newline won't fit into the buffer, just return
-		if(len >= FLASH_SIZE_BYTES-2 || FlashPageNumber>FLASH_VOICE_END_PAGE)
+		if(len >= FLASH_SIZE_BYTES || FlashPageNumber>FLASH_VOICE_END_PAGE)
 			return;
 
 		// If we're ready to start writing out...
 		if(AcqIrqState != ACQ_IRQ_IDLE) {
 			//... and buffer 1 is empty
-			if(Buf1.Status == BUF_EMPTY) {
-				
+			if(Buf1.Status == BUF_EMPTY) {			
 				// Append a newline and set the buffer to the message
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				message[len-1] = '\n';
-				message[len] = '\0';
-				strcpy(Buf1.Data.Byte, message);
+				memcpy(Buf1.Data.Byte, message, len);
 
 				// Tell TaskFlash we're ready to write
-				TaskFlashCmd = TF_WRITE_BUF1;
 				Buf1.Status = BUF_FULL;
+				TaskFlashCmd = TF_WRITE_BUF1;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
@@ -326,12 +327,10 @@ void StopAcq(void){
 			}
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
-				message[len-1] = '\n';
-				message[len] = '\0';
-				strcpy(Buf2.Data.Byte, message);
+				memcpy(Buf2.Data.Byte, message, len);
 
-				TaskFlashCmd = TF_WRITE_BUF2;
 				Buf2.Status = BUF_FULL;
+				TaskFlashCmd = TF_WRITE_BUF2;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
@@ -344,6 +343,7 @@ void StopAcq(void){
                 }
 			}
 		}
+#endif
 	}
 	//--------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
@@ -771,15 +771,19 @@ BEGIN_TASK(TaskAcq)
 			//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 
-				// Start throwing logs out to the FLASH_ECG pages
+				// Start throwing logs out to the FLASH_ECG page
+#ifdef LOGGING_TO_FLASH
+				Buf1.Status = BUF_EMPTY; // make the buffers ready
+				Buf2.Status = BUF_EMPTY;
 				FlashPageNumber = FLASH_ECG_START_PAGE;
 				StartAcq(ACQ_IRQ_LOGGING);
+#endif
 
 			//--------------------------------------------------------------------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 
-			LogMessage("This is a debugging message! We are starting the acquisition process!");
+			LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
 		AnalogPowerOn();
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
@@ -852,9 +856,12 @@ BEGIN_TASK(TaskAcq)
 		osWAIT(30);	// wait for button to stop bouncing
 
 		LFBiasOff();
-		//StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
-		//Buf1.Status = BUF_EMPTY; // make the buffers ready
-		//Buf2.Status = BUF_EMPTY;
+
+#ifndef LOGGING_TO_FLASH
+		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
+		Buf1.Status = BUF_EMPTY; // make the buffers ready
+		Buf2.Status = BUF_EMPTY;
+#endif
 
 		// wait for another button press, shut off if it never comes
 		ShutoffTimer = 0;
@@ -887,13 +894,12 @@ BEGIN_TASK(TaskAcq)
 		// COMMENTED OUT FOR LOGGING
 
 		Seg7LP('r');	// we're recording
-		LogMessage("We're recording voice data now");
+		LogMessage("We're recording voice data now\n");
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
 			osWAIT(1);
 
-			// DON'T DUMP ANYTHING SINCE WE'RE DUMPING LOGGING INFORMATION
-			/*
+#ifndef LOGGING_TO_FLASH
 			if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 16ms
 				TaskFlashCmd = TF_WRITE_BUF1;
 				while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
@@ -916,7 +922,7 @@ BEGIN_TASK(TaskAcq)
 					break;
 				}
 			}
-			*/
+#endif
 		}
 		EE_Wr(EE_VOICE_RECORD_LENGTH,FlashPageNumber-FLASH_VOICE_START_PAGE-1);	// remember how much voice we recorded
 
@@ -943,7 +949,9 @@ BEGIN_TASK(TaskAcq)
 		AbandonTimer = EE_Rd(EE_ABANDON_TIME)*250L;	// set the abandonment timer
 		LFReady=0;
 
-		//StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
+#ifndef LOGGING_TO_FLASH
+		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
+#endif
 
 		// Flash
 		while(FlashPageNumber>FLASH_VOICE_END_PAGE && ButtonPressed()){
@@ -959,7 +967,7 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 
-		LogMessage("Now we are at preacquisition");
+		LogMessage("Now we are at preacquisition\n");
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
 		BTEnable = 1;				// allow Bluetooth to send data
@@ -1035,12 +1043,12 @@ BEGIN_TASK(TaskAcq)
 			LFBiasOff();	// disable lead fail bias for acquisition, so we don't interfere with other instruments (defib?)
 			Seg7LP('A');
 
-			// COMMENTED OUT FOR LOGGING
-				//FlashPageNumber = FLASH_ECG_START_PAGE;
-				//Buf1.Status = BUF_EMPTY;
-				//Buf2.Status = BUF_EMPTY;
-				//EnableBuffering();
-			// COMMENTED OUT FOR LOGGING
+#ifndef LOGGING_TO_FLASH
+			FlashPageNumber = FLASH_ECG_START_PAGE;
+			Buf1.Status = BUF_EMPTY;
+			Buf2.Status = BUF_EMPTY;
+			EnableBuffering();
+#endif
 
 			// BTBufPhase = 0;
             BTStatus |= 4;
@@ -1097,7 +1105,7 @@ BEGIN_TASK(TaskAcq)
 			}
 
             //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
-            break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+            //break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
             //=====================================================================================
 
 			if(ButtonTimer<LONG_BUTTON_TIME){	// a short or no press means stop and show 'F'
