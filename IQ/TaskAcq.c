@@ -297,10 +297,10 @@ void StopAcq(void){
 	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
 		//static int logIndex = FL
-		//size_t len = strlen(message) + 1;
+		size_t len = strlen(message) + 1;
 
 		// If our message won't fit into the buffer, just return
-		if(/*len >= FLASH_SIZE_BYTES ||*/ FlashPageNumber>FLASH_ECG_END_PAGE)
+		if(len >= FLASH_SIZE_BYTES || FlashPageNumber>FLASH_ECG_END_PAGE)
 			return;
 
 		// If we're ready to start writing out...
@@ -310,7 +310,7 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				memcpy(Buf1.Data.Byte, message, 256);
+				strncpy(Buf1.Data.Byte, message, len);
 
 				// Tell TaskFlash we're ready to write
 				Buf1.Status = BUF_FULL;
@@ -328,7 +328,7 @@ void StopAcq(void){
 			}
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
-				memcpy(Buf2.Data.Byte, message, 256);
+				strncpy(Buf2.Data.Byte, message, len);
 
 				Buf2.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF2;
