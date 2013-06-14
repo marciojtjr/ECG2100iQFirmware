@@ -296,10 +296,11 @@ void StopAcq(void){
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
+		//static int logIndex = FL
 		//size_t len = strlen(message) + 1;
 
 		// If our message won't fit into the buffer, just return
-		if(/*len >= FLASH_SIZE_BYTES||*/ FlashPageNumber>FLASH_VOICE_END_PAGE)
+		if(/*len >= FLASH_SIZE_BYTES ||*/ FlashPageNumber>FLASH_ECG_END_PAGE)
 			return;
 
 		// If we're ready to start writing out...
