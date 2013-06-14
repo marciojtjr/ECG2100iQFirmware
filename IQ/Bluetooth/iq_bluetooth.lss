@@ -21,11 +21,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   8 .debug_frame  000009e0  00000000  00000000  00017498  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    0000314d  00000000  00000000  00017e78  2**0
+  9 .debug_str    0000315c  00000000  00000000  00017e78  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    000015c1  00000000  00000000  0001afc5  2**0
+ 10 .debug_loc    000015c1  00000000  00000000  0001afd4  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_ranges 00000078  00000000  00000000  0001c586  2**0
+ 11 .debug_ranges 00000078  00000000  00000000  0001c595  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -2927,14 +2927,15 @@ void StopAcq(void){
 	void LogMessage(char *message) {
     19c6:	9c 01       	movw	r18, r24
 #ifdef LOGGING_TO_FLASH
+		//static int logIndex = FL
 		//size_t len = strlen(message) + 1;
 
 		// If our message won't fit into the buffer, just return
-		if(/*len >= FLASH_SIZE_BYTES||*/ FlashPageNumber>FLASH_VOICE_END_PAGE)
+		if(/*len >= FLASH_SIZE_BYTES ||*/ FlashPageNumber>FLASH_ECG_END_PAGE)
     19c8:	80 91 1c 23 	lds	r24, 0x231C
     19cc:	90 91 1d 23 	lds	r25, 0x231D
     19d0:	80 50       	subi	r24, 0x00	; 0
-    19d2:	98 40       	sbci	r25, 0x08	; 8
+    19d2:	90 44       	sbci	r25, 0x40	; 64
     19d4:	98 f5       	brcc	.+102    	; 0x1a3c <LogMessage+0x76>
 			return;
 

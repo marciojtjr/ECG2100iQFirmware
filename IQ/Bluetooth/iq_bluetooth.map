@@ -1332,7 +1332,7 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_frame   0x00000930       0x90 TaskBT.o
  .debug_frame   0x000009c0       0x20 TaskWatchDog.o
 
-.debug_str      0x00000000     0x314d
+.debug_str      0x00000000     0x315c
  *(.debug_str)
  .debug_str     0x00000000      0x1ac rtos.o
                                 0x1f5 (size before relaxing)
@@ -1352,33 +1352,33 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
                                 0x73b (size before relaxing)
  .debug_str     0x0000259a      0x134 eeprom_driver.o
                                 0x500 (size before relaxing)
- .debug_str     0x000026ce      0x321 TaskUSB.o
+ .debug_str     0x000026ce      0x330 TaskUSB.o
                                 0x8d7 (size before relaxing)
- .debug_str     0x000029ef      0x14b TaskFlash.o
+ .debug_str     0x000029fe      0x14b TaskFlash.o
                                 0x571 (size before relaxing)
- .debug_str     0x00002b3a       0x8f spi_driver.o
+ .debug_str     0x00002b49       0x8f spi_driver.o
                                 0x30b (size before relaxing)
- .debug_str     0x00002bc9       0x4a lowpower.o
+ .debug_str     0x00002bd8       0x4a lowpower.o
                                  0xe3 (size before relaxing)
- .debug_str     0x00002c13      0x1ba rtc_driver.o
+ .debug_str     0x00002c22      0x1ba rtc_driver.o
                                 0x3b7 (size before relaxing)
- .debug_str     0x00002dcd      0x13e sleepmgr.o
+ .debug_str     0x00002ddc      0x13e sleepmgr.o
                                 0x20a (size before relaxing)
- .debug_str     0x00002f0b       0x1f ccpwrite.o
+ .debug_str     0x00002f1a       0x1f ccpwrite.o
                                  0xfa (size before relaxing)
- .debug_str     0x00002f2a       0x63 seg7.o
+ .debug_str     0x00002f39       0x63 seg7.o
                                 0x334 (size before relaxing)
- .debug_str     0x00002f8d        0xd buffers.o
+ .debug_str     0x00002f9c        0xd buffers.o
                                  0xa3 (size before relaxing)
- .debug_str     0x00002f9a       0xb4 ulaw.o
+ .debug_str     0x00002fa9       0xb4 ulaw.o
                                 0x17f (size before relaxing)
- .debug_str     0x0000304e       0x1d eeprom.o
+ .debug_str     0x0000305d       0x1d eeprom.o
                                 0x1d2 (size before relaxing)
- .debug_str     0x0000306b       0xa9 TaskBT.o
+ .debug_str     0x0000307a       0xa9 TaskBT.o
                                 0x637 (size before relaxing)
- .debug_str     0x00003114       0x30 TaskWatchDog.o
+ .debug_str     0x00003123       0x30 TaskWatchDog.o
                                 0x280 (size before relaxing)
- .debug_str     0x00003144        0x9 crc.o
+ .debug_str     0x00003153        0x9 crc.o
                                  0xab (size before relaxing)
 
 .debug_loc      0x00000000     0x15c1
