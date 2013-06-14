@@ -8,12 +8,11 @@ TaskAcq.o: ../TaskAcq.c \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/common.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/version.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/fuse.h \
-  c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h \
-  c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h \
-  c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h \
-  ../rtos.h ../iq.h ../adc_driver.h ../avr_compiler.h \
+  c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h ../rtos.h \
+  ../iq.h ../adc_driver.h ../avr_compiler.h \
   c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdbool.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdlib.h \
+  c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/interrupt.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h \
@@ -24,7 +23,8 @@ TaskAcq.o: ../TaskAcq.c \
   ../seg7.h ../eeprom.h ../eeprom_driver.h ../taskUSB.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdio.h \
   c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdarg.h \
-  ../taskBT.h ../TaskWatchDog.h
+  ../taskBT.h ../TaskWatchDog.h \
+  c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/io.h:
 
@@ -46,10 +46,6 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/fuse.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/lock.h:
 
-c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h:
-
-c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
-
 ../rtos.h:
 
 ../iq.h:
@@ -61,6 +57,8 @@ c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
 c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdbool.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdlib.h:
+
+c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h:
 
@@ -99,3 +97,5 @@ c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdarg.h:
 ../taskBT.h:
 
 ../TaskWatchDog.h:
+
+c:/apps/winavr-20100110/lib/gcc/../../avr/include/string.h:
