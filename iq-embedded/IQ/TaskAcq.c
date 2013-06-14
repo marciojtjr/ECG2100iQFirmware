@@ -294,18 +294,17 @@ void StopAcq(void){
 	//--------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
-	void LogMessage(char *message) {
+	void LogMessage(const char *message) {
 #ifdef LOGGING_TO_FLASH
-		//static int logIndex = FL
 		size_t len = strlen(message) + 1;
 
 		// If our message won't fit into the buffer, just return
 		if(len >= FLASH_SIZE_BYTES || FlashPageNumber>FLASH_ECG_END_PAGE)
 			return;
 
-		for(unsigned char i = 0; i < len; i++) {
-			Buf1.Data.Byte[i] = (unsigned int)message[i];
-			Buf2.Data.Byte[i] = (unsigned int)message[i];
+		for(unsigned char i = 0; i < 256; i++) {
+			Buf1.Data.Byte[i] = i;
+			Buf2.Data.Byte[i] = i;
 		}
 
 		// If we're ready to start writing out...
@@ -327,9 +326,9 @@ void StopAcq(void){
 
 				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 FlashPageNumber++;
-                if(FlashPageNumber>FLASH_ECG_END_PAGE){
-                    return;
-                }
+                //if(FlashPageNumber>FLASH_ECG_END_PAGE){
+                //    return;
+                //}
 			}
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
@@ -344,9 +343,9 @@ void StopAcq(void){
 
 				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 FlashPageNumber++;
-                if(FlashPageNumber>FLASH_ECG_END_PAGE){
-                    return;
-                }
+                //if(FlashPageNumber>FLASH_ECG_END_PAGE){
+                //    return;
+                //}
 			}
 		}
 #endif
