@@ -299,10 +299,10 @@ void StopAcq(void){
 		size_t len = strlen(message) + 1;
 
 		// If our message won't fit into the buffer, just return
-		if(len >= FLASH_SIZE_BYTES || FlashPageNumber>FLASH_ECG_END_PAGE)
+		if(len >= 252 || FlashPageNumber>FLASH_ECG_END_PAGE)
 			return;
 
-		for(unsigned char i = 0; i < 256; i++) {
+		for(unsigned char i = 0; i < 252; i++) {
 			Buf1.Data.Byte[i] = i;
 			Buf2.Data.Byte[i] = i;
 		}
