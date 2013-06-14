@@ -1237,31 +1237,31 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_pubnames
                 0x00000f3e       0x1f crc.o
 
-.debug_info     0x00000000     0x8dab
+.debug_info     0x00000000     0x8e1e
  *(.debug_info)
  .debug_info    0x00000000      0x53a rtos.o
  .debug_info    0x0000053a      0x2c9 wdt_driver.o
  .debug_info    0x00000803      0x4e5 clksys_driver.o
  .debug_info    0x00000ce8     0x122c TC_driver.o
  .debug_info    0x00001f14      0xee8 iq.o
- .debug_info    0x00002dfc      0xfdc TaskAcq.o
- .debug_info    0x00003dd8      0x2da usart_driver.o
- .debug_info    0x000040b2      0x8fc adc_driver.o
- .debug_info    0x000049ae      0x4c2 eeprom_driver.o
- .debug_info    0x00004e70     0x14a9 TaskUSB.o
- .debug_info    0x00006319      0x5e2 TaskFlash.o
- .debug_info    0x000068fb      0x3f3 spi_driver.o
- .debug_info    0x00006cee       0xec lowpower.o
- .debug_info    0x00006dda      0x3c2 rtc_driver.o
- .debug_info    0x0000719c      0x257 sleepmgr.o
- .debug_info    0x000073f3       0xe2 ccpwrite.o
- .debug_info    0x000074d5      0x698 seg7.o
- .debug_info    0x00007b6d      0x12b buffers.o
- .debug_info    0x00007c98      0x2b7 ulaw.o
- .debug_info    0x00007f4f      0x1e4 eeprom.o
- .debug_info    0x00008133      0x932 TaskBT.o
- .debug_info    0x00008a65      0x2bb TaskWatchDog.o
- .debug_info    0x00008d20       0x8b crc.o
+ .debug_info    0x00002dfc      0xff7 TaskAcq.o
+ .debug_info    0x00003df3      0x2da usart_driver.o
+ .debug_info    0x000040cd      0x8fc adc_driver.o
+ .debug_info    0x000049c9      0x4c2 eeprom_driver.o
+ .debug_info    0x00004e8b     0x14c4 TaskUSB.o
+ .debug_info    0x0000634f      0x5fd TaskFlash.o
+ .debug_info    0x0000694c      0x3f3 spi_driver.o
+ .debug_info    0x00006d3f       0xec lowpower.o
+ .debug_info    0x00006e2b      0x3c2 rtc_driver.o
+ .debug_info    0x000071ed      0x257 sleepmgr.o
+ .debug_info    0x00007444       0xe2 ccpwrite.o
+ .debug_info    0x00007526      0x698 seg7.o
+ .debug_info    0x00007bbe      0x14d buffers.o
+ .debug_info    0x00007d0b      0x2b7 ulaw.o
+ .debug_info    0x00007fc2      0x1e4 eeprom.o
+ .debug_info    0x000081a6      0x932 TaskBT.o
+ .debug_info    0x00008ad8      0x2bb TaskWatchDog.o
+ .debug_info    0x00008d93       0x8b crc.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev   0x00000000     0x1fb3
@@ -1353,7 +1353,7 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_str     0x00001468      0x4e5 iq.o
                                 0xe3f (size before relaxing)
  .debug_str     0x0000194d      0x6f7 TaskAcq.o
-                                0xb82 (size before relaxing)
+                                0xb89 (size before relaxing)
  .debug_str     0x00002044      0x17d usart_driver.o
                                 0x246 (size before relaxing)
  .debug_str     0x000021c1      0x3e0 adc_driver.o
@@ -1361,9 +1361,9 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_str     0x000025a1      0x134 eeprom_driver.o
                                 0x500 (size before relaxing)
  .debug_str     0x000026d5      0x330 TaskUSB.o
-                                0x8d7 (size before relaxing)
+                                0x8de (size before relaxing)
  .debug_str     0x00002a05      0x14b TaskFlash.o
-                                0x571 (size before relaxing)
+                                0x578 (size before relaxing)
  .debug_str     0x00002b50       0x8f spi_driver.o
                                 0x30b (size before relaxing)
  .debug_str     0x00002bdf       0x4a lowpower.o
@@ -1377,7 +1377,7 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_str     0x00002f40       0x63 seg7.o
                                 0x334 (size before relaxing)
  .debug_str     0x00002fa3        0xd buffers.o
-                                 0xa3 (size before relaxing)
+                                 0xaf (size before relaxing)
  .debug_str     0x00002fb0       0xb4 ulaw.o
                                 0x17f (size before relaxing)
  .debug_str     0x00003064       0x1d eeprom.o
