@@ -324,7 +324,7 @@ void StopAcq(void){
 				//strncpy(Buf1.Data.String, str, len);
 
 				// Tell TaskFlash we're ready to write
-				FlashPageNumber = page;
+				FlashPageNumber = FLASH_ECG_START_PAGE;
 				TaskFlashCmd = TF_WRITE_BUF1;
 
 				while(TaskFlashCmd != TF_IDLE) {
