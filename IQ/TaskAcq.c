@@ -319,17 +319,17 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				memset((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), 0, 256);
-				//sprintf((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), "Page = %d, Buffer = %d", FlashPageNumber, buffer);
+				memset((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), 30, 256);
 				strncpy((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), message, len);
 
 				// Tell TaskFlash we're ready to write
 				TaskFlashCmd = (buffer == 0 ? TF_WRITE_BUF1 : TF_WRITE_BUF2);
 
-				//while(TaskFlashCmd != TF_IDLE) {
-				//	osYIELD;
-				//}
-				++FlashPageNumber;
+				while(TaskFlashCmd != TF_IDLE) {
+					osYIELD;
+				}
+
+				FlashPageNumber++;
 				buffer = !buffer;
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
