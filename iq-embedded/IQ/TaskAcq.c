@@ -312,22 +312,23 @@ void StopAcq(void){
 		// If we're ready to start writing out...
 		if(AcqIrqState != ACQ_IRQ_IDLE) {
 			//... and buffer 1 is empty
-			if(Buf1.Status == BUF_EMPTY) {			
+			if(Buf1.Status == BUF_EMPTY) {
+				Buf1.Status = BUF_FULL;
+						
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
 				strncpy(Buf1.Data.String, message, len);
 
 				// Tell TaskFlash we're ready to write
-				Buf1.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF1;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
 				}
 
+				FlashPageNumber++;
 				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
-                FlashPageNumber++;
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
@@ -335,17 +336,18 @@ void StopAcq(void){
 			
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
+				Buf2.Status = BUF_FULL;
+
 				strncpy(Buf2.Data.String, message, len);
 
-				Buf2.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF2;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
 				}
 
+				FlashPageNumber++;
 				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
-                FlashPageNumber++;
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
@@ -904,7 +906,7 @@ BEGIN_TASK(TaskAcq)
 #endif
 
 		Seg7LP('r');	// we're recording
-		//LogMessage("We're recording voice data now\n");
+		LogMessage("We're recording voice data now\n");
 
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
@@ -978,7 +980,7 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 
-		//LogMessage("Now we are at preacquisition\n");
+		LogMessage("Now we are at preacquisition\n");
 
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
