@@ -313,12 +313,16 @@ void StopAcq(void){
 		// If we're ready to start writing out...
 		if(AcqIrqState != ACQ_IRQ_IDLE) {
 			//... and buffer 1 is empty
+			while(TaskFlashCmd != TF_IDLE)
+				osYIELD;
+
 			if(Buf1.Status == BUF_EMPTY) {
 				Buf1.Status = BUF_FULL;
 						
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
+				memset(Buf1.Data.String, 0, 252);
 				strncpy(Buf1.Data.String, message, len);
 
 				// Tell TaskFlash we're ready to write
@@ -328,14 +332,15 @@ void StopAcq(void){
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
 				}
+				++page;
 
 				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
-				++page;
 			}
 			
+			/*
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
 				Buf2.Status = BUF_FULL;
@@ -349,13 +354,13 @@ void StopAcq(void){
 					osYIELD;
 				}
 
-				
+				++page;
 				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
-				++page;
 			}
+			*/
 			
 		}
 #endif
