@@ -325,9 +325,9 @@ void StopAcq(void){
 				// Tell TaskFlash we're ready to write
 				TaskFlashCmd = (buffer == 0 ? TF_WRITE_BUF1 : TF_WRITE_BUF2);
 
-				while(TaskFlashCmd != TF_IDLE) {
-					osYIELD;
-				}
+				//while(TaskFlashCmd != TF_IDLE) {
+				//	osYIELD;
+				//}
 
 				FlashPageNumber++;
 				buffer = !buffer;
