@@ -294,7 +294,7 @@ void StopAcq(void){
 	//--------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
-	void LogMessage(const char *message) {
+	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
 		size_t len = strlen(message) + 1;
 
@@ -314,7 +314,7 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				memcpy(&Buf1.Data.String[126], message, len);
+				memcpy(&Buf1.Data.Byte[126], message, 120);
 
 				// Tell TaskFlash we're ready to write
 				Buf1.Status = BUF_FULL;
@@ -332,7 +332,7 @@ void StopAcq(void){
 			}
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
-				memcpy(&Buf1.Data.String[126], message, len);
+				memcpy(&Buf2.Data.Byte[126], message, 120);
 
 				Buf2.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF2;
