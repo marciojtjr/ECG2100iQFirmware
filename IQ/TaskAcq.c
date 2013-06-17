@@ -295,7 +295,6 @@ void StopAcq(void){
 	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
-#ifdef LOGGING_TO_FLASH
 		size_t len = strlen(message) + 1;
 		static int pageOffset = 0;
 		static int buffer = 0;
@@ -360,7 +359,6 @@ void StopAcq(void){
 			*/
 			
 		//}
-#endif
 	}
 	//--------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
@@ -873,7 +871,7 @@ BEGIN_TASK(TaskAcq)
 			//--------------------------------------------------------------------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 
-			LogMessage("This is a debugging message! We are starting the acquisition process!\n");
+			//LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
 #ifndef LOGGING_TO_FLASH
 		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
@@ -912,7 +910,7 @@ BEGIN_TASK(TaskAcq)
 #endif
 
 		Seg7LP('r');	// we're recording
-		LogMessage("We're recording voice data now\n");
+		//LogMessage("We're recording voice data now\n");
 
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
