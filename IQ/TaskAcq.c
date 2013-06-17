@@ -313,8 +313,8 @@ void StopAcq(void){
 		// If we're ready to start writing out...
 		//if(AcqIrqState != ACQ_IRQ_IDLE) {
 			//... and buffer 1 is empty
-			while(TaskFlashCmd != TF_IDLE)
-				osYIELD;
+			//while(TaskFlashCmd != TF_IDLE)
+			//	osYIELD;
 						
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
@@ -326,9 +326,9 @@ void StopAcq(void){
 				// Tell TaskFlash we're ready to write
 				TaskFlashCmd = (buffer == 0 ? TF_WRITE_BUF1 : TF_WRITE_BUF2);
 
-				while(TaskFlashCmd != TF_IDLE) {
-					osYIELD;
-				}
+				//while(TaskFlashCmd != TF_IDLE) {
+				//	osYIELD;
+				//}
 				++FlashPageNumber;
 				buffer = !buffer;
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
@@ -871,7 +871,7 @@ BEGIN_TASK(TaskAcq)
 			//--------------------------------------------------------------------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 
-			//LogMessage("This is a debugging message! We are starting the acquisition process!\n");
+			LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
 #ifndef LOGGING_TO_FLASH
 		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
@@ -910,7 +910,7 @@ BEGIN_TASK(TaskAcq)
 #endif
 
 		Seg7LP('r');	// we're recording
-		//LogMessage("We're recording voice data now\n");
+		LogMessage("We're recording voice data now\n");
 
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
