@@ -297,9 +297,10 @@ void StopAcq(void){
 	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
 		size_t len = strlen(message) + 1;
+		static int page = FLASH_ECG_START_PAGE;
 
 		// If our message won't fit into the buffer, just return
-		if(len >= 252 || FlashPageNumber>FLASH_ECG_END_PAGE)
+		if(len >= 252 || page>FLASH_ECG_END_PAGE)
 			return;
 
 		/*
@@ -321,17 +322,18 @@ void StopAcq(void){
 				strncpy(Buf1.Data.String, message, len);
 
 				// Tell TaskFlash we're ready to write
+				FlashPageNumber = page;
 				TaskFlashCmd = TF_WRITE_BUF1;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
 				}
 
-				FlashPageNumber++;
 				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
+				++page;
 			}
 			
 			//... and buffer 2 is empty
@@ -340,17 +342,19 @@ void StopAcq(void){
 
 				strncpy(Buf2.Data.String, message, len);
 
+				FlashPageNumber = page;
 				TaskFlashCmd = TF_WRITE_BUF2;
 
 				while(TaskFlashCmd != TF_IDLE) {
 					osYIELD;
 				}
 
-				FlashPageNumber++;
+				
 				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
+				++page;
 			}
 			
 		}
