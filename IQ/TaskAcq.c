@@ -297,7 +297,7 @@ void StopAcq(void){
 	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
 		size_t len = strlen(message) + 1;
-		static int page = FLASH_ECG_START_PAGE+1;
+		static int page = FLASH_ECG_START_PAGE;
 
 		// If our message won't fit into the buffer, just return
 		//if(len >= 252 || page>FLASH_ECG_END_PAGE)
@@ -314,6 +314,8 @@ void StopAcq(void){
 		if(AcqIrqState != ACQ_IRQ_IDLE) {
 			//... and buffer 1 is empty
 			while(TaskFlashCmd != TF_IDLE)
+				osYIELD;
+			while(Buf1.Status != BUF_EMPTY)
 				osYIELD;
 
 			if(Buf1.Status == BUF_EMPTY) {
