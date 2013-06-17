@@ -315,11 +315,6 @@ void StopAcq(void){
 			//... and buffer 1 is empty
 			while(TaskFlashCmd != TF_IDLE)
 				osYIELD;
-			while(Buf1.Status != BUF_EMPTY)
-				osYIELD;
-
-			if(Buf1.Status == BUF_EMPTY) {
-				Buf1.Status = BUF_FULL;
 						
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
@@ -336,12 +331,10 @@ void StopAcq(void){
 					osYIELD;
 				}
 				++page;
-
-				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
                 //}
-			}
+
 			
 			/*
 			//... and buffer 2 is empty
