@@ -297,11 +297,11 @@ void StopAcq(void){
 	void LogMessage(char *message) {
 #ifdef LOGGING_TO_FLASH
 		size_t len = strlen(message) + 1;
-		static int page = FLASH_ECG_START_PAGE;
+		static int page = FLASH_ECG_START_PAGE+1;
 
 		// If our message won't fit into the buffer, just return
-		if(len >= 252 || page>FLASH_ECG_END_PAGE)
-			return;
+		//if(len >= 252 || page>FLASH_ECG_END_PAGE)
+		//	return;
 
 		/*
 		for(unsigned char i = 0; i < 127; i++) {
