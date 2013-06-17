@@ -281,7 +281,7 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x70b4
+.text           0x00000000     0x70c4
  *(.vectors)
  .vectors       0x00000000      0x1e8 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4/crtx64a3.o
                 0x00000000                __vectors
@@ -533,7 +533,7 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
                 0x00001486                SlowClock
                 0x0000140c                SetDefaults
                 0x0000139a                __vector_20
- .text          0x000018f8      0xbd2 TaskAcq.o
+ .text          0x000018f8      0xbe2 TaskAcq.o
                 0x0000191e                PackECG
                 0x0000194e                UnPackECG
                 0x000019b4                AcqInterrupt
@@ -543,295 +543,295 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
                 0x00001b7a                TaskAcq
                 0x00001a40                InitADCs
                 0x000019c6                LogMessage
- .text          0x000024ca      0x11e usart_driver.o
-                0x0000252c                USART_RXComplete
-                0x000025a0                USART_DataRegEmpty
-                0x000024ca                USART_InterruptDriver_Initialize
-                0x000024dc                uart_putchar
- .text          0x000025e8       0xc6 adc_driver.o
-                0x0000260e                ADC_Wait
-                0x00002620                ADC_Offset_Get
-                0x0000269a                SP_ReadCalibrationByte
-                0x000025e8                ADC_ResultCh_GetWord_Offset
-                0x00002600                ADC_ResultCh_GetWord
-                0x0000265a                ADC_CalibrationValues_Load
- .text          0x000026ae      0x256 eeprom_driver.o
-                0x000026ae                EEPROM_ReadByte
-                0x00002708                EEPROM_WaitForNVM
-                0x000027b2                EEPROM_LoadByte
-                0x0000288c                EEPROM_SplitWritePage
-                0x000027f8                EEPROM_AtomicWritePage
-                0x000027d0                EEPROM_LoadPage
-                0x000028d6                EEPROM_EraseAll
-                0x00002712                EEPROM_FlushBuffer
-                0x00002842                EEPROM_ErasePage
-                0x00002748                EEPROM_WriteByte
- .text          0x00002904     0x1d7a TaskUSB.o
-                0x00002a20                __vector_119
-                0x00002904                UnPackECGA
-                0x00002a74                Hello
-                0x0000453a                Dump
-                0x00002970                UnPackECGP
-                0x00002bae                TaskUSB
-                0x000029cc                __vector_120
- .text          0x0000467e      0x446 TaskFlash.o
-                0x0000467e                TaskFlash
- .text          0x00004ac4       0xc6 spi_driver.o
-                0x00004b50                SPI_SS_Lo
-                0x00004b70                SPI_TransceiveByte
-                0x00004b60                SPI_SS_Hi
-                0x00004ac4                SPI_Init
- .text          0x00004b8a       0x3c lowpower.o
-                0x00004b8a                LOWPOWER_Init
- .text          0x00004bc6       0x86 rtc_driver.o
-                0x00004c3e                RTC_SetPrescaler
-                0x00004bc6                RTC_Initialize
-                0x00004c0e                RTC_SetAlarm
-                0x00004bf0                RTC_SetCompareIntLevel
-                0x00004bfe                RTC_SetIntLevels
-                0x00004be2                RTC_SetOverflowIntLevel
- .text          0x00004c4c       0xae sleepmgr.o
-                0x00004c8e                SLEEPMGR_Unlock
-                0x00004cb8                SLEEPMGR_Sleep
-                0x00004c64                SLEEPMGR_Lock
-                0x00004c4c                SLEEPMGR_Init
-                0x00004cee                SLEEPMGR_CancelSleep
- .text          0x00004cfa       0x2a ccpwrite.o
-                0x00004cfa                CCPWrite
- .text          0x00004d24      0x21a seg7.o
-                0x00004d84                Seg7D
-                0x00004f24                InitSeg7
-                0x00004dec                Seg7G
-                0x00004efe                Seg7HP
-                0x00004d24                Seg7A
-                0x00004e04                Seg7DP
-                0x00004ee8                Seg7LP
-                0x00004d3c                Seg7B
-                0x00004d54                Seg7C
-                0x00004e1c                Seg7
-                0x00004dd4                Seg7F
-                0x00004dbc                Seg7E
- .text          0x00004f3e        0x0 buffers.o
- .text          0x00004f3e      0x102 ulaw.o
-                0x00004f52                alaw2linear
-                0x00004f3e                ulaw2linear
-                0x00004f66                linear2ulaw
-                0x00004fca                linear2alaw
- .text          0x00005040      0x15c eeprom.o
-                0x000050cc                EE_Rd
-                0x00005040                EE_Wr
- .text          0x0000519c      0x3c8 TaskBT.o
-                0x000051aa                BTOff
-                0x000052b8                TaskBT
-                0x000051b8                bin2Hex
-                0x000051ca                CRCCalc
-                0x00005264                __vector_58
-                0x0000519c                BTOn
-                0x00005210                __vector_59
- .text          0x00005564       0xa8 TaskWatchDog.o
-                0x00005564                TaskWatchDog
- .text          0x0000560c        0x0 crc.o
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
- .text          0x0000560c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
-                0x0000560c                . = ALIGN (0x2)
+ .text          0x000024da      0x11e usart_driver.o
+                0x0000253c                USART_RXComplete
+                0x000025b0                USART_DataRegEmpty
+                0x000024da                USART_InterruptDriver_Initialize
+                0x000024ec                uart_putchar
+ .text          0x000025f8       0xc6 adc_driver.o
+                0x0000261e                ADC_Wait
+                0x00002630                ADC_Offset_Get
+                0x000026aa                SP_ReadCalibrationByte
+                0x000025f8                ADC_ResultCh_GetWord_Offset
+                0x00002610                ADC_ResultCh_GetWord
+                0x0000266a                ADC_CalibrationValues_Load
+ .text          0x000026be      0x256 eeprom_driver.o
+                0x000026be                EEPROM_ReadByte
+                0x00002718                EEPROM_WaitForNVM
+                0x000027c2                EEPROM_LoadByte
+                0x0000289c                EEPROM_SplitWritePage
+                0x00002808                EEPROM_AtomicWritePage
+                0x000027e0                EEPROM_LoadPage
+                0x000028e6                EEPROM_EraseAll
+                0x00002722                EEPROM_FlushBuffer
+                0x00002852                EEPROM_ErasePage
+                0x00002758                EEPROM_WriteByte
+ .text          0x00002914     0x1d7a TaskUSB.o
+                0x00002a30                __vector_119
+                0x00002914                UnPackECGA
+                0x00002a84                Hello
+                0x0000454a                Dump
+                0x00002980                UnPackECGP
+                0x00002bbe                TaskUSB
+                0x000029dc                __vector_120
+ .text          0x0000468e      0x446 TaskFlash.o
+                0x0000468e                TaskFlash
+ .text          0x00004ad4       0xc6 spi_driver.o
+                0x00004b60                SPI_SS_Lo
+                0x00004b80                SPI_TransceiveByte
+                0x00004b70                SPI_SS_Hi
+                0x00004ad4                SPI_Init
+ .text          0x00004b9a       0x3c lowpower.o
+                0x00004b9a                LOWPOWER_Init
+ .text          0x00004bd6       0x86 rtc_driver.o
+                0x00004c4e                RTC_SetPrescaler
+                0x00004bd6                RTC_Initialize
+                0x00004c1e                RTC_SetAlarm
+                0x00004c00                RTC_SetCompareIntLevel
+                0x00004c0e                RTC_SetIntLevels
+                0x00004bf2                RTC_SetOverflowIntLevel
+ .text          0x00004c5c       0xae sleepmgr.o
+                0x00004c9e                SLEEPMGR_Unlock
+                0x00004cc8                SLEEPMGR_Sleep
+                0x00004c74                SLEEPMGR_Lock
+                0x00004c5c                SLEEPMGR_Init
+                0x00004cfe                SLEEPMGR_CancelSleep
+ .text          0x00004d0a       0x2a ccpwrite.o
+                0x00004d0a                CCPWrite
+ .text          0x00004d34      0x21a seg7.o
+                0x00004d94                Seg7D
+                0x00004f34                InitSeg7
+                0x00004dfc                Seg7G
+                0x00004f0e                Seg7HP
+                0x00004d34                Seg7A
+                0x00004e14                Seg7DP
+                0x00004ef8                Seg7LP
+                0x00004d4c                Seg7B
+                0x00004d64                Seg7C
+                0x00004e2c                Seg7
+                0x00004de4                Seg7F
+                0x00004dcc                Seg7E
+ .text          0x00004f4e        0x0 buffers.o
+ .text          0x00004f4e      0x102 ulaw.o
+                0x00004f62                alaw2linear
+                0x00004f4e                ulaw2linear
+                0x00004f76                linear2ulaw
+                0x00004fda                linear2alaw
+ .text          0x00005050      0x15c eeprom.o
+                0x000050dc                EE_Rd
+                0x00005050                EE_Wr
+ .text          0x000051ac      0x3c8 TaskBT.o
+                0x000051ba                BTOff
+                0x000052c8                TaskBT
+                0x000051c8                bin2Hex
+                0x000051da                CRCCalc
+                0x00005274                __vector_58
+                0x000051ac                BTOn
+                0x00005220                __vector_59
+ .text          0x00005574       0xa8 TaskWatchDog.o
+                0x00005574                TaskWatchDog
+ .text          0x0000561c        0x0 crc.o
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
+ .text          0x0000561c        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
+                0x0000561c                . = ALIGN (0x2)
  *(.text.*)
  .text.avr-libc.fplib
-                0x0000560c        0xa c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
-                0x0000560c                __subsf3
-                0x0000560e                __addsf3
+                0x0000561c        0xa c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
+                0x0000561c                __subsf3
+                0x0000561e                __addsf3
  .text.avr-libc.fplib
-                0x00005616       0xc0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
-                0x00005630                __addsf3x
+                0x00005626       0xc0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
+                0x00005640                __addsf3x
  .text.avr-libc.fplib
-                0x000056d6        0x8 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
-                0x000056d6                __lesf2
-                0x000056d6                __nesf2
-                0x000056d6                __eqsf2
-                0x000056d6                __cmpsf2
-                0x000056d6                __ltsf2
+                0x000056e6        0x8 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
+                0x000056e6                __lesf2
+                0x000056e6                __nesf2
+                0x000056e6                __eqsf2
+                0x000056e6                __cmpsf2
+                0x000056e6                __ltsf2
  .text.avr-libc.fplib
-                0x000056de        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
-                0x000056de                __divsf3
+                0x000056ee        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
+                0x000056ee                __divsf3
  .text.avr-libc.fplib
-                0x000056e2       0xcc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
-                0x000056f8                __divsf3x
-                0x000056fc                __divsf3_pse
+                0x000056f2       0xcc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
+                0x00005708                __divsf3x
+                0x0000570c                __divsf3_pse
  .text.avr-libc.fplib
-                0x000057ae       0x58 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
-                0x000057ae                __fixunssfsi
+                0x000057be       0x58 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
+                0x000057be                __fixunssfsi
  .text.avr-libc.fplib
-                0x00005806       0x7a c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
-                0x0000580a                __floatsisf
-                0x00005806                __floatunsisf
+                0x00005816       0x7a c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
+                0x0000581a                __floatsisf
+                0x00005816                __floatunsisf
  .text.avr-libc.fplib
-                0x00005880       0x26 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
-                0x00005880                floor
+                0x00005890       0x26 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
+                0x00005890                floor
  .text.avr-libc.fplib
-                0x000058a6       0x48 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
-                0x000058a6                __fp_cmp
+                0x000058b6       0x48 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
+                0x000058b6                __fp_cmp
  .text.avr-libc.fplib
-                0x000058ee        0xc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
-                0x000058ee                __fp_inf
+                0x000058fe        0xc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
+                0x000058fe                __fp_inf
  .text.avr-libc.fplib
-                0x000058fa       0x36 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
-                0x000058fa                __fp_mintl
+                0x0000590a       0x36 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
+                0x0000590a                __fp_mintl
  .text.avr-libc.fplib
-                0x00005930       0x1c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
-                0x00005934                __fp_mpack_finite
-                0x00005930                __fp_mpack
+                0x00005940       0x1c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
+                0x00005944                __fp_mpack_finite
+                0x00005940                __fp_mpack
  .text.avr-libc.fplib
-                0x0000594c        0x6 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
-                0x0000594c                __fp_nan
+                0x0000595c        0x6 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
+                0x0000595c                __fp_nan
  .text.avr-libc.fplib
-                0x00005952        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
-                0x00005952                __fp_pscA
+                0x00005962        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
+                0x00005962                __fp_pscA
  .text.avr-libc.fplib
-                0x00005960        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
-                0x00005960                __fp_pscB
+                0x00005970        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
+                0x00005970                __fp_pscB
  .text.avr-libc.fplib
-                0x0000596e       0x22 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
-                0x0000596e                __fp_round
+                0x0000597e       0x22 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
+                0x0000597e                __fp_round
  .text.avr-libc.fplib
-                0x00005990       0x44 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
-                0x00005990                __fp_split3
-                0x000059a0                __fp_splitA
+                0x000059a0       0x44 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
+                0x000059a0                __fp_split3
+                0x000059b0                __fp_splitA
  .text.avr-libc.fplib
-                0x000059d4       0x2e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
-                0x000059d4                __fp_trunc
+                0x000059e4       0x2e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
+                0x000059e4                __fp_trunc
  .text.avr-libc.fplib
-                0x00005a02        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
-                0x00005a02                __fp_zero
-                0x00005a04                __fp_szero
+                0x00005a12        0xe c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
+                0x00005a12                __fp_zero
+                0x00005a14                __fp_szero
  .text.avr-libc.fplib
-                0x00005a10        0x8 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
-                0x00005a10                __gtsf2
-                0x00005a10                __gesf2
+                0x00005a20        0x8 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
+                0x00005a20                __gtsf2
+                0x00005a20                __gesf2
  .text.avr-libc.fplib
-                0x00005a18        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
-                0x00005a18                __mulsf3
+                0x00005a28        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
+                0x00005a28                __mulsf3
  .text.avr-libc.fplib
-                0x00005a1c       0xc2 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
-                0x00005a34                __mulsf3_pse
-                0x00005a30                __mulsf3x
+                0x00005a2c       0xc2 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
+                0x00005a44                __mulsf3_pse
+                0x00005a40                __mulsf3x
  .text.avr-libc
-                0x00005ade      0x754 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
-                0x00005ade                vfprintf
+                0x00005aee      0x754 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
+                0x00005aee                vfprintf
  .text.avr-libc
-                0x00006232      0x880 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
-                0x00006834                vfscanf
- .text.libgcc   0x00006ab2       0x3e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
-                0x00006ab2                __mulsi3
- .text.libgcc   0x00006af0       0x26 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
-                0x00006af0                __divmodhi4
-                0x00006af0                _div
- .text.libgcc   0x00006b16       0x44 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
-                0x00006b16                __udivmodsi4
- .text.libgcc   0x00006b5a        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
- .text.libgcc   0x00006b5a        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
- .text.libgcc   0x00006b5a       0x28 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
-                0x00006b5a                __udivmodhi4
+                0x00006242      0x880 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
+                0x00006844                vfscanf
+ .text.libgcc   0x00006ac2       0x3e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
+                0x00006ac2                __mulsi3
+ .text.libgcc   0x00006b00       0x26 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
+                0x00006b00                __divmodhi4
+                0x00006b00                _div
+ .text.libgcc   0x00006b26       0x44 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
+                0x00006b26                __udivmodsi4
+ .text.libgcc   0x00006b6a        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+ .text.libgcc   0x00006b6a        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
+ .text.libgcc   0x00006b6a       0x28 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
+                0x00006b6a                __udivmodhi4
  .text.avr-libc
-                0x00006b82      0x1b0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
-                0x00006b82                __ftoa_engine
+                0x00006b92      0x1b0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
+                0x00006b92                __ftoa_engine
  .text.avr-libc
-                0x00006d32       0x10 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
-                0x00006d32                isspace
+                0x00006d42       0x10 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
+                0x00006d42                isspace
  .text.avr-libc
-                0x00006d42       0x10 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
-                0x00006d42                tolower
+                0x00006d52       0x10 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
+                0x00006d52                tolower
  .text.avr-libc
-                0x00006d52       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
-                0x00006d52                strchr_P
+                0x00006d62       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
+                0x00006d62                strchr_P
  .text.avr-libc
-                0x00006d68       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
-                0x00006d68                strnlen_P
+                0x00006d78       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
+                0x00006d78                strnlen_P
  .text.avr-libc
-                0x00006d7e       0x14 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
-                0x00006d7e                strlwr
+                0x00006d8e       0x14 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
+                0x00006d8e                strlwr
  .text.avr-libc
-                0x00006d92       0x1c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
-                0x00006d92                strncmp
+                0x00006da2       0x1c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
+                0x00006da2                strncmp
  .text.avr-libc
-                0x00006dae       0x1e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
-                0x00006dae                strncpy
+                0x00006dbe       0x1e c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
+                0x00006dbe                strncpy
  .text.avr-libc
-                0x00006dcc       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
-                0x00006dcc                strnlen
+                0x00006ddc       0x16 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
+                0x00006ddc                strnlen
  .text.avr-libc
-                0x00006de2       0x84 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
-                0x00006de2                fgetc
+                0x00006df2       0x84 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
+                0x00006df2                fgetc
  .text.avr-libc
-                0x00006e66       0x3c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
-                0x00006e66                fprintf_P
+                0x00006e76       0x3c c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
+                0x00006e76                fprintf_P
  .text.avr-libc
-                0x00006ea2       0x58 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
-                0x00006ea2                fputc
+                0x00006eb2       0x58 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
+                0x00006eb2                fputc
  .text.avr-libc
-                0x00006efa       0x86 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
-                0x00006efa                fwrite
+                0x00006f0a       0x86 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
+                0x00006f0a                fwrite
  .text.avr-libc
-                0x00006f80       0x3a c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
-                0x00006f80                sscanf_P
+                0x00006f90       0x3a c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
+                0x00006f90                sscanf_P
  .text.avr-libc
-                0x00006fba       0x34 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
-                0x00006fba                ungetc
+                0x00006fca       0x34 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
+                0x00006fca                ungetc
  .text.avr-libc
-                0x00006fee       0xbc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
-                0x00006fee                __ultoa_invert
+                0x00006ffe       0xbc c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
+                0x00006ffe                __ultoa_invert
  .text.avr-libc
-                0x000070aa        0x6 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
-                0x000070ae                __ctype_istrue
-                0x000070aa                __ctype_isfalse
-                0x000070b0                . = ALIGN (0x2)
+                0x000070ba        0x6 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
+                0x000070be                __ctype_istrue
+                0x000070ba                __ctype_isfalse
+                0x000070c0                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000070b0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
-                0x000070b0                exit
-                0x000070b0                _exit
+ .fini9         0x000070c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+                0x000070c0                exit
+                0x000070c0                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -850,11 +850,11 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000070b0        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+ .fini0         0x000070c0        0x4 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
  *(.fini0)
-                0x000070b4                _etext = .
+                0x000070c4                _etext = .
 
-.data           0x00802000       0x82 load address 0x000070b4
+.data           0x00802000       0xc0 load address 0x000070c4
                 0x00802000                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00802000        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4/crtx64a3.o
@@ -864,234 +864,234 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .data          0x00802002        0x0 clksys_driver.o
  .data          0x00802002        0x0 TC_driver.o
  .data          0x00802002        0x0 iq.o
- .data          0x00802002       0x47 TaskAcq.o
- .data          0x00802049        0x0 usart_driver.o
- .data          0x00802049        0x0 adc_driver.o
- .data          0x00802049        0x0 eeprom_driver.o
- .data          0x00802049       0x29 TaskUSB.o
- .data          0x00802072        0x0 TaskFlash.o
- .data          0x00802072        0x0 spi_driver.o
- .data          0x00802072        0x0 lowpower.o
- .data          0x00802072        0x0 rtc_driver.o
- .data          0x00802072        0x0 sleepmgr.o
- .data          0x00802072        0x0 ccpwrite.o
- .data          0x00802072        0x0 seg7.o
- .data          0x00802072        0x0 buffers.o
- .data          0x00802072        0x0 ulaw.o
- .data          0x00802072        0x0 eeprom.o
- .data          0x00802072        0xe TaskBT.o
- .data          0x00802080        0x2 TaskWatchDog.o
-                0x00802080                GlobalWatchTimer
- .data          0x00802082        0x0 crc.o
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
- .data          0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
+ .data          0x00802002       0x85 TaskAcq.o
+ .data          0x00802087        0x0 usart_driver.o
+ .data          0x00802087        0x0 adc_driver.o
+ .data          0x00802087        0x0 eeprom_driver.o
+ .data          0x00802087       0x29 TaskUSB.o
+ .data          0x008020b0        0x0 TaskFlash.o
+ .data          0x008020b0        0x0 spi_driver.o
+ .data          0x008020b0        0x0 lowpower.o
+ .data          0x008020b0        0x0 rtc_driver.o
+ .data          0x008020b0        0x0 sleepmgr.o
+ .data          0x008020b0        0x0 ccpwrite.o
+ .data          0x008020b0        0x0 seg7.o
+ .data          0x008020b0        0x0 buffers.o
+ .data          0x008020b0        0x0 ulaw.o
+ .data          0x008020b0        0x0 eeprom.o
+ .data          0x008020b0        0xe TaskBT.o
+ .data          0x008020be        0x2 TaskWatchDog.o
+                0x008020be                GlobalWatchTimer
+ .data          0x008020c0        0x0 crc.o
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
+ .data          0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
  *(.data*)
  *(.rodata)
  *(.rodata*)
  *(.gnu.linkonce.d*)
-                0x00802082                . = ALIGN (0x2)
-                0x00802082                _edata = .
-                0x00802082                PROVIDE (__data_end, .)
+                0x008020c0                . = ALIGN (0x2)
+                0x008020c0                _edata = .
+                0x008020c0                PROVIDE (__data_end, .)
 
-.bss            0x00802082      0x513
-                0x00802082                PROVIDE (__bss_start, .)
+.bss            0x008020c0      0x513
+                0x008020c0                PROVIDE (__bss_start, .)
  *(.bss)
- .bss           0x00802082        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4/crtx64a3.o
- .bss           0x00802082        0x0 rtos.o
- .bss           0x00802082        0x0 wdt_driver.o
- .bss           0x00802082        0x0 clksys_driver.o
- .bss           0x00802082        0x0 TC_driver.o
- .bss           0x00802082        0x4 iq.o
-                0x00802082                resetVec
-                0x00802084                gState
- .bss           0x00802086        0xa TaskAcq.o
-                0x00802086                AcqIrqState
-                0x00802087                AcqBufferLock
- .bss           0x00802090        0x0 usart_driver.o
- .bss           0x00802090        0x0 adc_driver.o
- .bss           0x00802090        0x0 eeprom_driver.o
- .bss           0x00802090       0x26 TaskUSB.o
-                0x00802092                EraseInProgress
-                0x00802090                Verbose
-                0x00802091                Debug
- .bss           0x008020b6        0xa TaskFlash.o
-                0x008020b6                TaskFlashCmd
- .bss           0x008020c0        0x0 spi_driver.o
- .bss           0x008020c0        0x0 lowpower.o
- .bss           0x008020c0        0x0 rtc_driver.o
- .bss           0x008020c0        0x0 sleepmgr.o
- .bss           0x008020c0        0x0 ccpwrite.o
- .bss           0x008020c0        0x0 seg7.o
- .bss           0x008020c0        0x0 buffers.o
- .bss           0x008020c0        0x0 ulaw.o
- .bss           0x008020c0        0x0 eeprom.o
- .bss           0x008020c0        0x2 TaskBT.o
- .bss           0x008020c2        0x4 TaskWatchDog.o
-                0x008020c4                AcqWatchTimer
-                0x008020c3                USBWatchTimer
-                0x008020c2                FlashWatchTimer
- .bss           0x008020c6        0x0 crc.o
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
- .bss           0x008020c6        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
+ .bss           0x008020c0        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4/crtx64a3.o
+ .bss           0x008020c0        0x0 rtos.o
+ .bss           0x008020c0        0x0 wdt_driver.o
+ .bss           0x008020c0        0x0 clksys_driver.o
+ .bss           0x008020c0        0x0 TC_driver.o
+ .bss           0x008020c0        0x4 iq.o
+                0x008020c0                resetVec
+                0x008020c2                gState
+ .bss           0x008020c4        0xa TaskAcq.o
+                0x008020c4                AcqIrqState
+                0x008020c5                AcqBufferLock
+ .bss           0x008020ce        0x0 usart_driver.o
+ .bss           0x008020ce        0x0 adc_driver.o
+ .bss           0x008020ce        0x0 eeprom_driver.o
+ .bss           0x008020ce       0x26 TaskUSB.o
+                0x008020d0                EraseInProgress
+                0x008020ce                Verbose
+                0x008020cf                Debug
+ .bss           0x008020f4        0xa TaskFlash.o
+                0x008020f4                TaskFlashCmd
+ .bss           0x008020fe        0x0 spi_driver.o
+ .bss           0x008020fe        0x0 lowpower.o
+ .bss           0x008020fe        0x0 rtc_driver.o
+ .bss           0x008020fe        0x0 sleepmgr.o
+ .bss           0x008020fe        0x0 ccpwrite.o
+ .bss           0x008020fe        0x0 seg7.o
+ .bss           0x008020fe        0x0 buffers.o
+ .bss           0x008020fe        0x0 ulaw.o
+ .bss           0x008020fe        0x0 eeprom.o
+ .bss           0x008020fe        0x2 TaskBT.o
+ .bss           0x00802100        0x4 TaskWatchDog.o
+                0x00802102                AcqWatchTimer
+                0x00802101                USBWatchTimer
+                0x00802100                FlashWatchTimer
+ .bss           0x00802104        0x0 crc.o
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(addsf3x.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(cmpsf2.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(divsf3x.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fixunssfsi.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floatsisf.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(floor.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_cmp.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_inf.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mintl.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_mpack.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_nan.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscA.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_pscB.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_round.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_split3.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_trunc.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(fp_zero.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(gesf2.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libm.a(mulsf3x.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libscanf_flt.a(vfscanf_flt.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_mulsi3.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_divmodhi4.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodsi4.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_exit.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_clear_bss.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a(_udivmodhi4.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ftoa_engine.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(isspace.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(tolower.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strchr_P.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen_P.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strlwr.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fprintf_p.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fputc.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fwrite.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(sscanf_p.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ungetc.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(ultoa_invert.o)
+ .bss           0x00802104        0x0 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(cty_isfalse.o)
  *(.bss*)
  *(COMMON)
- COMMON         0x008020c6       0x1f rtos.o
-                0x008020c6                myTasks
-                0x008020e4                currentTaskNum
- COMMON         0x008020e5        0x5 iq.o
-                0x008020e5                SystemError
-                0x008020e6                ElapsedMinutes
-                0x008020e8                Flags
- COMMON         0x008020ea      0x14a TaskAcq.o
-                0x008020ea                BTBuf
-                0x008020fa                voiceIndex
-                0x008020fc                BTString
-                0x00802169                LFLo
-                0x0080216b                BTStatus
-                0x0080216c                LFBiasEnable
-                0x0080216d                LFHi
-                0x0080216f                VBatt
-                0x00802173                AbandonTimer
-                0x00802177                LFReady
-                0x00802178                RL_Mon
-                0x0080217a                BTEnable
-                0x0080217b                LFMax
-                0x0080217d                LFMin
-                0x0080217f                B2
-                0x00802181                LFMag
-                0x00802183                QC
-                0x00802184                LFMinFilt
-                0x00802186                LFMaxFilt
-                0x00802188                Acc
-                0x00802198                LFBiasModelIndex
-                0x00802199                Lead
-                0x008021a9                RA_Mon
-                0x008021ab                M
-                0x008021ac                sampleIndex
-                0x008021ae                LFBiasModel
-                0x0080222e                B1
-                0x00802230                BTReady
-                0x00802231                B3
-                0x00802233                BTBufPhase
- COMMON         0x00802234       0xaa TaskUSB.o
-                0x00802234                FlowControl
-                0x00802235                USBPortDescriptor
-                0x008022dc                usb
- COMMON         0x008022de        0x2 TaskFlash.o
-                0x008022de                FlashPageNumber
- COMMON         0x008022e0        0x5 sleepmgr.o
-                0x008022e0                SLEEPMGR_locks
- COMMON         0x008022e5        0x2 seg7.o
-                0x008022e5                Priority
-                0x008022e6                LPChar
- COMMON         0x008022e7      0x202 buffers.o
-                0x008022e7                Buf1
-                0x008023e8                Buf2
- COMMON         0x008024e9       0xac TaskBT.o
-                0x008024e9                BTPortDescriptor
-                0x00802590                bt
-                0x00802592                BTBufReady
-                0x00802593                bt_in
-                0x00802595                PROVIDE (__bss_end, .)
-                0x000070b4                __data_load_start = LOADADDR (.data)
-                0x00007136                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x00802104       0x1f rtos.o
+                0x00802104                myTasks
+                0x00802122                currentTaskNum
+ COMMON         0x00802123        0x5 iq.o
+                0x00802123                SystemError
+                0x00802124                ElapsedMinutes
+                0x00802126                Flags
+ COMMON         0x00802128      0x14a TaskAcq.o
+                0x00802128                BTBuf
+                0x00802138                voiceIndex
+                0x0080213a                BTString
+                0x008021a7                LFLo
+                0x008021a9                BTStatus
+                0x008021aa                LFBiasEnable
+                0x008021ab                LFHi
+                0x008021ad                VBatt
+                0x008021b1                AbandonTimer
+                0x008021b5                LFReady
+                0x008021b6                RL_Mon
+                0x008021b8                BTEnable
+                0x008021b9                LFMax
+                0x008021bb                LFMin
+                0x008021bd                B2
+                0x008021bf                LFMag
+                0x008021c1                QC
+                0x008021c2                LFMinFilt
+                0x008021c4                LFMaxFilt
+                0x008021c6                Acc
+                0x008021d6                LFBiasModelIndex
+                0x008021d7                Lead
+                0x008021e7                RA_Mon
+                0x008021e9                M
+                0x008021ea                sampleIndex
+                0x008021ec                LFBiasModel
+                0x0080226c                B1
+                0x0080226e                BTReady
+                0x0080226f                B3
+                0x00802271                BTBufPhase
+ COMMON         0x00802272       0xaa TaskUSB.o
+                0x00802272                FlowControl
+                0x00802273                USBPortDescriptor
+                0x0080231a                usb
+ COMMON         0x0080231c        0x2 TaskFlash.o
+                0x0080231c                FlashPageNumber
+ COMMON         0x0080231e        0x5 sleepmgr.o
+                0x0080231e                SLEEPMGR_locks
+ COMMON         0x00802323        0x2 seg7.o
+                0x00802323                Priority
+                0x00802324                LPChar
+ COMMON         0x00802325      0x202 buffers.o
+                0x00802325                Buf1
+                0x00802426                Buf2
+ COMMON         0x00802527       0xac TaskBT.o
+                0x00802527                BTPortDescriptor
+                0x008025ce                bt
+                0x008025d0                BTBufReady
+                0x008025d1                bt_in
+                0x008025d3                PROVIDE (__bss_end, .)
+                0x000070c4                __data_load_start = LOADADDR (.data)
+                0x00007184                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x00802595        0x0
-                0x00802595                PROVIDE (__noinit_start, .)
+.noinit         0x008025d3        0x0
+                0x008025d3                PROVIDE (__noinit_start, .)
  *(.noinit*)
-                0x00802595                PROVIDE (__noinit_end, .)
-                0x00802595                _end = .
-                0x00802595                PROVIDE (__heap_start, .)
+                0x008025d3                PROVIDE (__noinit_end, .)
+                0x008025d3                _end = .
+                0x008025d3                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0x0
  *(.eeprom*)
@@ -1290,31 +1290,31 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_abbrev  0x00001e67       0xef TaskWatchDog.o
  .debug_abbrev  0x00001f56       0x5d crc.o
 
-.debug_line     0x00000000     0x43aa
+.debug_line     0x00000000     0x43ba
  *(.debug_line)
  .debug_line    0x00000000      0x2dc rtos.o
  .debug_line    0x000002dc      0x20e wdt_driver.o
  .debug_line    0x000004ea      0x1e7 clksys_driver.o
  .debug_line    0x000006d1      0x2f5 TC_driver.o
  .debug_line    0x000009c6      0x559 iq.o
- .debug_line    0x00000f1f      0x95e TaskAcq.o
- .debug_line    0x0000187d      0x204 usart_driver.o
- .debug_line    0x00001a81      0x286 adc_driver.o
- .debug_line    0x00001d07      0x361 eeprom_driver.o
- .debug_line    0x00002068      0xb05 TaskUSB.o
- .debug_line    0x00002b6d      0x451 TaskFlash.o
- .debug_line    0x00002fbe      0x1ae spi_driver.o
- .debug_line    0x0000316c       0xea lowpower.o
- .debug_line    0x00003256      0x196 rtc_driver.o
- .debug_line    0x000033ec      0x1c9 sleepmgr.o
- .debug_line    0x000035b5      0x104 ccpwrite.o
- .debug_line    0x000036b9      0x4b0 seg7.o
- .debug_line    0x00003b69       0x5b buffers.o
- .debug_line    0x00003bc4      0x149 ulaw.o
- .debug_line    0x00003d0d      0x12b eeprom.o
- .debug_line    0x00003e38      0x396 TaskBT.o
- .debug_line    0x000041ce      0x192 TaskWatchDog.o
- .debug_line    0x00004360       0x4a crc.o
+ .debug_line    0x00000f1f      0x96e TaskAcq.o
+ .debug_line    0x0000188d      0x204 usart_driver.o
+ .debug_line    0x00001a91      0x286 adc_driver.o
+ .debug_line    0x00001d17      0x361 eeprom_driver.o
+ .debug_line    0x00002078      0xb05 TaskUSB.o
+ .debug_line    0x00002b7d      0x451 TaskFlash.o
+ .debug_line    0x00002fce      0x1ae spi_driver.o
+ .debug_line    0x0000317c       0xea lowpower.o
+ .debug_line    0x00003266      0x196 rtc_driver.o
+ .debug_line    0x000033fc      0x1c9 sleepmgr.o
+ .debug_line    0x000035c5      0x104 ccpwrite.o
+ .debug_line    0x000036c9      0x4b0 seg7.o
+ .debug_line    0x00003b79       0x5b buffers.o
+ .debug_line    0x00003bd4      0x149 ulaw.o
+ .debug_line    0x00003d1d      0x12b eeprom.o
+ .debug_line    0x00003e48      0x396 TaskBT.o
+ .debug_line    0x000041de      0x192 TaskWatchDog.o
+ .debug_line    0x00004370       0x4a crc.o
 
 .debug_frame    0x00000000      0x9e0
  *(.debug_frame)
