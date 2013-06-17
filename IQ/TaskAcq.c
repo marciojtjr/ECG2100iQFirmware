@@ -302,7 +302,7 @@ void StopAcq(void){
 		if(len >= 252 || FlashPageNumber>FLASH_ECG_END_PAGE)
 			return;
 
-		for(unsigned char i = 0; i < 252; i++) {
+		for(unsigned char i = 0; i < 127; i++) {
 			Buf1.Data.Byte[i] = i;
 			Buf2.Data.Byte[i] = i;
 		}
@@ -314,7 +314,7 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				//memcpy(Buf1.Data.String, message, len);
+				memcpy(&Buf1.Data.String[126], message, len);
 
 				// Tell TaskFlash we're ready to write
 				Buf1.Status = BUF_FULL;
@@ -332,7 +332,7 @@ void StopAcq(void){
 			}
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
-				//memcpy(Buf2.Data.String, message, len);
+				memcpy(&Buf1.Data.String[126], message, len);
 
 				Buf2.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF2;
