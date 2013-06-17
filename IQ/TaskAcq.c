@@ -332,10 +332,10 @@ void StopAcq(void){
                 //    return;
                 //}
 			}
-			/*
+			
 			//... and buffer 2 is empty
 			else if (Buf2.Status == BUF_EMPTY) {
-				strncpy(&Buf2.Data.String[126], message, 120);
+				strncpy(Buf2.Data.String, message, len);
 
 				Buf2.Status = BUF_FULL;
 				TaskFlashCmd = TF_WRITE_BUF2;
@@ -350,7 +350,7 @@ void StopAcq(void){
                 //    return;
                 //}
 			}
-			*/
+			
 		}
 #endif
 	}
@@ -904,7 +904,7 @@ BEGIN_TASK(TaskAcq)
 #endif
 
 		Seg7LP('r');	// we're recording
-		LogMessage("We're recording voice data now\n");
+		//LogMessage("We're recording voice data now\n");
 
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
@@ -978,7 +978,7 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 
-		LogMessage("Now we are at preacquisition\n");
+		//LogMessage("Now we are at preacquisition\n");
 
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
