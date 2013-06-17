@@ -322,8 +322,9 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				memset(Buf1.Data.String, 0, 252);
-				strncpy(Buf1.Data.String, message, len);
+				sprintf(Buf1.Data.String, "Page = %d", page);
+				//memset(Buf1.Data.String, 0, 252);
+				//strncpy(Buf1.Data.String, str, len);
 
 				// Tell TaskFlash we're ready to write
 				FlashPageNumber = page;
