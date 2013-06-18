@@ -169,6 +169,10 @@ CRCCalc(short crc, short x)
 
 BEGIN_TASK(TaskBT)
 
+	while(TaskFlashCmd != TF_IDLE) {
+	 osWAIT(5);
+	 }
+
 	//------------------------------------------------------------------------------------------
 	// prepare the Bluetooth USART
 	#define BT_BAUD_RATE 921600
