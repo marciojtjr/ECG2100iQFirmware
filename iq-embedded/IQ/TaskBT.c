@@ -23,12 +23,14 @@
 #include "usart_driver.h"
 #include "eeprom_driver.h"
 #include "adc_driver.h"
+#include "taskAcq.h"
 
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
+unsigned char BTIn[252];
 
 
 //##########################################################################################
@@ -40,7 +42,7 @@ static int put_bt( char c, FILE *stream){
 	return(0);
 }
 static char get_bt(FILE *stream) {
-	return uart_getchar(&BTPortDescriptor);
+	return ' ';//uart_getchar(&BTPortDescriptor);
 }
 
 #define put_byte(c) uart_putchar(&BTPortDescriptor,c)
@@ -86,6 +88,8 @@ BEGIN_TASK(TaskBT)
 	// prepare the Bluetooth USART
 	#define BT_BAUD_RATE 921600
 	bt = &bt_str;
+	bt_in = &bt_in_str;
+
 	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
 	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
 
@@ -130,6 +134,10 @@ BEGIN_TASK(TaskBT)
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
+
+				if(BTPortDescriptor.RxReady) {
+					//LogMessage(BTPortDescriptor.RxBuf);
+				}
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
@@ -217,6 +225,8 @@ BEGIN_TASK(TaskBT)
 					print_bt("\n");
 					*/
 					fwrite(BTString, BT_SIZE, 1, bt);
+
+					LogMessage(BTIn);
 
 					FrameIndex++;
 				    }

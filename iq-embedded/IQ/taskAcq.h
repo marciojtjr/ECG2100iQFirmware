@@ -5,6 +5,7 @@ void InitADCs(void);
 void AcqInterrupt(void);
 void PackECG(unsigned char *out, unsigned char *in);
 void UnPackECG(signed int *out, unsigned char *in);
+void LogMessage(char *);
 
 #define ECG_SAMPLES_PER_PAGE 21
 #define ECG_SAMPLES_PER_MS 1
