@@ -296,6 +296,7 @@ void StopAcq(void){
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
 		size_t len = strlen(message) + 1;
+		static int buffer = 0;
 		FlashPageNumber++;
 
 		// If our message won't fit into the buffer, just return
@@ -318,7 +319,7 @@ void StopAcq(void){
 				// This is inefficient by design. We want to dump messages out
 				// as soon as possible, so wasting page space isn't too big of a deal.
 				// We have 14k pages anyway
-				memset((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), 30, 256);
+				memset((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), 0, 256);
 				strncpy((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), message, len);
 
 				// Tell TaskFlash we're ready to write
@@ -869,7 +870,7 @@ BEGIN_TASK(TaskAcq)
 			//--------------------------------------------------------------------------------------------------------------
 			//--------------------------------------------------------------------------------------------------------------
 
-			LogMessage("This is a debugging message! We are starting the acquisition process!\n");
+			//LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
 #ifndef LOGGING_TO_FLASH
 		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
@@ -908,7 +909,7 @@ BEGIN_TASK(TaskAcq)
 #endif
 
 		Seg7LP('r');	// we're recording
-		LogMessage("We're recording voice data now\n");
+		//LogMessage("We're recording voice data now\n");
 
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
@@ -982,7 +983,7 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 
-		LogMessage("Now we are at preacquisition\n");
+		//LogMessage("Now we are at preacquisition\n");
 
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
