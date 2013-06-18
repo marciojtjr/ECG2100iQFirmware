@@ -136,9 +136,10 @@ BEGIN_TASK(TaskBT)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
 
-				if(BTPortDescriptor.RxReady) {
-					LogMessage(BTPortDescriptor.RxBuf);
-				}
+				//if(BTPortDescriptor.RxReady) {
+					//LogMessage(BTPortDescriptor.RxBuf);
+				//}
+				LogMessage("In BT loop!");
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 

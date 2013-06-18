@@ -300,8 +300,8 @@ void StopAcq(void){
 		FlashPageNumber++;
 
 		// If our message won't fit into the buffer, just return
-		//if(len >= 252 || page>FLASH_ECG_END_PAGE)
-		//	return;
+		if(len >= 252 || FlashPageNumber>FLASH_ECG_END_PAGE)
+			return;
 
 		/*
 		for(unsigned char i = 0; i < 127; i++) {
@@ -781,6 +781,21 @@ BEGIN_TASK(TaskAcq)
 	Flags.AcqActive = 1;
 
 	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
+
+				// Start throwing logs out to the FLASH_ECG page
+#ifdef LOGGING_TO_FLASH
+				Buf1.Status = BUF_EMPTY; // make the buffers ready
+				Buf2.Status = BUF_EMPTY;
+				FlashPageNumber = FLASH_ECG_START_PAGE-1;
+				StartAcq(ACQ_IRQ_LOGGING);
+#endif
+
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
+			//--------------------------------------------------------------------------------------------------------------
 
 		AnalogPowerOn();
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
@@ -853,22 +868,6 @@ BEGIN_TASK(TaskAcq)
 		osWAIT(30);	// wait for button to stop bouncing
 
 		LFBiasOff();
-
-			//--------------------------------------------------------------------------------------------------------------
-			//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
-			//--------------------------------------------------------------------------------------------------------------
-
-				// Start throwing logs out to the FLASH_ECG page
-#ifdef LOGGING_TO_FLASH
-				Buf1.Status = BUF_EMPTY; // make the buffers ready
-				Buf2.Status = BUF_EMPTY;
-				FlashPageNumber = FLASH_ECG_START_PAGE-1;
-				StartAcq(ACQ_IRQ_LOGGING);
-#endif
-
-			//--------------------------------------------------------------------------------------------------------------
-			//--------------------------------------------------------------------------------------------------------------
-			//--------------------------------------------------------------------------------------------------------------
 
 			//LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
