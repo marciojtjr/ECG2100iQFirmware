@@ -75,7 +75,7 @@ c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\l
 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncmp.o)
                               TaskUSB.o (strncmp)
 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strncpy.o)
-                              TaskAcq.o (strncpy)
+                              TaskBT.o (strncpy)
 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(strnlen.o)
                               c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libprintf_flt.a(vfprintf_flt.o) (strnlen)
 c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avrxmega4\libc.a(fgetc.o)
@@ -533,101 +533,101 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
                 0x00001486                SlowClock
                 0x0000140c                SetDefaults
                 0x0000139a                __vector_20
- .text          0x000018f8      0xc06 TaskAcq.o
+ .text          0x000018f8      0xb5e TaskAcq.o
                 0x0000191e                PackECG
                 0x0000194e                UnPackECG
                 0x000019b4                AcqInterrupt
-                0x00001b1c                StartAcq
+                0x00001a74                StartAcq
                 0x000018f8                MeasureBatt
                 0x000019aa                StopAcq
-                0x00001ba8                TaskAcq
-                0x00001a6e                InitADCs
-                0x000019c6                LogMessage
- .text          0x000024fe      0x120 usart_driver.o
-                0x00002562                USART_RXComplete
-                0x000025d6                USART_DataRegEmpty
-                0x000024fe                USART_InterruptDriver_Initialize
-                0x00002512                uart_putchar
- .text          0x0000261e       0xc6 adc_driver.o
-                0x00002644                ADC_Wait
-                0x00002656                ADC_Offset_Get
-                0x000026d0                SP_ReadCalibrationByte
-                0x0000261e                ADC_ResultCh_GetWord_Offset
-                0x00002636                ADC_ResultCh_GetWord
-                0x00002690                ADC_CalibrationValues_Load
- .text          0x000026e4      0x256 eeprom_driver.o
-                0x000026e4                EEPROM_ReadByte
-                0x0000273e                EEPROM_WaitForNVM
-                0x000027e8                EEPROM_LoadByte
-                0x000028c2                EEPROM_SplitWritePage
-                0x0000282e                EEPROM_AtomicWritePage
-                0x00002806                EEPROM_LoadPage
-                0x0000290c                EEPROM_EraseAll
-                0x00002748                EEPROM_FlushBuffer
-                0x00002878                EEPROM_ErasePage
-                0x0000277e                EEPROM_WriteByte
- .text          0x0000293a     0x1d7a TaskUSB.o
-                0x00002a56                __vector_119
-                0x0000293a                UnPackECGA
-                0x00002aaa                Hello
-                0x00004570                Dump
-                0x000029a6                UnPackECGP
-                0x00002be4                TaskUSB
-                0x00002a02                __vector_120
- .text          0x000046b4      0x446 TaskFlash.o
-                0x000046b4                TaskFlash
- .text          0x00004afa       0xc6 spi_driver.o
-                0x00004b86                SPI_SS_Lo
-                0x00004ba6                SPI_TransceiveByte
-                0x00004b96                SPI_SS_Hi
-                0x00004afa                SPI_Init
- .text          0x00004bc0       0x3c lowpower.o
-                0x00004bc0                LOWPOWER_Init
- .text          0x00004bfc       0x86 rtc_driver.o
-                0x00004c74                RTC_SetPrescaler
-                0x00004bfc                RTC_Initialize
-                0x00004c44                RTC_SetAlarm
-                0x00004c26                RTC_SetCompareIntLevel
-                0x00004c34                RTC_SetIntLevels
-                0x00004c18                RTC_SetOverflowIntLevel
- .text          0x00004c82       0xae sleepmgr.o
-                0x00004cc4                SLEEPMGR_Unlock
-                0x00004cee                SLEEPMGR_Sleep
-                0x00004c9a                SLEEPMGR_Lock
-                0x00004c82                SLEEPMGR_Init
-                0x00004d24                SLEEPMGR_CancelSleep
- .text          0x00004d30       0x2a ccpwrite.o
-                0x00004d30                CCPWrite
- .text          0x00004d5a      0x21a seg7.o
-                0x00004dba                Seg7D
-                0x00004f5a                InitSeg7
-                0x00004e22                Seg7G
-                0x00004f34                Seg7HP
-                0x00004d5a                Seg7A
-                0x00004e3a                Seg7DP
-                0x00004f1e                Seg7LP
-                0x00004d72                Seg7B
-                0x00004d8a                Seg7C
-                0x00004e52                Seg7
-                0x00004e0a                Seg7F
-                0x00004df2                Seg7E
- .text          0x00004f74        0x0 buffers.o
- .text          0x00004f74      0x102 ulaw.o
-                0x00004f88                alaw2linear
-                0x00004f74                ulaw2linear
-                0x00004f9c                linear2ulaw
-                0x00005000                linear2alaw
- .text          0x00005076      0x15c eeprom.o
-                0x00005102                EE_Rd
-                0x00005076                EE_Wr
- .text          0x000051d2      0x3d8 TaskBT.o
-                0x000051d2                BTOff
-                0x000052f6                TaskBT
-                0x000051e0                bin2Hex
-                0x000051f2                CRCCalc
-                0x0000528c                __vector_58
-                0x000052e0                BTOn
-                0x00005238                __vector_59
+                0x00001b00                TaskAcq
+                0x000019c6                InitADCs
+ .text          0x00002456      0x120 usart_driver.o
+                0x000024ba                USART_RXComplete
+                0x0000252e                USART_DataRegEmpty
+                0x00002456                USART_InterruptDriver_Initialize
+                0x0000246a                uart_putchar
+ .text          0x00002576       0xc6 adc_driver.o
+                0x0000259c                ADC_Wait
+                0x000025ae                ADC_Offset_Get
+                0x00002628                SP_ReadCalibrationByte
+                0x00002576                ADC_ResultCh_GetWord_Offset
+                0x0000258e                ADC_ResultCh_GetWord
+                0x000025e8                ADC_CalibrationValues_Load
+ .text          0x0000263c      0x256 eeprom_driver.o
+                0x0000263c                EEPROM_ReadByte
+                0x00002696                EEPROM_WaitForNVM
+                0x00002740                EEPROM_LoadByte
+                0x0000281a                EEPROM_SplitWritePage
+                0x00002786                EEPROM_AtomicWritePage
+                0x0000275e                EEPROM_LoadPage
+                0x00002864                EEPROM_EraseAll
+                0x000026a0                EEPROM_FlushBuffer
+                0x000027d0                EEPROM_ErasePage
+                0x000026d6                EEPROM_WriteByte
+ .text          0x00002892     0x1d7a TaskUSB.o
+                0x000029ae                __vector_119
+                0x00002892                UnPackECGA
+                0x00002a02                Hello
+                0x000044c8                Dump
+                0x000028fe                UnPackECGP
+                0x00002b3c                TaskUSB
+                0x0000295a                __vector_120
+ .text          0x0000460c      0x446 TaskFlash.o
+                0x0000460c                TaskFlash
+ .text          0x00004a52       0xc6 spi_driver.o
+                0x00004ade                SPI_SS_Lo
+                0x00004afe                SPI_TransceiveByte
+                0x00004aee                SPI_SS_Hi
+                0x00004a52                SPI_Init
+ .text          0x00004b18       0x3c lowpower.o
+                0x00004b18                LOWPOWER_Init
+ .text          0x00004b54       0x86 rtc_driver.o
+                0x00004bcc                RTC_SetPrescaler
+                0x00004b54                RTC_Initialize
+                0x00004b9c                RTC_SetAlarm
+                0x00004b7e                RTC_SetCompareIntLevel
+                0x00004b8c                RTC_SetIntLevels
+                0x00004b70                RTC_SetOverflowIntLevel
+ .text          0x00004bda       0xae sleepmgr.o
+                0x00004c1c                SLEEPMGR_Unlock
+                0x00004c46                SLEEPMGR_Sleep
+                0x00004bf2                SLEEPMGR_Lock
+                0x00004bda                SLEEPMGR_Init
+                0x00004c7c                SLEEPMGR_CancelSleep
+ .text          0x00004c88       0x2a ccpwrite.o
+                0x00004c88                CCPWrite
+ .text          0x00004cb2      0x21a seg7.o
+                0x00004d12                Seg7D
+                0x00004eb2                InitSeg7
+                0x00004d7a                Seg7G
+                0x00004e8c                Seg7HP
+                0x00004cb2                Seg7A
+                0x00004d92                Seg7DP
+                0x00004e76                Seg7LP
+                0x00004cca                Seg7B
+                0x00004ce2                Seg7C
+                0x00004daa                Seg7
+                0x00004d62                Seg7F
+                0x00004d4a                Seg7E
+ .text          0x00004ecc        0x0 buffers.o
+ .text          0x00004ecc      0x102 ulaw.o
+                0x00004ee0                alaw2linear
+                0x00004ecc                ulaw2linear
+                0x00004ef4                linear2ulaw
+                0x00004f58                linear2alaw
+ .text          0x00004fce      0x15c eeprom.o
+                0x0000505a                EE_Rd
+                0x00004fce                EE_Wr
+ .text          0x0000512a      0x480 TaskBT.o
+                0x0000512a                BTOff
+                0x00005306                TaskBT
+                0x00005138                bin2Hex
+                0x0000514a                CRCCalc
+                0x000051e4                __vector_58
+                0x000052f0                BTOn
+                0x00005248                LogMessage
+                0x00005190                __vector_59
  .text          0x000055aa       0xa8 TaskWatchDog.o
                 0x000055aa                TaskWatchDog
  .text          0x00005652        0x0 crc.o
@@ -950,28 +950,28 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .bss           0x008020f6        0x4 iq.o
                 0x008020f6                resetVec
                 0x008020f8                gState
- .bss           0x008020fa        0xc TaskAcq.o
+ .bss           0x008020fa        0xa TaskAcq.o
                 0x008020fa                AcqIrqState
                 0x008020fb                AcqBufferLock
- .bss           0x00802106        0x0 usart_driver.o
- .bss           0x00802106        0x0 adc_driver.o
- .bss           0x00802106        0x0 eeprom_driver.o
- .bss           0x00802106       0x26 TaskUSB.o
-                0x00802108                EraseInProgress
-                0x00802106                Verbose
-                0x00802107                Debug
- .bss           0x0080212c        0xa TaskFlash.o
-                0x0080212c                TaskFlashCmd
- .bss           0x00802136        0x0 spi_driver.o
- .bss           0x00802136        0x0 lowpower.o
- .bss           0x00802136        0x0 rtc_driver.o
- .bss           0x00802136        0x0 sleepmgr.o
- .bss           0x00802136        0x0 ccpwrite.o
- .bss           0x00802136        0x0 seg7.o
- .bss           0x00802136        0x0 buffers.o
- .bss           0x00802136        0x0 ulaw.o
- .bss           0x00802136        0x0 eeprom.o
- .bss           0x00802136        0x2 TaskBT.o
+ .bss           0x00802104        0x0 usart_driver.o
+ .bss           0x00802104        0x0 adc_driver.o
+ .bss           0x00802104        0x0 eeprom_driver.o
+ .bss           0x00802104       0x26 TaskUSB.o
+                0x00802106                EraseInProgress
+                0x00802104                Verbose
+                0x00802105                Debug
+ .bss           0x0080212a        0xa TaskFlash.o
+                0x0080212a                TaskFlashCmd
+ .bss           0x00802134        0x0 spi_driver.o
+ .bss           0x00802134        0x0 lowpower.o
+ .bss           0x00802134        0x0 rtc_driver.o
+ .bss           0x00802134        0x0 sleepmgr.o
+ .bss           0x00802134        0x0 ccpwrite.o
+ .bss           0x00802134        0x0 seg7.o
+ .bss           0x00802134        0x0 buffers.o
+ .bss           0x00802134        0x0 ulaw.o
+ .bss           0x00802134        0x0 eeprom.o
+ .bss           0x00802134        0x4 TaskBT.o
  .bss           0x00802138        0x4 TaskWatchDog.o
                 0x0080213a                AcqWatchTimer
                 0x00802139                USBWatchTimer
@@ -1202,120 +1202,120 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_pubnames
                 0x000004c6       0xd2 iq.o
  .debug_pubnames
-                0x00000598      0x20d TaskAcq.o
+                0x00000598      0x1fe TaskAcq.o
  .debug_pubnames
-                0x000007a5       0x74 usart_driver.o
+                0x00000796       0x74 usart_driver.o
  .debug_pubnames
-                0x00000819       0xa5 adc_driver.o
+                0x0000080a       0xa5 adc_driver.o
  .debug_pubnames
-                0x000008be       0xee eeprom_driver.o
+                0x000008af       0xee eeprom_driver.o
  .debug_pubnames
-                0x000009ac       0xd4 TaskUSB.o
+                0x0000099d       0xd4 TaskUSB.o
  .debug_pubnames
-                0x00000a80       0x45 TaskFlash.o
+                0x00000a71       0x45 TaskFlash.o
  .debug_pubnames
-                0x00000ac5       0x52 spi_driver.o
+                0x00000ab6       0x52 spi_driver.o
  .debug_pubnames
-                0x00000b17       0x24 lowpower.o
+                0x00000b08       0x24 lowpower.o
  .debug_pubnames
-                0x00000b3b       0x97 rtc_driver.o
+                0x00000b2c       0x97 rtc_driver.o
  .debug_pubnames
-                0x00000bd2       0x89 sleepmgr.o
+                0x00000bc3       0x89 sleepmgr.o
  .debug_pubnames
-                0x00000c5b       0x1f ccpwrite.o
+                0x00000c4c       0x1f ccpwrite.o
  .debug_pubnames
-                0x00000c7a       0xb5 seg7.o
+                0x00000c6b       0xb5 seg7.o
  .debug_pubnames
-                0x00000d2f       0x24 buffers.o
+                0x00000d20       0x24 buffers.o
  .debug_pubnames
-                0x00000d53       0xa6 ulaw.o
+                0x00000d44       0xa6 ulaw.o
  .debug_pubnames
-                0x00000df9       0x26 eeprom.o
+                0x00000dea       0x26 eeprom.o
  .debug_pubnames
-                0x00000e1f       0xae TaskBT.o
+                0x00000e10       0xbd TaskBT.o
  .debug_pubnames
                 0x00000ecd       0x70 TaskWatchDog.o
  .debug_pubnames
                 0x00000f3d       0x1f crc.o
 
-.debug_info     0x00000000     0x8e34
+.debug_info     0x00000000     0x8f9b
  *(.debug_info)
  .debug_info    0x00000000      0x53a rtos.o
  .debug_info    0x0000053a      0x2c9 wdt_driver.o
  .debug_info    0x00000803      0x4e5 clksys_driver.o
  .debug_info    0x00000ce8     0x122c TC_driver.o
  .debug_info    0x00001f14      0xee8 iq.o
- .debug_info    0x00002dfc      0xff1 TaskAcq.o
- .debug_info    0x00003ded      0x2e8 usart_driver.o
- .debug_info    0x000040d5      0x8fc adc_driver.o
- .debug_info    0x000049d1      0x4c2 eeprom_driver.o
- .debug_info    0x00004e93     0x14d2 TaskUSB.o
- .debug_info    0x00006365      0x5fd TaskFlash.o
- .debug_info    0x00006962      0x3f3 spi_driver.o
- .debug_info    0x00006d55       0xec lowpower.o
- .debug_info    0x00006e41      0x3c2 rtc_driver.o
- .debug_info    0x00007203      0x257 sleepmgr.o
- .debug_info    0x0000745a       0xe2 ccpwrite.o
- .debug_info    0x0000753c      0x698 seg7.o
- .debug_info    0x00007bd4      0x14d buffers.o
- .debug_info    0x00007d21      0x2b7 ulaw.o
- .debug_info    0x00007fd8      0x1e4 eeprom.o
- .debug_info    0x000081bc      0x932 TaskBT.o
- .debug_info    0x00008aee      0x2bb TaskWatchDog.o
- .debug_info    0x00008da9       0x8b crc.o
+ .debug_info    0x00002dfc      0xf94 TaskAcq.o
+ .debug_info    0x00003d90      0x2e8 usart_driver.o
+ .debug_info    0x00004078      0x8fc adc_driver.o
+ .debug_info    0x00004974      0x4c2 eeprom_driver.o
+ .debug_info    0x00004e36     0x14d2 TaskUSB.o
+ .debug_info    0x00006308      0x5fd TaskFlash.o
+ .debug_info    0x00006905      0x3f3 spi_driver.o
+ .debug_info    0x00006cf8       0xec lowpower.o
+ .debug_info    0x00006de4      0x3c2 rtc_driver.o
+ .debug_info    0x000071a6      0x257 sleepmgr.o
+ .debug_info    0x000073fd       0xe2 ccpwrite.o
+ .debug_info    0x000074df      0x698 seg7.o
+ .debug_info    0x00007b77      0x14d buffers.o
+ .debug_info    0x00007cc4      0x2b7 ulaw.o
+ .debug_info    0x00007f7b      0x1e4 eeprom.o
+ .debug_info    0x0000815f      0xaf6 TaskBT.o
+ .debug_info    0x00008c55      0x2bb TaskWatchDog.o
+ .debug_info    0x00008f10       0x8b crc.o
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev   0x00000000     0x1f9b
+.debug_abbrev   0x00000000     0x1feb
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x207 rtos.o
  .debug_abbrev  0x00000207      0x109 wdt_driver.o
  .debug_abbrev  0x00000310      0x13c clksys_driver.o
  .debug_abbrev  0x0000044c      0x165 TC_driver.o
  .debug_abbrev  0x000005b1      0x21d iq.o
- .debug_abbrev  0x000007ce      0x2df TaskAcq.o
- .debug_abbrev  0x00000aad      0x11c usart_driver.o
- .debug_abbrev  0x00000bc9      0x236 adc_driver.o
- .debug_abbrev  0x00000dff      0x1a6 eeprom_driver.o
- .debug_abbrev  0x00000fa5      0x26f TaskUSB.o
- .debug_abbrev  0x00001214      0x1b8 TaskFlash.o
- .debug_abbrev  0x000013cc      0x10c spi_driver.o
- .debug_abbrev  0x000014d8       0x6d lowpower.o
- .debug_abbrev  0x00001545      0x127 rtc_driver.o
- .debug_abbrev  0x0000166c      0x11f sleepmgr.o
- .debug_abbrev  0x0000178b       0xb9 ccpwrite.o
- .debug_abbrev  0x00001844      0x199 seg7.o
- .debug_abbrev  0x000019dd       0x92 buffers.o
- .debug_abbrev  0x00001a6f       0xc6 ulaw.o
- .debug_abbrev  0x00001b35       0xd0 eeprom.o
- .debug_abbrev  0x00001c05      0x24a TaskBT.o
- .debug_abbrev  0x00001e4f       0xef TaskWatchDog.o
- .debug_abbrev  0x00001f3e       0x5d crc.o
+ .debug_abbrev  0x000007ce      0x2c1 TaskAcq.o
+ .debug_abbrev  0x00000a8f      0x11c usart_driver.o
+ .debug_abbrev  0x00000bab      0x236 adc_driver.o
+ .debug_abbrev  0x00000de1      0x1a6 eeprom_driver.o
+ .debug_abbrev  0x00000f87      0x26f TaskUSB.o
+ .debug_abbrev  0x000011f6      0x1b8 TaskFlash.o
+ .debug_abbrev  0x000013ae      0x10c spi_driver.o
+ .debug_abbrev  0x000014ba       0x6d lowpower.o
+ .debug_abbrev  0x00001527      0x127 rtc_driver.o
+ .debug_abbrev  0x0000164e      0x11f sleepmgr.o
+ .debug_abbrev  0x0000176d       0xb9 ccpwrite.o
+ .debug_abbrev  0x00001826      0x199 seg7.o
+ .debug_abbrev  0x000019bf       0x92 buffers.o
+ .debug_abbrev  0x00001a51       0xc6 ulaw.o
+ .debug_abbrev  0x00001b17       0xd0 eeprom.o
+ .debug_abbrev  0x00001be7      0x2b8 TaskBT.o
+ .debug_abbrev  0x00001e9f       0xef TaskWatchDog.o
+ .debug_abbrev  0x00001f8e       0x5d crc.o
 
-.debug_line     0x00000000     0x4397
+.debug_line     0x00000000     0x43b0
  *(.debug_line)
  .debug_line    0x00000000      0x2dc rtos.o
  .debug_line    0x000002dc      0x20e wdt_driver.o
  .debug_line    0x000004ea      0x1e7 clksys_driver.o
  .debug_line    0x000006d1      0x2f5 TC_driver.o
  .debug_line    0x000009c6      0x559 iq.o
- .debug_line    0x00000f1f      0x93e TaskAcq.o
- .debug_line    0x0000185d      0x20c usart_driver.o
- .debug_line    0x00001a69      0x286 adc_driver.o
- .debug_line    0x00001cef      0x361 eeprom_driver.o
- .debug_line    0x00002050      0xb05 TaskUSB.o
- .debug_line    0x00002b55      0x451 TaskFlash.o
- .debug_line    0x00002fa6      0x1ae spi_driver.o
- .debug_line    0x00003154       0xea lowpower.o
- .debug_line    0x0000323e      0x196 rtc_driver.o
- .debug_line    0x000033d4      0x1c9 sleepmgr.o
- .debug_line    0x0000359d      0x104 ccpwrite.o
- .debug_line    0x000036a1      0x4b0 seg7.o
- .debug_line    0x00003b51       0x5b buffers.o
- .debug_line    0x00003bac      0x149 ulaw.o
- .debug_line    0x00003cf5      0x12b eeprom.o
- .debug_line    0x00003e20      0x39b TaskBT.o
- .debug_line    0x000041bb      0x192 TaskWatchDog.o
- .debug_line    0x0000434d       0x4a crc.o
+ .debug_line    0x00000f1f      0x8ae TaskAcq.o
+ .debug_line    0x000017cd      0x20c usart_driver.o
+ .debug_line    0x000019d9      0x286 adc_driver.o
+ .debug_line    0x00001c5f      0x361 eeprom_driver.o
+ .debug_line    0x00001fc0      0xb05 TaskUSB.o
+ .debug_line    0x00002ac5      0x451 TaskFlash.o
+ .debug_line    0x00002f16      0x1ae spi_driver.o
+ .debug_line    0x000030c4       0xea lowpower.o
+ .debug_line    0x000031ae      0x196 rtc_driver.o
+ .debug_line    0x00003344      0x1c9 sleepmgr.o
+ .debug_line    0x0000350d      0x104 ccpwrite.o
+ .debug_line    0x00003611      0x4b0 seg7.o
+ .debug_line    0x00003ac1       0x5b buffers.o
+ .debug_line    0x00003b1c      0x149 ulaw.o
+ .debug_line    0x00003c65      0x12b eeprom.o
+ .debug_line    0x00003d90      0x444 TaskBT.o
+ .debug_line    0x000041d4      0x192 TaskWatchDog.o
+ .debug_line    0x00004366       0x4a crc.o
 
 .debug_frame    0x00000000      0x9e0
  *(.debug_frame)
@@ -1324,24 +1324,24 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_frame   0x00000110       0xa0 clksys_driver.o
  .debug_frame   0x000001b0      0x170 TC_driver.o
  .debug_frame   0x00000320       0xa0 iq.o
- .debug_frame   0x000003c0       0xa0 TaskAcq.o
- .debug_frame   0x00000460       0x50 usart_driver.o
- .debug_frame   0x000004b0       0x70 adc_driver.o
- .debug_frame   0x00000520       0xb0 eeprom_driver.o
- .debug_frame   0x000005d0       0x90 TaskUSB.o
- .debug_frame   0x00000660       0x20 TaskFlash.o
- .debug_frame   0x00000680       0x50 spi_driver.o
- .debug_frame   0x000006d0       0x20 lowpower.o
- .debug_frame   0x000006f0       0x70 rtc_driver.o
- .debug_frame   0x00000760       0x60 sleepmgr.o
- .debug_frame   0x000007c0       0x20 ccpwrite.o
- .debug_frame   0x000007e0       0xd0 seg7.o
- .debug_frame   0x000008b0       0x50 ulaw.o
- .debug_frame   0x00000900       0x30 eeprom.o
- .debug_frame   0x00000930       0x90 TaskBT.o
+ .debug_frame   0x000003c0       0x90 TaskAcq.o
+ .debug_frame   0x00000450       0x50 usart_driver.o
+ .debug_frame   0x000004a0       0x70 adc_driver.o
+ .debug_frame   0x00000510       0xb0 eeprom_driver.o
+ .debug_frame   0x000005c0       0x90 TaskUSB.o
+ .debug_frame   0x00000650       0x20 TaskFlash.o
+ .debug_frame   0x00000670       0x50 spi_driver.o
+ .debug_frame   0x000006c0       0x20 lowpower.o
+ .debug_frame   0x000006e0       0x70 rtc_driver.o
+ .debug_frame   0x00000750       0x60 sleepmgr.o
+ .debug_frame   0x000007b0       0x20 ccpwrite.o
+ .debug_frame   0x000007d0       0xd0 seg7.o
+ .debug_frame   0x000008a0       0x50 ulaw.o
+ .debug_frame   0x000008f0       0x30 eeprom.o
+ .debug_frame   0x00000920       0xa0 TaskBT.o
  .debug_frame   0x000009c0       0x20 TaskWatchDog.o
 
-.debug_str      0x00000000     0x3156
+.debug_str      0x00000000     0x3153
  *(.debug_str)
  .debug_str     0x00000000      0x1ac rtos.o
                                 0x1f5 (size before relaxing)
@@ -1353,41 +1353,41 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
                                 0xb7e (size before relaxing)
  .debug_str     0x00001468      0x4e5 iq.o
                                 0xe3f (size before relaxing)
- .debug_str     0x0000194d      0x6f4 TaskAcq.o
-                                0xb86 (size before relaxing)
- .debug_str     0x00002041      0x183 usart_driver.o
+ .debug_str     0x0000194d      0x6d0 TaskAcq.o
+                                0xb62 (size before relaxing)
+ .debug_str     0x0000201d      0x183 usart_driver.o
                                 0x24c (size before relaxing)
- .debug_str     0x000021c4      0x3e0 adc_driver.o
+ .debug_str     0x000021a0      0x3e0 adc_driver.o
                                 0x73b (size before relaxing)
- .debug_str     0x000025a4      0x134 eeprom_driver.o
+ .debug_str     0x00002580      0x134 eeprom_driver.o
                                 0x500 (size before relaxing)
- .debug_str     0x000026d8      0x32b TaskUSB.o
+ .debug_str     0x000026b4      0x32b TaskUSB.o
                                 0x8e4 (size before relaxing)
- .debug_str     0x00002a03      0x14b TaskFlash.o
+ .debug_str     0x000029df      0x14b TaskFlash.o
                                 0x578 (size before relaxing)
- .debug_str     0x00002b4e       0x8f spi_driver.o
+ .debug_str     0x00002b2a       0x8f spi_driver.o
                                 0x30b (size before relaxing)
- .debug_str     0x00002bdd       0x4a lowpower.o
+ .debug_str     0x00002bb9       0x4a lowpower.o
                                  0xe3 (size before relaxing)
- .debug_str     0x00002c27      0x1ba rtc_driver.o
+ .debug_str     0x00002c03      0x1ba rtc_driver.o
                                 0x3b7 (size before relaxing)
- .debug_str     0x00002de1      0x13e sleepmgr.o
+ .debug_str     0x00002dbd      0x13e sleepmgr.o
                                 0x20a (size before relaxing)
- .debug_str     0x00002f1f       0x1f ccpwrite.o
+ .debug_str     0x00002efb       0x1f ccpwrite.o
                                  0xfa (size before relaxing)
- .debug_str     0x00002f3e       0x63 seg7.o
+ .debug_str     0x00002f1a       0x63 seg7.o
                                 0x334 (size before relaxing)
- .debug_str     0x00002fa1        0xd buffers.o
+ .debug_str     0x00002f7d        0xd buffers.o
                                  0xaf (size before relaxing)
- .debug_str     0x00002fae       0xb4 ulaw.o
+ .debug_str     0x00002f8a       0xb4 ulaw.o
                                 0x17f (size before relaxing)
- .debug_str     0x00003062       0x1d eeprom.o
+ .debug_str     0x0000303e       0x1d eeprom.o
                                 0x1d2 (size before relaxing)
- .debug_str     0x0000307f       0x9e TaskBT.o
-                                0x632 (size before relaxing)
- .debug_str     0x0000311d       0x30 TaskWatchDog.o
+ .debug_str     0x0000305b       0xbf TaskBT.o
+                                0x740 (size before relaxing)
+ .debug_str     0x0000311a       0x30 TaskWatchDog.o
                                 0x280 (size before relaxing)
- .debug_str     0x0000314d        0x9 crc.o
+ .debug_str     0x0000314a        0x9 crc.o
                                  0xab (size before relaxing)
 
 .debug_loc      0x00000000     0x15b9
@@ -1397,20 +1397,20 @@ LOAD c:/apps/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avrxmega4\libgcc.a
  .debug_loc     0x000002ec       0x75 clksys_driver.o
  .debug_loc     0x00000361      0x370 TC_driver.o
  .debug_loc     0x000006d1       0xcb iq.o
- .debug_loc     0x0000079c      0x31e TaskAcq.o
- .debug_loc     0x00000aba       0x8b usart_driver.o
- .debug_loc     0x00000b45       0xfe adc_driver.o
- .debug_loc     0x00000c43      0x1d3 eeprom_driver.o
- .debug_loc     0x00000e16       0xce TaskUSB.o
- .debug_loc     0x00000ee4       0x68 TaskFlash.o
- .debug_loc     0x00000f4c       0xac spi_driver.o
- .debug_loc     0x00000ff8       0x30 rtc_driver.o
- .debug_loc     0x00001028       0x39 sleepmgr.o
- .debug_loc     0x00001061       0x18 ccpwrite.o
- .debug_loc     0x00001079       0xca seg7.o
- .debug_loc     0x00001143      0x177 ulaw.o
- .debug_loc     0x000012ba       0xdb eeprom.o
- .debug_loc     0x00001395      0x1ec TaskBT.o
+ .debug_loc     0x0000079c      0x2ce TaskAcq.o
+ .debug_loc     0x00000a6a       0x8b usart_driver.o
+ .debug_loc     0x00000af5       0xfe adc_driver.o
+ .debug_loc     0x00000bf3      0x1d3 eeprom_driver.o
+ .debug_loc     0x00000dc6       0xce TaskUSB.o
+ .debug_loc     0x00000e94       0x68 TaskFlash.o
+ .debug_loc     0x00000efc       0xac spi_driver.o
+ .debug_loc     0x00000fa8       0x30 rtc_driver.o
+ .debug_loc     0x00000fd8       0x39 sleepmgr.o
+ .debug_loc     0x00001011       0x18 ccpwrite.o
+ .debug_loc     0x00001029       0xca seg7.o
+ .debug_loc     0x000010f3      0x177 ulaw.o
+ .debug_loc     0x0000126a       0xdb eeprom.o
+ .debug_loc     0x00001345      0x23c TaskBT.o
  .debug_loc     0x00001581       0x38 TaskWatchDog.o
 
 .debug_macinfo
