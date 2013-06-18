@@ -34,6 +34,11 @@
 #include "eeprom.h"
 #include "eeprom_driver.h"
 
+#ifdef LOGGING_TO_FLASH
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
