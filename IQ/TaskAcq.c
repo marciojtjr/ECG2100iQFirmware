@@ -869,7 +869,7 @@ BEGIN_TASK(TaskAcq)
 
 		LFBiasOff();
 
-			//LogMessage("This is a debugging message! We are starting the acquisition process!\n");
+			LogMessage("This is a debugging message! We are starting the acquisition process!\n");
 
 #ifndef LOGGING_TO_FLASH
 		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
