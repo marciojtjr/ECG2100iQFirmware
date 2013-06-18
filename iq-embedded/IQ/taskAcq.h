@@ -1,6 +1,8 @@
 #ifndef taskacq_h
 #define taskacq_h
 
+#define LOGGING_TO_FLASH // Define if we want to log to flash memory during preAcq
+
 void InitADCs(void);
 void AcqInterrupt(void);
 void PackECG(unsigned char *out, unsigned char *in);
