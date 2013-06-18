@@ -53,6 +53,7 @@ FILE *bt;
 FILE *bt_in;
 
 void BTOn(void){
+	LogMessage("Bluetooth on--moment of truth. Any messages after _should_ be raw dumps from Rx");
 	PORTF.DIRSET = PIN0_bm;
 	PORTF.OUTSET = PIN0_bm;
 	PORTF.PIN0CTRL = PORT_OPC_TOTEM_gc;
@@ -136,7 +137,7 @@ BEGIN_TASK(TaskBT)
 				BTReady=0;
 
 				if(BTPortDescriptor.RxReady) {
-					//LogMessage(BTPortDescriptor.RxBuf);
+					LogMessage(BTPortDescriptor.RxBuf);
 				}
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
@@ -226,7 +227,7 @@ BEGIN_TASK(TaskBT)
 					*/
 					fwrite(BTString, BT_SIZE, 1, bt);
 
-					LogMessage(BTIn);
+					//LogMessage(BTIn);
 
 					FrameIndex++;
 				    }
