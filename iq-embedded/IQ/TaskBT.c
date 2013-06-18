@@ -25,6 +25,15 @@
 #include "adc_driver.h"
 #include "taskAcq.h"
 
+#include "rtos.h"
+#include "adc_driver.h"
+#include "buffers.h"
+#include "taskFlash.h"
+#include "ulaw.h"
+#include "seg7.h"
+#include "eeprom.h"
+#include "eeprom_driver.h"
+
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
@@ -131,6 +140,12 @@ BEGIN_TASK(TaskBT)
 	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		BTOn();
      
+	 			memset(Buf1.Data.String, 0, 256);
+				strncpy(Buf1.Data.String, "We are just outside the BT loop", 252);
+
+				// Tell TaskFlash we're ready to write
+				TaskFlashCmd = TF_WRITE_BUF1;
+
 		while(1)
             {
 			if(BTReady && BTEnable)
