@@ -12,6 +12,7 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 	usart_desc->usart = usart;
 	usart_desc->dreIntLevel = dreIntLevel;
 	usart_desc->RxPut = 0;
+	usart_desc->RxGet = 0;
 	usart_desc->RxReady = 0;
 	usart_desc->TxPut = 0;
 	usart_desc->TxGet = 0;
@@ -57,6 +58,20 @@ void uart_putchar(USART_desc_t *usart_desc, uint8_t data){
 	usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | usart_desc->dreIntLevel;		// Enable DRE interrupt (might already be enabled)
 }
 
+/*
+uint8_t uart_getchar(USART_desc_t *usart_desc) {
+	uint8_t ret;
+
+	while( (( (usart_desc->RxGet)+1 ) & RX_BUF_MASK) == usart_desc->RxPut );
+
+	ret = usart_desc->RxBuf[usart_desc->RxGet];
+	usart_desc->RxGet = (usart_desc->RxGet + 1) & RX_BUF_MASK;
+	usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | usart_desc->dreIntLevel;
+
+	return ret;
+}
+*/
+
 //============================================================
 // Data Register Empty Interrupt Service Routine
 
@@ -77,6 +92,16 @@ void USART_DataRegEmpty(USART_desc_t *usart_desc){
 	else{	// else turn off DRE interrupts
 		usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
 	}
+
+	/*
+	if (usart_desc->RxGet != usart_desc->RxPut) {
+		usart_desc->RxBuf[usart_desc->RxPut] = usart_desc->usart->DATA;
+		usart_desc->RxPut = (usart_desc->RxPut + 1) & RX_BUF_MASK;
+	}
+	else {
+		usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
+	}
+	*/
 }
 
 

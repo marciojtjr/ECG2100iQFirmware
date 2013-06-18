@@ -17,6 +17,7 @@ typedef struct USART_Descriptor{
 	USART_t *usart;// pointer to USART module base address
 	USART_DREINTLVL_t dreIntLevel;// data register empty interrupt level
 	volatile uint8_t RxPut;
+	volatile uint8_t RxGet;
 	volatile uint8_t RxReady;	// 0 = program is not ready to receive, 0 = it is
 	volatile uint8_t TxPut;
 	volatile uint8_t TxGet;

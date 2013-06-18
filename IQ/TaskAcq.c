@@ -296,8 +296,7 @@ void StopAcq(void){
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
 		size_t len = strlen(message) + 1;
-		static int pageOffset = 0;
-		static int buffer = 0;
+		FlashPageNumber++;
 
 		// If our message won't fit into the buffer, just return
 		//if(len >= 252 || page>FLASH_ECG_END_PAGE)
@@ -329,7 +328,6 @@ void StopAcq(void){
 				//	osYIELD;
 				//}
 
-				FlashPageNumber++;
 				buffer = !buffer;
                 //if(FlashPageNumber>FLASH_ECG_END_PAGE){
                 //    return;
@@ -863,7 +861,7 @@ BEGIN_TASK(TaskAcq)
 #ifdef LOGGING_TO_FLASH
 				Buf1.Status = BUF_EMPTY; // make the buffers ready
 				Buf2.Status = BUF_EMPTY;
-				FlashPageNumber = FLASH_ECG_START_PAGE;
+				FlashPageNumber = FLASH_ECG_START_PAGE-1;
 				StartAcq(ACQ_IRQ_LOGGING);
 #endif
 
@@ -1108,6 +1106,7 @@ BEGIN_TASK(TaskAcq)
             BTStatus &= ~4;
             osWAIT(250);
 			// we ran to the end of the ECG buffer, or the button was pressed
+
 #ifndef LOGGING_TO_FLASH
 			StopAcq();
 #endif
