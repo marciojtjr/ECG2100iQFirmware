@@ -19,6 +19,7 @@ extern unsigned char BTStatus;
 
 void BTOn(void);
 void BTOff(void);
+void LogMessage(char *message);
 
 // macro to make sending stuff a little easier
 #define print_bt(fmt,...)  fprintf_P(bt, PSTR(fmt), ## __VA_ARGS__)
