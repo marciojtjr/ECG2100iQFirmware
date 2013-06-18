@@ -295,6 +295,8 @@ void StopAcq(void){
 	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------
 	void LogMessage(char *message) {
+		while(TaskFlashCmd != TF_IDLE);
+
 		size_t len = strlen(message) + 1;
 		static int buffer = 0;
 		FlashPageNumber++;
