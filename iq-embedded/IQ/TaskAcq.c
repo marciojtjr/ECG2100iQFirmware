@@ -964,9 +964,9 @@ BEGIN_TASK(TaskAcq)
 		AbandonTimer = EE_Rd(EE_ABANDON_TIME)*250L;	// set the abandonment timer
 		LFReady=0;
 
-#ifndef LOGGING_TO_FLASH
+//#ifndef LOGGING_TO_FLASH
 		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
-#endif
+//#endif
 
 		// Flash
 		while(FlashPageNumber>FLASH_VOICE_END_PAGE && ButtonPressed()){

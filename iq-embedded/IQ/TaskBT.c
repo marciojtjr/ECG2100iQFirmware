@@ -48,9 +48,9 @@ static char get_bt(FILE *stream) {
 #define put_byte(c) uart_putchar(&BTPortDescriptor,c)
 
 static FILE bt_str = FDEV_SETUP_STREAM(put_bt, 0, _FDEV_SETUP_WRITE);
-static FILE bt_in_str = FDEV_SETUP_STREAM(get_bt, 0, _FDEV_SETUP_READ);
+//static FILE bt_in_str = FDEV_SETUP_STREAM(get_bt, 0, _FDEV_SETUP_READ);
 FILE *bt;
-FILE *bt_in;
+//FILE *bt_in;
 
 void BTOn(void){
 	LogMessage("Bluetooth on--moment of truth. Any messages after _should_ be raw dumps from Rx");
@@ -89,7 +89,7 @@ BEGIN_TASK(TaskBT)
 	// prepare the Bluetooth USART
 	#define BT_BAUD_RATE 921600
 	bt = &bt_str;
-	bt_in = &bt_in_str;
+//	bt_in = &bt_in_str;
 
 	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
 	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
@@ -126,6 +126,7 @@ BEGIN_TASK(TaskBT)
    
 	//==========================================================================================
 	// Bluetooth command parser
+	LogMessage("Right outside BT loop!");
 
 	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		BTOn();
