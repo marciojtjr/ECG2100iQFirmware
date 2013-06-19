@@ -15,7 +15,6 @@ union DATA{
 	struct ECGBuffer ECG;
 	unsigned char Voice[256];
 	unsigned char Byte[256];
-	char String[256];
 };
 
 struct BUFFER {
