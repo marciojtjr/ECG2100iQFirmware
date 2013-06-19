@@ -853,6 +853,8 @@ BEGIN_TASK(TaskAcq)
         BTStatus = 0;               // Added by PRV
 		BTEnable = 1;				// allow Bluetooth to send data
 
+		LogMessage("This _should_ show up on the Android console\n");
+
 		while(!ButtonPressed()){	// pre-acquire while the button is not pressed
 
 			osYIELD;
