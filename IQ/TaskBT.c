@@ -23,28 +23,12 @@
 #include "usart_driver.h"
 #include "eeprom_driver.h"
 #include "adc_driver.h"
-#include "taskAcq.h"
-
-#include "rtos.h"
-#include "adc_driver.h"
-#include "buffers.h"
-#include "taskFlash.h"
-#include "ulaw.h"
-#include "seg7.h"
-#include "eeprom.h"
-#include "eeprom_driver.h"
-
-#ifdef LOGGING_TO_FLASH
-#include <stdlib.h>
-#include <string.h>
-#endif
 
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
-unsigned char BTIn[252];
 
 
 //##########################################################################################
@@ -55,19 +39,13 @@ static int put_bt( char c, FILE *stream){
 	uart_putchar(&BTPortDescriptor,c);
 	return(0);
 }
-static char get_bt(FILE *stream) {
-	return ' ';//uart_getchar(&BTPortDescriptor);
-}
 
 #define put_byte(c) uart_putchar(&BTPortDescriptor,c)
 
 static FILE bt_str = FDEV_SETUP_STREAM(put_bt, 0, _FDEV_SETUP_WRITE);
-//static FILE bt_in_str = FDEV_SETUP_STREAM(get_bt, 0, _FDEV_SETUP_READ);
 FILE *bt;
-//FILE *bt_in;
 
 void BTOn(void){
-	LogMessage("Bluetooth on--moment of truth. Any messages after _should_ be raw dumps from Rx");
 	PORTF.DIRSET = PIN0_bm;
 	PORTF.OUTSET = PIN0_bm;
 	PORTF.PIN0CTRL = PORT_OPC_TOTEM_gc;
@@ -78,81 +56,6 @@ void BTOff(void){
 	PORTF.OUTCLR = PIN0_bm;
 	PORTF.PIN0CTRL = PORT_OPC_TOTEM_gc;
 }
-
-	//--------------------------------------------------------------------------------------------------------------
-	//--------------------------------------------DEBUGGING STUFF---------------------------------------------------
-	//--------------------------------------------------------------------------------------------------------------
-	void LogMessage(char *message) {
-		//while(TaskFlashCmd != TF_IDLE);
-
-		size_t len = strlen(message) + 1;
-		static int buffer = 0;
-		FlashPageNumber++;
-
-		// If our message won't fit into the buffer, just return
-		if(len >= 252 || FlashPageNumber>FLASH_ECG_END_PAGE)
-			return;
-
-		/*
-		for(unsigned char i = 0; i < 127; i++) {
-			Buf1.Data.Byte[i] = i;
-			Buf2.Data.Byte[i] = i;
-		}
-		*/
-
-		// If we're ready to start writing out...
-		//if(AcqIrqState != ACQ_IRQ_IDLE) {
-			//... and buffer 1 is empty
-			//while(TaskFlashCmd != TF_IDLE)
-			//	osYIELD;
-						
-				// This is inefficient by design. We want to dump messages out
-				// as soon as possible, so wasting page space isn't too big of a deal.
-				// We have 14k pages anyway
-				memset((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), 0, 256);
-				strncpy((buffer == 0 ? Buf1.Data.String : Buf2.Data.String), message, len);
-
-				// Tell TaskFlash we're ready to write
-				TaskFlashCmd = (buffer == 0 ? TF_WRITE_BUF1 : TF_WRITE_BUF2);
-
-				//while(TaskFlashCmd != TF_IDLE) {
-				//	osYIELD;
-				//}
-
-				buffer = !buffer;
-                //if(FlashPageNumber>FLASH_ECG_END_PAGE){
-                //    return;
-                //}
-
-			
-			/*
-			//... and buffer 2 is empty
-			else if (Buf2.Status == BUF_EMPTY) {
-				Buf2.Status = BUF_FULL;
-
-				strncpy(Buf2.Data.String, message, len);
-
-				FlashPageNumber = page;
-				TaskFlashCmd = TF_WRITE_BUF2;
-
-				while(TaskFlashCmd != TF_IDLE) {
-					osYIELD;
-				}
-
-				++page;
-				Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
-                //if(FlashPageNumber>FLASH_ECG_END_PAGE){
-                //    return;
-                //}
-			}
-			*/
-			
-		//}
-	}
-	//--------------------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------------------
-
 
 unsigned char Hex[16] PROGMEM = {"0123456789ABCDEF"};
 char bin2Hex(unsigned char c){
@@ -174,16 +77,10 @@ CRCCalc(short crc, short x)
 
 BEGIN_TASK(TaskBT)
 
-	while(TaskFlashCmd != TF_IDLE) {
-	 osWAIT(5);
-	 }
-
 	//------------------------------------------------------------------------------------------
 	// prepare the Bluetooth USART
 	#define BT_BAUD_RATE 921600
 	bt = &bt_str;
-//	bt_in = &bt_in_str;
-
 	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
 	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
 
@@ -219,21 +116,15 @@ BEGIN_TASK(TaskBT)
    
 	//==========================================================================================
 	// Bluetooth command parser
-	LogMessage("Right outside BT loop!");
 
 	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		BTOn();
-
+     
 		while(1)
             {
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
-
-				//if(BTPortDescriptor.RxReady) {
-					//LogMessage(BTPortDescriptor.RxBuf);
-				//}
-				LogMessage("In BT loop!");
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
@@ -321,8 +212,6 @@ BEGIN_TASK(TaskBT)
 					print_bt("\n");
 					*/
 					fwrite(BTString, BT_SIZE, 1, bt);
-
-					//LogMessage(BTIn);
 
 					FrameIndex++;
 				    }

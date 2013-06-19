@@ -14,12 +14,10 @@ extern unsigned int BTBuf[];	// holds all eight channels of data, decimated from
 extern unsigned char BTString[]; // room to store the Bluetooth sample output string.
 extern unsigned char M;	// selects which of the two LFBiasModels is ready for examination, 0 or 1
 extern int LFBiasModel[2][8][4];	// two models (so we can ping-pong) for the eight channels, each model containing four samples
-extern unsigned char BTIn[252];
 extern unsigned char BTStatus;
 
 void BTOn(void);
 void BTOff(void);
-void LogMessage(char *message);
 
 // macro to make sending stuff a little easier
 #define print_bt(fmt,...)  fprintf_P(bt, PSTR(fmt), ## __VA_ARGS__)
