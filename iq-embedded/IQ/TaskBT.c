@@ -29,6 +29,18 @@
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
+char logBuffer[256];
+unsigned char logStatus = LOG_IDLE;
+
+void LogMessage(char *message) {
+	logStatus = LOG_WAITING;
+
+	memset(logBuffer, 0, 256);
+	strncpy(logBuffer, message, 256);
+
+	while(logStatus != LOG_IDLE)
+		osYIELD;
+}
 
 
 //##########################################################################################
@@ -211,7 +223,18 @@ BEGIN_TASK(TaskBT)
 						print_bt("%02X",BTString[jx]);
 					print_bt("\n");
 					*/
-					fwrite(BTString, BT_SIZE, 1, bt);
+
+					//if(BTPortDescriptor.RxReady) {
+					//	char c;
+					//	sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
+					//	fwrite(&c, 1, 1, bt);
+					//}
+
+					if(logStatus == LOG_WAITING) {
+						fwrite(logBuffer, strlen(logBuffer), 1, bt);
+						logStatus = LOG_IDLE;
+					}
+					//fwrite(BTString, BT_SIZE, 1, bt);
 
 					FrameIndex++;
 				    }
