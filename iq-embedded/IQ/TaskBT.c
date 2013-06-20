@@ -29,13 +29,13 @@
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
-char logBuffer[128];
+char logBuffer[109];
 unsigned char logStatus = LOG_IDLE;
 
 void LogMessage(char *message) {
 	logStatus = LOG_WAITING;
 
-	strncpy(logBuffer, message, 128);
+	strncpy(logBuffer, message, 109);
 
 	while(logStatus != LOG_IDLE)
 		osYIELD;
