@@ -134,6 +134,12 @@ BEGIN_TASK(TaskBT)
      
 		while(1)
             {
+
+			if(logStatus == LOG_WAITING) {
+				fwrite(logBuffer, strlen(logBuffer), 1, bt);
+				logStatus = LOG_IDLE;
+			}
+
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
@@ -229,11 +235,6 @@ BEGIN_TASK(TaskBT)
 					//	sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
 					//	fwrite(&c, 1, 1, bt);
 					//}
-
-					if(logStatus == LOG_WAITING) {
-						fwrite(logBuffer, strlen(logBuffer), 1, bt);
-						logStatus = LOG_IDLE;
-					}
 					//fwrite(BTString, BT_SIZE, 1, bt);
 
 					FrameIndex++;
