@@ -137,10 +137,11 @@ BEGIN_TASK(TaskBT)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
 
-				if(logStatus == LOG_WAITING) {
-					fwrite(logBuffer, strlen(logBuffer), 1, bt);
-					logStatus = LOG_IDLE;
-				}
+				//if(logStatus == LOG_WAITING) {
+					char out = '@';
+					fwrite(&out, 1, 1, bt);
+				//	logStatus = LOG_IDLE;
+				//}
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
@@ -228,11 +229,6 @@ BEGIN_TASK(TaskBT)
 					print_bt("\n");
 					*/
 
-					//if(BTPortDescriptor.RxReady) {
-					//	char c;
-					//	sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
-					//	fwrite(&c, 1, 1, bt);
-					//}
 					//fwrite(BTString, BT_SIZE, 1, bt);
 
 					FrameIndex++;
