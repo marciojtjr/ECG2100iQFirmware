@@ -168,7 +168,7 @@ BEGIN_TASK(TaskBT)
 						osWAIT(255);
 						osWAIT(255);
 
-						fwrite("at\n", 2, 1, bt);
+						fwrite("at\n", 4, 1, bt);
 						//fwrite("set", 2, 1, bt);
 
 						firstTime = 0;
