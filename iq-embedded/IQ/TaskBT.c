@@ -144,10 +144,10 @@ BEGIN_TASK(TaskBT)
 				//}
 
 				if(BTPortDescriptor.RxReady) {
-					char c;
-					sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
-					//fwrite(&c, 1, 1, bt);
-					print_bt("%c", c);
+					//char c;
+					//sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
+					fwrite((const char *)BTPortDescriptor.RxBuf, 32, 1, bt);
+					//print_bt("%c", c);
 				}
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
