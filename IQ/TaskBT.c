@@ -29,14 +29,13 @@
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
-char logBuffer[256];
+char logBuffer[128];
 unsigned char logStatus = LOG_IDLE;
 
 void LogMessage(char *message) {
 	logStatus = LOG_WAITING;
 
-	memset(logBuffer, 0, 256);
-	strncpy(logBuffer, message, 256);
+	strncpy(logBuffer, message, 128);
 
 	while(logStatus != LOG_IDLE)
 		osYIELD;
@@ -134,15 +133,14 @@ BEGIN_TASK(TaskBT)
      
 		while(1)
             {
-
-			if(logStatus == LOG_WAITING) {
-				fwrite(logBuffer, strlen(logBuffer), 1, bt);
-				logStatus = LOG_IDLE;
-			}
-
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
 				BTReady=0;
+
+				if(logStatus == LOG_WAITING) {
+					fwrite(logBuffer, strlen(logBuffer), 1, bt);
+					logStatus = LOG_IDLE;
+				}
 
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
