@@ -15,7 +15,7 @@ extern unsigned char BTString[]; // room to store the Bluetooth sample output st
 extern unsigned char M;	// selects which of the two LFBiasModels is ready for examination, 0 or 1
 extern int LFBiasModel[2][8][4];	// two models (so we can ping-pong) for the eight channels, each model containing four samples
 extern unsigned char BTStatus;
-extern char logBuffer[256];
+extern char logBuffer[128];
 
 enum {LOG_IDLE, LOG_WAITING};
 
