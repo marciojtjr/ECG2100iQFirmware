@@ -152,6 +152,8 @@ BEGIN_TASK(TaskBT)
 					//sscanf( (const char *)BTPortDescriptor.RxBuf, "%c", &c);
 					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
 					//print_bt("%c", c);
+
+					print_bt("+++at");
 					BTPortDescriptor.RxReady=0;
 				}
 
