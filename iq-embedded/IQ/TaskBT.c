@@ -99,7 +99,7 @@ BEGIN_TASK(TaskBT)
 
 	USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
 	USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
-	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N2
 	USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
 //	USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);  // Does not work for all Baud Rates (BAUD_RATE = 921600 for example)
 	USART_Rx_Enable(BTPortDescriptor.usart);
@@ -168,8 +168,8 @@ BEGIN_TASK(TaskBT)
 						osWAIT(250);
 						osWAIT(250);
 
-						fwrite("at", 2, 1, bt);
-						fwrite("set", 2, 1, bt);
+						fwrite("at\n", 2, 1, bt);
+						//fwrite("set", 2, 1, bt);
 
 						firstTime = 0;
 					}
