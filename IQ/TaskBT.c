@@ -148,10 +148,11 @@ BEGIN_TASK(TaskBT)
 				//}
 
 				if(BTPortDescriptor.RxReady) {
-					//char c;
-					//sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
-					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
-					//print_bt("%c", c);
+					char c;
+					sscanf( (const char *)BTPortDescriptor.RxBuf, "%c", &c);
+					//fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
+					print_bt("%c", c);
+					BTPortDescriptor.RxReady=0;
 				}
 
 #ifndef LOGGING
