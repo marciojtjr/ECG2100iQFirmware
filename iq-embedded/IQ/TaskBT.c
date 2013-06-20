@@ -108,6 +108,7 @@ BEGIN_TASK(TaskBT)
     unsigned char ix = 0;
     static unsigned int FrameIndex = 0;
     short crc;
+	static unsigned char firstTime = 1;
 
     BTString[ix++] = 0xAA;  // Preamble byte 1
     BTString[ix++] = 0x55;  // Preamble byte 2
@@ -153,17 +154,24 @@ BEGIN_TASK(TaskBT)
 					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
 					//print_bt("%c", c);
 
-					osWAIT(250);
-					osWAIT(250);
-					osWAIT(250);
-					osWAIT(250);
-					fwrite(&c, 1, 1, bt);
-					fwrite(&c, 1, 1, bt);
-					fwrite(&c, 1, 1, bt);
-					osWAIT(250);
-					osWAIT(250);
-					osWAIT(250);
-					osWAIT(250);
+					if(firstTime) {
+						osWAIT(250);
+						osWAIT(250);
+						osWAIT(250);
+						osWAIT(250);
+						fwrite(&c, 1, 1, bt);
+						fwrite(&c, 1, 1, bt);
+						fwrite(&c, 1, 1, bt);
+						osWAIT(250);
+						osWAIT(250);
+						osWAIT(250);
+						osWAIT(250);
+
+						fwrite("at", 2, 1, bt);
+						fwrite("set", 2, 1, bt);
+
+						firstTime = 0;
+					}
 
 					BTPortDescriptor.RxReady=0;
 				}
