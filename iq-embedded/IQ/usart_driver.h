@@ -4,7 +4,7 @@
 #include "avr_compiler.h"
 
 // Transmit and Receive buffers
-#define RX_BUF_SIZE 32	// can be any size up to 255
+#define RX_BUF_SIZE 255	// can be any size up to 255
 #define TX_BUF_SIZE 128	// must be a power of 2 no larger than 128
 #define TX_BUF_MASK ( TX_BUF_SIZE - 1 )
 

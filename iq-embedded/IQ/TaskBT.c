@@ -24,6 +24,8 @@
 #include "eeprom_driver.h"
 #include "adc_driver.h"
 
+#define LOGGING
+
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
@@ -135,7 +137,9 @@ BEGIN_TASK(TaskBT)
             {
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
+#ifndef LOGGING
 				BTReady=0;
+#endif
 
 				//if(logStatus == LOG_WAITING) {
 				//	char out = '@';
@@ -146,10 +150,11 @@ BEGIN_TASK(TaskBT)
 				if(BTPortDescriptor.RxReady) {
 					//char c;
 					//sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%c"), &c);
-					fwrite((const char *)BTPortDescriptor.RxBuf, 32, 1, bt);
+					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
 					//print_bt("%c", c);
 				}
 
+#ifndef LOGGING
 				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
 				unsigned char m = M^1;	// use the LFBiasModel NOT being filled at the moment
@@ -240,6 +245,7 @@ BEGIN_TASK(TaskBT)
 
 					FrameIndex++;
 				    }
+#endif
 
 			    }
 			    osYIELD;	// let other stuff run
