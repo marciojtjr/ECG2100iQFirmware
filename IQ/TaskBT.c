@@ -156,19 +156,19 @@ BEGIN_TASK(TaskBT)
 					//print_bt("%c", c);
 
 					if(firstTime) {
-						osWAIT(255);
-						osWAIT(255);
-						osWAIT(255);
-						osWAIT(255);
-						fwrite(&c, 1, 1, bt);
-						fwrite(&c, 1, 1, bt);
-						fwrite(&c, 1, 1, bt);
-						osWAIT(255);
-						osWAIT(255);
-						osWAIT(255);
-						osWAIT(255);
+						//osWAIT(255);
+						//osWAIT(255);
+						//osWAIT(255);
+						//osWAIT(255);
+						//fwrite(&c, 1, 1, bt);
+						//fwrite(&c, 1, 1, bt);
+						//fwrite(&c, 1, 1, bt);
+						//osWAIT(255);
+						//osWAIT(255);
+						//osWAIT(255);
+						//osWAIT(255);
 
-						fwrite("at\n", 4, 1, bt);
+						//fwrite("at\n", 4, 1, bt);
 						//fwrite("set", 2, 1, bt);
 
 						firstTime = 0;
