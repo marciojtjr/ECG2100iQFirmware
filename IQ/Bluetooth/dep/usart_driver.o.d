@@ -21,7 +21,7 @@ usart_driver.o: ../usart_driver.c \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/wdt.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/util/delay.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h \
-  ../iq.h ../wdt_driver.h ../TaskUSB.h
+  ../iq.h ../wdt_driver.h ../TaskUSB.h ../TaskBT.h ../seg7.h
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdint.h:
 
@@ -74,3 +74,7 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h:
 ../wdt_driver.h:
 
 ../TaskUSB.h:
+
+../TaskBT.h:
+
+../seg7.h:

@@ -23,7 +23,7 @@ TaskAcq.o: ../TaskAcq.c \
   ../seg7.h ../eeprom.h ../eeprom_driver.h ../taskUSB.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdio.h \
   c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdarg.h \
-  ../taskBT.h ../TaskWatchDog.h
+  ../taskBT.h ../usart_driver.h ../TaskWatchDog.h
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/io.h:
 
@@ -94,5 +94,7 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdio.h:
 c:\apps\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdarg.h:
 
 ../taskBT.h:
+
+../usart_driver.h:
 
 ../TaskWatchDog.h:

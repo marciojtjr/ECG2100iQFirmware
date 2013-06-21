@@ -2,6 +2,7 @@
 #define TASKBT_H
 
 #include <stdio.h>
+#include "usart_driver.h"
 
 extern FILE *bt;
 
@@ -16,6 +17,7 @@ extern unsigned char M;	// selects which of the two LFBiasModels is ready for ex
 extern int LFBiasModel[2][8][4];	// two models (so we can ping-pong) for the eight channels, each model containing four samples
 extern unsigned char BTStatus;
 extern char logBuffer[109];
+extern USART_desc_t BTPortDescriptor;
 
 enum {LOG_IDLE, LOG_WAITING};
 
