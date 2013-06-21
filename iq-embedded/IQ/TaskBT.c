@@ -142,16 +142,16 @@ BEGIN_TASK(TaskBT)
 				BTReady=0;
 #endif
 
-				//if(logStatus == LOG_WAITING) {
-				//	char out = '@';
-				//	fwrite(&out, 1, 1, bt);
-				//	logStatus = LOG_IDLE;
-				//}
+				if(logStatus == LOG_WAITING) {
+					char out = '@';
+					fwrite(&out, 1, 1, bt);
+					logStatus = LOG_IDLE;
+				}
 
 				if(BTPortDescriptor.RxReady) {
 					char c = '+';
 					//sscanf( (const char *)BTPortDescriptor.RxBuf, "%c", &c);
-					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
+					//fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
 					//BTPortDescriptor.RxReady=0;
 					//print_bt("%c", c);
 
