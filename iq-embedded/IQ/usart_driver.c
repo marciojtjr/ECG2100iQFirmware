@@ -24,7 +24,7 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 
 	uint8_t c = usart_desc->usart->DATA;	// get the byte
 
-	//if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
+	if(usart_desc->RxPut < 254){ // only receive characters if the last receive buffer has been processed
 		//if(c=='\r'|| c=='\n'){
 		//	uart_putchar(usart_desc,'\r');
 		//	usart_desc->RxBuf[usart_desc->RxPut] = 0;
@@ -43,7 +43,7 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 			}
 			usart_desc->RxReady = 1;
 		//}
-	//}
+	}
 }
 
 //============================================================
