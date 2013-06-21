@@ -142,11 +142,11 @@ BEGIN_TASK(TaskBT)
 				BTReady=0;
 #endif
 
-				if(logStatus == LOG_WAITING) {
-					char out = '@';
-					fwrite(&out, 1, 1, bt);
-					logStatus = LOG_IDLE;
-				}
+				//if(logStatus == LOG_WAITING) {
+				//	char out = '@';
+				//	fwrite(&out, 1, 1, bt);
+				//	logStatus = LOG_IDLE;
+				//}
 
 				if(BTPortDescriptor.RxReady) {
 					char c = '+';
