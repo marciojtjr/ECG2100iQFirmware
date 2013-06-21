@@ -36,14 +36,14 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 			//}
 			//else {
 				uart_putchar(usart_desc,c);
-				if(c=='\b'){	// backspace
-					uart_putchar(usart_desc,' ');
-					uart_putchar(usart_desc,'\b');
-					if(usart_desc->RxPut)usart_desc->RxPut--;
-				}
-				else {
+				//if(c=='\b'){	// backspace
+				//	uart_putchar(usart_desc,' ');
+				//	uart_putchar(usart_desc,'\b');
+				//	if(usart_desc->RxPut)usart_desc->RxPut--;
+				//}
+				//else {
 					usart_desc->RxBuf[usart_desc->RxPut++]=c;
-				}
+				//}
 				usart_desc->RxReady = 1;
 			//}
 		}
