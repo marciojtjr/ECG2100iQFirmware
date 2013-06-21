@@ -27,28 +27,6 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 	uint8_t c = usart_desc->usart->DATA;	// get the byte
 
 	if(usart_desc == &BTPortDescriptor) {
-
-		if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
-			if(c=='\r'|| c=='\n'){
-				uart_putchar(usart_desc,'\r');
-				usart_desc->RxBuf[usart_desc->RxPut] = 0;
-				usart_desc->RxPut = 0;
-				usart_desc->RxReady = 1;
-				Seg7HP('b');
-			}
-			else {
-				uart_putchar(usart_desc,c);
-				if(c=='\b'){	// backspace
-					uart_putchar(usart_desc,' ');
-					uart_putchar(usart_desc,'\b');
-					if(usart_desc->RxPut)usart_desc->RxPut--;
-				}
-				else {
-					usart_desc->RxBuf[usart_desc->RxPut++]=c;
-				}
-			}
-		}
-	/*
 		if(usart_desc->RxPut < 254){ // only receive characters if the last receive buffer has been processed
 			//if(c=='\r'|| c=='\n'){
 			//	uart_putchar(usart_desc,'\r');
@@ -69,7 +47,6 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 				usart_desc->RxReady = 1;
 			//}
 		}
-		*/
 	}
 	else {
 		if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
@@ -78,7 +55,6 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 				usart_desc->RxBuf[usart_desc->RxPut] = 0;
 				usart_desc->RxPut = 0;
 				usart_desc->RxReady = 1;
-				Seg7HP('s');
 			}
 			else {
 				uart_putchar(usart_desc,c);
