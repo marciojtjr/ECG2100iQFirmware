@@ -851,10 +851,10 @@ BEGIN_TASK(TaskAcq)
 
 		BTBufPhase = 0;
         BTStatus = 0;               // Added by PRV
-		BTEnable = 1;				// allow Bluetooth to send data
+		//BTEnable = 1;				// allow Bluetooth to send data
 
-		LogMessage("This _should_ show up on the Android console\n");
-		LogMessage("This _should_ also show up on the Android console\n");
+		//LogMessage("This _should_ show up on the Android console\n");
+		//LogMessage("This _should_ also show up on the Android console\n");
 
 		while(!ButtonPressed()){	// pre-acquire while the button is not pressed
 
@@ -937,12 +937,12 @@ BEGIN_TASK(TaskAcq)
 			while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 )
                 { // run while there's still room in flash and button is not pressed
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
-                /*
+                
 					TaskFlashCmd = TF_WRITE_BUF1;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
-                */
+                
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
@@ -951,12 +951,12 @@ BEGIN_TASK(TaskAcq)
 					}
 				}
 				if(Buf2.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
-                /*
+                
 					TaskFlashCmd = TF_WRITE_BUF2;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
-                */
+                
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
@@ -971,13 +971,14 @@ BEGIN_TASK(TaskAcq)
             osWAIT(250);
 			// we ran to the end of the ECG buffer, or the button was pressed
 			StopAcq();
-#if BLUETOOTH
+#if BLUETOOTH && !defined(COMPARE_VERSION)
 			BTOff();
 #endif
 			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
 
 			// determine if the button is being pressed, and for how long
 			// a short press shows 'F' and turns us off, a long one erases flash and sends us back to 'E'
+
 			ButtonTimer=0;
 			while(ButtonPressed()){
 				osWAIT(1);
@@ -987,10 +988,19 @@ BEGIN_TASK(TaskAcq)
 			}
 
             //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
-            break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+            //break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
             //=====================================================================================
 
 			if(ButtonTimer<LONG_BUTTON_TIME){	// a short or no press means stop and show 'F'
+#ifdef COMPARE_VERSION
+				Seg7HP('b');
+				BTEnable = 1;				// allow Bluetooth to send data
+				while(BTEnable) {
+					osWAIT(1);
+				}
+				BTOff();
+#endif
+
 				Seg7LP('F');
 				ShutoffTimer = SHUTOFF_TIME;
 				while(ShutoffTimer-- && (ButtonPressed() == 0)){

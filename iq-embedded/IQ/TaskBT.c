@@ -23,6 +23,10 @@
 #include "usart_driver.h"
 #include "eeprom_driver.h"
 #include "adc_driver.h"
+#include "taskacq.h"
+#include "taskflash.h"
+#include "buffers.h"
+#include "crc.h"
 
 #define LOGGING
 
@@ -136,6 +140,7 @@ BEGIN_TASK(TaskBT)
      
 		while(1)
             {
+#ifndef COMPARE_VERSION
 			if(BTReady && BTEnable)
                 {	// we have a lead fail model to decimate
 #ifndef LOGGING
@@ -267,7 +272,184 @@ BEGIN_TASK(TaskBT)
 					FrameIndex++;
 				    }
 #endif
+#endif
 
+#ifdef COMPARE_VERSION
+if(BTEnable) {
+	for(int i = 0; i < 255; i++)
+		put_byte('@');
+	BTEnable = 0;
+#endif
+
+#ifndef COMPARE_VERSION
+			if(BTEnable)
+                {	// we have a lead fail model to decimate
+					#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
+					#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
+
+					unsigned char Verbose = 0;	// used to control whether print_debug() messages are printed or ignored
+					unsigned char Debug = 0; // used to control print_debug() statements
+
+					static unsigned char argC;
+					static char cmd[3];
+					static float data1,data2;
+					static unsigned int i;
+					static unsigned char j;
+					static unsigned long start, end;
+					static unsigned char byte;
+
+					static unsigned char format;
+					static unsigned int crc;
+
+					static int startPage, startIndex, endPage, endIndex;
+
+					enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
+
+					argC = 2;
+					data1 = 0.0f;
+					data2 = 9.9f;
+
+					if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of ECG
+						if(data1>ECG_RECORD_LENGTH-BLOCK_LEN*2){
+							data1 = ECG_RECORD_LENGTH-BLOCK_LEN*2;
+						}
+						data2 = data1;
+					}
+					else if(argC==2){ // we were given both a start time and an end time
+						if(data2<data1){	// fix end<start
+							data2 = data1;
+						}
+						else if(data2>ECG_RECORD_LENGTH-BLOCK_LEN){// fix end bigger than record length
+							data2 = ECG_RECORD_LENGTH-BLOCK_LEN;
+						}
+						else{
+							data2 = data2;
+						}
+					}
+
+					// truncate times to 100ms resolution
+					start = data1*10;
+					end = data2*10;
+					// convert to milliseconds
+					start*=100;
+					end*=100;
+					// set end to the last milliscond of the 100ms block
+					end+=99;
+
+					if(Verbose && (format == FORMAT_BINARY)){
+						print_bt("s%ld e%ld\r\n", start, end);
+					}
+					// now we've got valid start and end times, convert that into flash page numbers and indexes
+					startPage = start/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+					startIndex = start%ECG_MS_PER_PAGE;
+					endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+					endIndex =  end%ECG_MS_PER_PAGE;
+
+					if(Verbose){
+						print_bt("Start page  = %d\r\n",startPage);
+						print_bt("Start index = %d\r\n",startIndex);
+						print_bt("End page    = %d\r\n",endPage);
+						print_bt("End index   = %d\r\n",endIndex);
+					}
+
+					crc = 0xffff;
+
+					// dump ECG data from startPage
+					FlashPageNumber=startPage;
+					while(TaskFlashCmd != TF_IDLE); // should never happen
+					TaskFlashCmd = TF_READ_BUF1;
+					while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+						osYIELD;
+					}
+					for(i=startIndex;i<ECG_SAMPLES_PER_PAGE;i++){
+						if(format == FORMAT_DECIMAL){
+							for(j=0;j<12;j++){
+								print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
+							}
+							print_bt("\r\n");
+						}
+						else{ // FORMAT_BINARY
+							for(j=0;j<12;j++){
+								if(Debug){
+									put_byte(j);
+									crc(j);
+								}
+								else{
+									put_byte(Buf1.Data.ECG.Sample[i][j]);
+									crc(Buf1.Data.ECG.Sample[i][j]);
+								}
+							}
+						}
+					}
+					osYIELD;
+					print_bt_verbose("Start Page Done\r\n");
+
+					// dump ECG data from full pages between startPage and endPage
+					while(++FlashPageNumber<endPage){
+						while(TaskFlashCmd != TF_IDLE); // should never happen
+						TaskFlashCmd = TF_READ_BUF1;
+						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+							osYIELD;
+						}
+						for(i=0;i<ECG_SAMPLES_PER_PAGE;i++){
+							if(format == FORMAT_DECIMAL){
+								for(j=0;j<12;j++){
+									print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
+								}
+								print_bt("\r\n");
+							}
+							else{ // FORMAT_BINARY
+								for(j=0;j<12;j++){
+									if(Debug){
+										put_byte(j);
+										crc(j);
+									}
+									else{
+										put_byte(Buf1.Data.ECG.Sample[i][j]);
+										crc(Buf1.Data.ECG.Sample[i][j]);
+									}
+								}
+							}
+						}
+						osYIELD;
+						print_bt_verbose("Interior page %d done\r\n",FlashPageNumber);
+					}
+
+					// dump ECG data from endPage
+					FlashPageNumber=endPage;
+					while(TaskFlashCmd != TF_IDLE); // should never happen
+					TaskFlashCmd = TF_READ_BUF1;
+					while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+						osYIELD;
+					}
+					for(i=0;i<=endIndex;i++){
+						if(format == FORMAT_DECIMAL){
+							for(j=0;j<12;j++){
+								print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
+							}
+							print_bt("\r\n");
+						}
+						else{ // FORMAT_BINARY
+							for(j=0;j<12;j++){
+								if(Debug){
+									put_byte(j);
+									crc(j);
+								}
+								else{
+									put_byte(Buf1.Data.ECG.Sample[i][j]);
+									crc(Buf1.Data.ECG.Sample[i][j]);
+								}
+							}
+						}
+						osYIELD;
+					}
+					if(format == FORMAT_BINARY){
+						put_byte(crc);
+						put_byte(crc>>8);
+					}
+
+					BTEnable = 0;						
+#endif
 			    }
 			    osYIELD;	// let other stuff run
 		    }
