@@ -2,6 +2,7 @@
 #define iq_h
 
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
+#define COMPARE_VERSION
 
 #define VERSION 1.05
 
