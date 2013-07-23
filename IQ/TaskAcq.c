@@ -49,6 +49,10 @@
 #define REZERO_V5	PIN1_bm
 #define REZERO_V6	PIN0_bm
 
+#define PORT_PACE_DETECT PORTA
+#define PACE_DETECT_L1 PIN0_bm
+#define PACE_DETECT_L2 PIN3_bm
+
 extern unsigned char AcqIrqState;	// a place to remember what the acquistion interrupt is doing
 // when AcqState == ACQ_IDLE, the acquisition interrupt (which is always running) does nothing. All internal pointers are reset
 // when AcqState == ACQ_VOICE, the interrupt samples the microphone input and puts samples into the available buffers. If neither buffer is available
@@ -58,6 +62,9 @@ extern unsigned char AcqIrqState;	// a place to remember what the acquistion int
 // when AcqState incrments to ACQ_DECIMATION, the sub-sample accumulators are scaled back to 12 bits and the eight leads are sent off to an available buffer
 //   if neither buffer is available, SystemError.BUF_OVERRUN is flagged
 enum {ACQ_IRQ_IDLE,  ACQ_IRQ_VOICE, ACQ_IRQ_ECG, ACQ_IRQ_ECG_DECIMATE=ACQ_IRQ_ECG+15};	// ACQ_IRQ_ECG increments into ACQ_IRQ_DECIMATE, then rolls back to ACQ_IRQ_ECG
+	
+unsigned char acqState = FSM_START;
+unsigned char haveFinalPacket = 0;
 
 unsigned char AcqIrqState = ACQ_IRQ_IDLE;	// used to hold the current acquisition interrupt state, a task may control acquisition via this "semaphore"
 enum {LOCKED, UNLOCKED};
@@ -96,6 +103,8 @@ unsigned int BTBuf[8];	// holds all eight channels of data, decimated from 1KHz 
 // unsigned char BTString[29]; // room to store the Bluetooth sample output string.
 unsigned char BTString[6+1+1+1+2+8*12+2]; // Bigger now.
 unsigned char BTStatus;
+
+static unsigned long int high = 0, low = 0;
 
 //unsigned int test;
 
@@ -266,6 +275,7 @@ void StartAcq(unsigned char state){
 		HIRESD.CTRL = HIRES_HREN_TC0_gc;
 		*/
 	}
+	
 	// start conversions so AcqInterrupt() won't hang waiting for data
 	ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm));
 	ADC_Conversions_Start(&ADCB, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm));
@@ -369,6 +379,10 @@ void AcqInterrupt(){
 
 				#define UPPER_THRESH 65534
 				#define LOWER_THRESH 3200
+				
+				// Check for a pacer spike
+				if((PORT_PACE_DETECT.IN & PACE_DETECT_L1) || (PORT_PACE_DETECT.IN & PACE_DETECT_L2))
+					BTStatus |= 8;
 
 				// rezero any lead that goes out of bounds
 				if(Acc[V3]>UPPER_THRESH){
@@ -603,6 +617,16 @@ void AcqInterrupt(){
 						index++;
 					}
 					if(index>=ECG_SAMPLES_PER_PAGE){ // index == ECG_SAMPLES_PER_PAGE, we've finished this page of memory
+						Buf1.Data.ECG.Flag1 = 1;
+						Buf1.Data.ECG.Flag2 = 2;
+						Buf1.Data.ECG.Flag3 = 3;
+						Buf1.Data.ECG.Flag4 = 4;
+						
+						Buf2.Data.ECG.Flag1 = 1;
+						Buf2.Data.ECG.Flag2 = 2;
+						Buf2.Data.ECG.Flag3 = 3;
+						Buf2.Data.ECG.Flag4 = 4;
+						
 						if(Buf1.Status == BUF_FILLING){
 							Buf1.Status = BUF_FULL;
 						}
@@ -678,8 +702,13 @@ BEGIN_TASK(TaskAcq)
 	Flags.AcqActive = 1;
 
 	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
-
 		AnalogPowerOn();
+		
+		acqState = FSM_START;
+		
+		high = 0;
+		low = 0;
+		
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
 		// if the button is still pressed after erasing, we wait for it to be released
 
@@ -699,8 +728,9 @@ BEGIN_TASK(TaskAcq)
 		osWAIT(1); // wait for conversions to complete
 		VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 
-
 		if(EE_Rd(EE_VOICE_RECORD_LENGTH)!=0){
+			acqState = FSM_ERASING;
+			
 			AcqWatchTimer = FLASH_WATCH_TIME;
 			while(TaskFlashCmd != TF_IDLE);	// wait for flash to become ready
 			TaskFlashCmd = TF_ERASE_VOICE;
@@ -718,6 +748,8 @@ BEGIN_TASK(TaskAcq)
 		}
 
 		if(EE_Rd(EE_ECG_RECORD_LENGTH)!=0){
+			acqState = FSM_ERASING;
+			
 			AcqWatchTimer = FLASH_WATCH_TIME;
 			while(TaskFlashCmd != TF_IDLE);	// wait for flash to become ready
 			TaskFlashCmd = TF_ERASE_ECG;
@@ -733,7 +765,8 @@ BEGIN_TASK(TaskAcq)
 			}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
 			Seg7HP(' ');	// blank and release the LED
 		}
-
+		
+		acqState = FSM_EMPTY;
 		Seg7LP('E');	// tell the user we're empty
 
 		if(VBatt < EE_Rd(EE_LB)/1000.0){
@@ -780,6 +813,7 @@ BEGIN_TASK(TaskAcq)
 			}
 		}
 		FlashPageNumber = FLASH_VOICE_START_PAGE;	// start from the beginning
+		acqState = FSM_VOICERECORDING;
 		Seg7LP('r');	// we're recording
 		EnableBuffering();
 		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
@@ -850,13 +884,15 @@ BEGIN_TASK(TaskAcq)
 		}
 
 		BTBufPhase = 0;
-        BTStatus = 0;               // Added by PRV
-		//BTEnable = 1;				// allow Bluetooth to send data
+       BTStatus = 0;               // Added by PRV
+		
+#ifndef COMPARE_VERSION
+		BTEnable = 1;				// allow Bluetooth to send data
+#endif
 
-		//LogMessage("This _should_ show up on the Android console\n");
-		//LogMessage("This _should_ also show up on the Android console\n");
-
-		while(!ButtonPressed()){	// pre-acquire while the button is not pressed
+		acqState = FSM_PREACQ;
+		
+		while(!ButtonPressed() && acqState != FSM_ACQURING){	// pre-acquire while the button is not pressed
 
 			osYIELD;
 			if(LFReady){	// this will happen every four milliseconds
@@ -926,6 +962,7 @@ BEGIN_TASK(TaskAcq)
             {	// start acquisition on a short button press
 			osWAIT(30); //make sure button is released so we don't catch a bounce
 			LFBiasOff();	// disable lead fail bias for acquisition, so we don't interfere with other instruments (defib?)
+			acqState = FSM_ACQURING;
 			Seg7LP('A');
 
 			FlashPageNumber = FLASH_ECG_START_PAGE;
@@ -933,15 +970,19 @@ BEGIN_TASK(TaskAcq)
 			Buf2.Status = BUF_EMPTY;
 			EnableBuffering();
 			// BTBufPhase = 0;
-            BTStatus |= 4;
-			while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 )
+          BTStatus |= 4;
+			//while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 && finalDecimation == 0)
+			while(acqState != FSM_FULL)
                 { // run while there's still room in flash and button is not pressed
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
-                
+
+// Currently cannot stream and save at the same time. Look into this
+#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF1;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
+#endif
                 
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
@@ -951,11 +992,13 @@ BEGIN_TASK(TaskAcq)
 					}
 				}
 				if(Buf2.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
-                
+// Currently cannot stream and save at the same time. Look into this
+#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF2;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
+#endif
                 
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
@@ -964,56 +1007,106 @@ BEGIN_TASK(TaskAcq)
 						break;
 					}
 				}
+					
+					if(acqState == FSM_ACQURING && (FlashPageNumber>FLASH_ECG_END_PAGE || ButtonPressed())) {
+#ifndef COMPARE_VERSION
+						BTStatus &= ~4;
+						acqState = FSM_WAITINGFORPACKET;
+						haveFinalPacket = 0;
+#else
+						acqState = FSM_FULL;
+#endif
+					}
+					
+					if(acqState == FSM_WAITINGFORPACKET && haveFinalPacket == 1) {
+						acqState = FSM_FULL;
+					}		
+													
                 osYIELD;
 			    }
-            
-            BTStatus &= ~4;
-            osWAIT(250);
+		
 			// we ran to the end of the ECG buffer, or the button was pressed
 			StopAcq();
+			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
+
+#ifndef COMPARE_VERSION
+           osWAIT(250);
+#endif
 #if BLUETOOTH && !defined(COMPARE_VERSION)
 			BTOff();
 #endif
-			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
-
 			// determine if the button is being pressed, and for how long
 			// a short press shows 'F' and turns us off, a long one erases flash and sends us back to 'E'
-
 			ButtonTimer=0;
+			
+			
 			while(ButtonPressed()){
 				osWAIT(1);
 				if(ButtonTimer++>LONG_BUTTON_TIME){
 					break; // this will cause us to rerun the outer while(1)
 				}
 			}
+			
+#ifdef COMPARE_VERSION			
+			while(!ButtonPressed()) {
+				// Flash 'b' on the screen to let user know BT is ready
+				osWAIT(50);
+				Seg7LP('b');
+				osWAIT(50);
+				Seg7LP(' ');
+			}
+			
+			// Let taskBT know to blast out all of the ECG data
+			BTEnable = 1;
+			BTReady = 0;
+			FlashPageNumber = 0;
+			
+			// Wait until it's all been sent out
+			while(BTEnable) {
+				osYIELD;
+			}
+			
+			BTOff();
+
+			Seg7LP('D'); // "D" for "Done" :)
+			while(!ButtonPressed()) {
+				osWAIT(1);
+			}
+			
+			// Wait for one more button press to continue
+			ButtonTimer = 0;
+			while(ButtonPressed()) {
+				osWAIT(1);
+				if(ButtonTimer++>LONG_BUTTON_TIME){
+					break; // this will cause us to rerun the outer while(1)
+				}
+			}
+#endif
 
             //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
+#ifndef COMPARE_VERSION
             //break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+#endif
             //=====================================================================================
 
 			if(ButtonTimer<LONG_BUTTON_TIME){	// a short or no press means stop and show 'F'
-#ifdef COMPARE_VERSION
-				Seg7HP('b');
-				BTEnable = 1;				// allow Bluetooth to send data
-				while(BTEnable) {
-					osWAIT(1);
-				}
-				BTOff();
-#endif
-
+				acqState = FSM_FULL;
 				Seg7LP('F');
 				ShutoffTimer = SHUTOFF_TIME;
 				while(ShutoffTimer-- && (ButtonPressed() == 0)){
 					osWAIT(1);
 				}
 				ElapsedMinutes = 1;	// Start the elapsed time timer. This tells TaskMain to enter low power mode
+				
 				osDISABLE_TASK(TaskAcq); // We're done!
 				Flags.AcqActive = 0;
 				AnalogPowerOff();
 				FlashPowerOff();
+				
 				while(1){
 					osWAIT(1);
 				}
+				
 			}
 		} // end short button press for acquisition, we only get here if acquisition ended with a long button press
 	} // while(1) back to 'E'

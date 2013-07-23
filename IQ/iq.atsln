@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "IQ", "IQ.cproj", "{01E6ED85-3528-4754-89EF-1D2C81CF09BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Bluetooth|AVR = Bluetooth|AVR
+		Production|AVR = Production|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Bluetooth|AVR.ActiveCfg = Bluetooth|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Bluetooth|AVR.Build.0 = Bluetooth|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Production|AVR.ActiveCfg = Production|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Production|AVR.Build.0 = Production|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,146 +1,276 @@
-###############################################################################
-# Makefile for the project IQ
-###############################################################################
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
 
-## General Flags
-PROJECT = IQ
-MCU = atxmega64a3
-TARGET = iq_bluetooth.elf
-CC = avr-gcc
+SHELL := cmd.exe
+RM := rm -rf
 
-CPP = avr-g++
+USER_OBJS :=
 
-## Options common to compile, link and assembly rules
-COMMON = -mmcu=$(MCU)
+LIBS := 
+PROJ := 
 
-## Compile options common for all C compilation units.
-CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
+O_SRCS := 
+C_SRCS := 
+S_SRCS := 
+S_UPPER_SRCS := 
+OBJ_SRCS := 
+ASM_SRCS := 
+PREPROCESSING_SRCS := 
+OBJS := 
+OBJS_AS_ARGS := 
+C_DEPS := 
+C_DEPS_AS_ARGS := 
+EXECUTABLES := 
+OUTPUT_FILE_PATH :=
+OUTPUT_FILE_PATH_AS_ARGS :=
+AVR_APP_PATH :=$$$AVR_APP_PATH$$$
+QUOTE := "
+ADDITIONAL_DEPENDENCIES:=
+OUTPUT_FILE_DEP:=
 
-## Assembly specific flags
-ASMFLAGS = $(COMMON)
-ASMFLAGS += $(CFLAGS)
-ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
-
-## Linker flags
-LDFLAGS = $(COMMON)
-LDFLAGS += -Wl,-u,vfscanf -Wl,-u,vfprintf -Wl,-Map=iq_bluetooth.map
-
-
-## Intel Hex file production flags
-HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature
-
-HEX_EEPROM_FLAGS = -j .eeprom
-HEX_EEPROM_FLAGS += --set-section-flags=.eeprom="alloc,load"
-HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
+# Every subdirectory with source files must be described here
+SUBDIRS := 
 
 
-## Libraries
-LIBS = -lm -lprintf_flt -lscanf_flt 
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS +=  \
+../rtos.c \
+../wdt_driver.c \
+../clksys_driver.c \
+../TC_driver.c \
+../iq.c \
+../TaskAcq.c \
+../usart_driver.c \
+../adc_driver.c \
+../eeprom_driver.c \
+../TaskUSB.c \
+../TaskFlash.c \
+../spi_driver.c \
+../lowpower.c \
+../rtc_driver.c \
+../sleepmgr.c \
+../ccpwrite.c \
+../seg7.c \
+../buffers.c \
+../ulaw.c \
+../eeprom.c \
+../TaskBT.c \
+../TaskWatchDog.c \
+../crc.c
 
-## Objects that must be built in order to link
-OBJECTS = rtos.o wdt_driver.o clksys_driver.o TC_driver.o iq.o TaskAcq.o usart_driver.o adc_driver.o eeprom_driver.o TaskUSB.o TaskFlash.o spi_driver.o lowpower.o rtc_driver.o sleepmgr.o ccpwrite.o seg7.o buffers.o ulaw.o eeprom.o TaskBT.o TaskWatchDog.o crc.o 
 
-## Objects explicitly added by the user
-LINKONLYOBJECTS = 
+PREPROCESSING_SRCS += 
 
-## Build
-all: $(TARGET) iq_bluetooth.hex iq_bluetooth.eep iq_bluetooth.lss size
 
-## Compile
-rtos.o: ../rtos.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+ASM_SRCS += 
 
-wdt_driver.o: ../wdt_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-clksys_driver.o: ../clksys_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+OBJS +=  \
+rtos.o \
+wdt_driver.o \
+clksys_driver.o \
+TC_driver.o \
+iq.o \
+TaskAcq.o \
+usart_driver.o \
+adc_driver.o \
+eeprom_driver.o \
+TaskUSB.o \
+TaskFlash.o \
+spi_driver.o \
+lowpower.o \
+rtc_driver.o \
+sleepmgr.o \
+ccpwrite.o \
+seg7.o \
+buffers.o \
+ulaw.o \
+eeprom.o \
+TaskBT.o \
+TaskWatchDog.o \
+crc.o
 
-TC_driver.o: ../TC_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-iq.o: ../iq.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+OBJS_AS_ARGS +=  \
+rtos.o \
+wdt_driver.o \
+clksys_driver.o \
+TC_driver.o \
+iq.o \
+TaskAcq.o \
+usart_driver.o \
+adc_driver.o \
+eeprom_driver.o \
+TaskUSB.o \
+TaskFlash.o \
+spi_driver.o \
+lowpower.o \
+rtc_driver.o \
+sleepmgr.o \
+ccpwrite.o \
+seg7.o \
+buffers.o \
+ulaw.o \
+eeprom.o \
+TaskBT.o \
+TaskWatchDog.o \
+crc.o
 
-TaskAcq.o: ../TaskAcq.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-usart_driver.o: ../usart_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+C_DEPS +=  \
+rtos.d \
+wdt_driver.d \
+clksys_driver.d \
+TC_driver.d \
+iq.d \
+TaskAcq.d \
+usart_driver.d \
+adc_driver.d \
+eeprom_driver.d \
+TaskUSB.d \
+TaskFlash.d \
+spi_driver.d \
+lowpower.d \
+rtc_driver.d \
+sleepmgr.d \
+ccpwrite.d \
+seg7.d \
+buffers.d \
+ulaw.d \
+eeprom.d \
+TaskBT.d \
+TaskWatchDog.d \
+crc.d
 
-adc_driver.o: ../adc_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-eeprom_driver.o: ../eeprom_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+C_DEPS_AS_ARGS +=  \
+rtos.d \
+wdt_driver.d \
+clksys_driver.d \
+TC_driver.d \
+iq.d \
+TaskAcq.d \
+usart_driver.d \
+adc_driver.d \
+eeprom_driver.d \
+TaskUSB.d \
+TaskFlash.d \
+spi_driver.d \
+lowpower.d \
+rtc_driver.d \
+sleepmgr.d \
+ccpwrite.d \
+seg7.d \
+buffers.d \
+ulaw.d \
+eeprom.d \
+TaskBT.d \
+TaskWatchDog.d \
+crc.d
 
-TaskUSB.o: ../TaskUSB.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-TaskFlash.o: ../TaskFlash.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+OUTPUT_FILE_PATH +=iq_bluetooth.elf
 
-spi_driver.o: ../spi_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+OUTPUT_FILE_PATH_AS_ARGS +=iq_bluetooth.elf
 
-lowpower.o: ../lowpower.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+ADDITIONAL_DEPENDENCIES:=
 
-rtc_driver.o: ../rtc_driver.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+OUTPUT_FILE_DEP:= ./makedep.mk
 
-sleepmgr.o: ../sleepmgr.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+# AVR32/GNU C Compiler
 
-ccpwrite.o: ../ccpwrite.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-seg7.o: ../seg7.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-buffers.o: ../buffers.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-ulaw.o: ../ulaw.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-eeprom.o: ../eeprom.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-TaskBT.o: ../TaskBT.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-TaskWatchDog.o: ../TaskWatchDog.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-crc.o: ../crc.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-##Link
-$(TARGET): $(OBJECTS)
-	 $(CC) $(LDFLAGS) $(OBJECTS) $(LINKONLYOBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET)
 
-%.hex: $(TARGET)
-	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
 
-%.eep: $(TARGET)
-	-avr-objcopy $(HEX_EEPROM_FLAGS) -O ihex $< $@ || exit 0
 
-%.lss: $(TARGET)
-	avr-objdump -h -S $< > $@
 
-size: ${TARGET}
-	@echo
-	@avr-size -C --mcu=${MCU} ${TARGET}
 
-## Clean target
-.PHONY: clean
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+./%.o: .././%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : (WinAVR 20100110) 4.3.3
+	$(QUOTE)C:\apps\WinAVR-20100110\bin\avr-gcc.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -Os -fpack-struct -fshort-enums -g3 -Wall -c -gdwarf-2 -std=gnu99  -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -mmcu=atxmega64a3   -o"$@" "$<" 
+	@echo Finished building: $<
+
+
+
+# AVR32/GNU Preprocessing Assembler
+
+
+
+# AVR32/GNU Assembler
+
+
+
+
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(C_DEPS)),)
+-include $(C_DEPS)
+endif
+endif
+
+# Add inputs and outputs from these tool invocations to the build variables 
+
+# All Target
+all: $(OUTPUT_FILE_PATH) $(ADDITIONAL_DEPENDENCIES)
+
+$(OUTPUT_FILE_PATH): $(OBJS) $(USER_OBJS) $(OUTPUT_FILE_DEP)
+	@echo Building target: $@
+	@echo Invoking: AVR/GNU Linker : (WinAVR 20100110) 4.3.3
+	$(QUOTE)C:\apps\WinAVR-20100110\bin\avr-gcc.exe$(QUOTE) -o$(OUTPUT_FILE_PATH_AS_ARGS) $(OBJS_AS_ARGS) $(USER_OBJS) $(LIBS) -Wl,-Map="iq_bluetooth.map" -Wl,--start-group -Wl,-lm -Wl,-lprintf_flt -Wl,-lscanf_flt  -Wl,--end-group -Wl,-u,vfscanf -Wl,-u,vfprintf   -mmcu=atxmega64a3  
+	@echo Finished building target: $@
+	"C:\apps\WinAVR-20100110\bin\avr-objcopy.exe" -O ihex -R .eeprom -R .fuse -R .lock -R .signature  "iq_bluetooth.elf" "iq_bluetooth.hex"
+	"C:\apps\WinAVR-20100110\bin\avr-objcopy.exe" -j .eeprom  --set-section-flags=.eeprom=alloc,load --change-section-lma .eeprom=0  --no-change-warnings -O ihex "iq_bluetooth.elf" "iq_bluetooth.eep" || exit 0
+	"C:\apps\WinAVR-20100110\bin\avr-objdump.exe" -h -S "iq_bluetooth.elf" > "iq_bluetooth.lss"
+	"C:\apps\WinAVR-20100110\bin\avr-size.exe" "iq_bluetooth.elf"
+	
+
+
+
+
+
+# Other Targets
 clean:
-	-rm -rf $(OBJECTS) iq_bluetooth.elf dep/* iq_bluetooth.hex iq_bluetooth.eep iq_bluetooth.lss iq_bluetooth.map
-
-
-## Other dependencies
--include $(shell mkdir dep 2>NUL) $(wildcard dep/*)
-
+	-$(RM) $(OBJS_AS_ARGS)$(C_DEPS_AS_ARGS) $(EXECUTABLES) 
+	rm -rf "iq_bluetooth.elf" "iq_bluetooth.a" "iq_bluetooth.hex" "iq_bluetooth.lss" "iq_bluetooth.eep" "iq_bluetooth.map"
+	

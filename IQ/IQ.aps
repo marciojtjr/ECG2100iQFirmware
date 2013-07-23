@@ -2,7 +2,7 @@
 	<MANAGEMENT>
 		<ProjectName>IQ</ProjectName>
 		<Created>04-Feb-2010 11:39:53</Created>
-		<LastEdit>19-Jun-2013 20:44:12</LastEdit>
+		<LastEdit>09-Jul-2013 10:26:42</LastEdit>
 		<ICON>241</ICON>
 		<ProjectType>0</ProjectType>
 		<Created>04-Feb-2010 11:39:53</Created>
@@ -13,7 +13,7 @@
 	<CODE_CREATION>
 		<ObjectFile>Bluetooth\iq_bluetooth.elf</ObjectFile>
 		<EntryFile></EntryFile>
-		<SaveFolder>C:\workspace\iq-embedded\IQ\</SaveFolder></CODE_CREATION>
+		<SaveFolder>G:\Users\snobaste\Desktop\IQFirmware\</SaveFolder></CODE_CREATION>
 	<DEBUG_TARGET>
 		<CURRENT_TARGET>JTAGICE mkII</CURRENT_TARGET>
 		<CURRENT_PART>ATxmega64A3</CURRENT_PART>
@@ -50,4 +50,4 @@
 		<ENTRY_FUNCTION>main</ENTRY_FUNCTION>
 		<REPROGRAM>2</REPROGRAM>
 	</JTAGICEmkII>
-	<IOView><usergroups/><sort sorted="1" column="0" ordername="0" orderaddress="0" ordergroup="0"/></IOView><Files><File00000><FileId>00000</FileId><FileName>iq.c</FileName><Status>259</Status></File00000><File00001><FileId>00001</FileId><FileName>spi_driver.c</FileName><Status>258</Status></File00001><File00002><FileId>00002</FileId><FileName>seg7.c</FileName><Status>258</Status></File00002><File00003><FileId>00003</FileId><FileName>TaskAcq.c</FileName><Status>257</Status></File00003><File00004><FileId>00004</FileId><FileName>TaskWatchDog.c</FileName><Status>1</Status></File00004><File00005><FileId>00005</FileId><FileName>TaskUSB.c</FileName><Status>257</Status></File00005><File00006><FileId>00006</FileId><FileName>rtos.c</FileName><Status>3</Status></File00006><File00007><FileId>00007</FileId><FileName>TaskBT.c</FileName><Status>1</Status></File00007><File00008><FileId>00008</FileId><FileName>AVR_COMPILER.H</FileName><Status>1</Status></File00008><File00009><FileId>00009</FileId><FileName>taskUSB.h</FileName><Status>1</Status></File00009><File00010><FileId>00010</FileId><FileName>taskBT.h</FileName><Status>1</Status></File00010></Files><Events><Bookmarks></Bookmarks></Events><Trace><Filters></Filters></Trace></AVRStudio>
+	<IOView><usergroups/><sort sorted="1" column="0" ordername="0" orderaddress="0" ordergroup="0"/></IOView><Files><File00000><FileId>00000</FileId><FileName>iq.c</FileName><Status>259</Status></File00000><File00001><FileId>00001</FileId><FileName>spi_driver.c</FileName><Status>258</Status></File00001><File00002><FileId>00002</FileId><FileName>seg7.c</FileName><Status>258</Status></File00002><File00003><FileId>00003</FileId><FileName>TaskAcq.c</FileName><Status>257</Status></File00003><File00004><FileId>00004</FileId><FileName>TaskWatchDog.c</FileName><Status>257</Status></File00004><File00005><FileId>00005</FileId><FileName>TaskUSB.c</FileName><Status>257</Status></File00005><File00006><FileId>00006</FileId><FileName>rtos.c</FileName><Status>259</Status></File00006><File00007><FileId>00007</FileId><FileName>TaskBT.c</FileName><Status>257</Status></File00007></Files><Events><Bookmarks></Bookmarks></Events><Trace><Filters></Filters></Trace></AVRStudio>

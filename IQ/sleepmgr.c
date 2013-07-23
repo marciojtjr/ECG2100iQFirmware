@@ -130,7 +130,7 @@ void SLEEPMGR_Lock( SLEEPMGR_mode_t mode )
  * \param  mode  The sleep mode to unlock.
  */
 void SLEEPMGR_Unlock( SLEEPMGR_mode_t mode )
-{
+{	
 	// The following must be an atomic operation, to avoid race conditions.
 	ENTER_CRITICAL_REGION();
 	
