@@ -13,4 +13,6 @@ extern unsigned char FlowControl;
 #define print_usb(fmt,...)  fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
 #define print_debug(fmt,...) if(Verbose) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
 
+void dump_flags();
+
 #endif

@@ -5,9 +5,11 @@
 #include "iq.h"
 #include "wdt_driver.h"
 #include "TaskUSB.h"
-#include "TaskBT.h"
-#include "seg7.h"
+#include "taskBT.h"
+#include "rtos.h"
 #include <util/delay.h>
+
+int written = 0;
 
 //============================================================
 void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, USART_DREINTLVL_t dreIntLevel){
@@ -17,6 +19,9 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 	usart_desc->RxReady = 0;
 	usart_desc->TxPut = 0;
 	usart_desc->TxGet = 0;
+	usart_desc->TxWaiting = 0;
+	usart_desc->TxDelivered = 0;
+	usart_desc->TxTotal = 0;
 }
 
 
@@ -25,83 +30,56 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 void USART_RXComplete(USART_desc_t *usart_desc){
 
 	uint8_t c = usart_desc->usart->DATA;	// get the byte
-
-	if(usart_desc == &BTPortDescriptor) {
-	/*
-		if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
-			if(c == 255){
-				uart_putchar(usart_desc,'\r');
-				usart_desc->RxBuf[usart_desc->RxPut] = 0;
-				usart_desc->RxPut = 0;
-				usart_desc->RxReady = 1;
-			}
-			else {
-				uart_putchar(usart_desc,c);
-				//if(c=='\b'){	// backspace
-				//	uart_putchar(usart_desc,' ');
-				//	uart_putchar(usart_desc,'\b');
-				//	if(usart_desc->RxPut)usart_desc->RxPut--;
-				//}
-				//else {
-					usart_desc->RxBuf[usart_desc->RxPut++]=c;
-				//}
-				//usart_desc->RxReady = 1;
-			}
+	
+	if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
+		if(c=='\r'|| c=='\n'){
+			if(usart_desc != &BTPortDescriptor) uart_putchar(usart_desc,'\r');
+			
+			usart_desc->RxBuf[usart_desc->RxPut] = 0;
+			usart_desc->RxPut = 0;
+			usart_desc->RxReady = 1;
 		}
-		*/
-		if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
-			if(c=='\r'|| c=='\n'){
-				uart_putchar(usart_desc,'\r');
-				usart_desc->RxBuf[usart_desc->RxPut] = 0;
-				usart_desc->RxPut = 0;
-				usart_desc->RxReady = 1;
+		else {
+			
+			if(usart_desc != &BTPortDescriptor) uart_putchar(usart_desc,c);
+			if(c=='\b'){	// backspace
+				uart_putchar(usart_desc,' ');
+				uart_putchar(usart_desc,'\b');
+				if(usart_desc->RxPut)usart_desc->RxPut--;
 			}
 			else {
-				uart_putchar(usart_desc,c);
-				if(c=='\b'){	// backspace
-					uart_putchar(usart_desc,' ');
-					uart_putchar(usart_desc,'\b');
-					if(usart_desc->RxPut)usart_desc->RxPut--;
-				}
-				else {
-					usart_desc->RxBuf[usart_desc->RxPut++]=c;
-				}
+				usart_desc->RxBuf[usart_desc->RxPut++]=c;
 			}
 		}
 	}
-	else {
-		if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
-			if(c=='\r'|| c=='\n'){
-				uart_putchar(usart_desc,'\r');
-				usart_desc->RxBuf[usart_desc->RxPut] = 0;
-				usart_desc->RxPut = 0;
-				usart_desc->RxReady = 1;
-			}
-			else {
-				uart_putchar(usart_desc,c);
-				if(c=='\b'){	// backspace
-					uart_putchar(usart_desc,' ');
-					uart_putchar(usart_desc,'\b');
-					if(usart_desc->RxPut)usart_desc->RxPut--;
-				}
-				else {
-					usart_desc->RxBuf[usart_desc->RxPut++]=c;
-				}
-			}
-		}
-	}
+	
+	//if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
+		//if(usart_desc->RxPut==255){
+		//	uart_putchar(usart_desc,'\r');
+		//	usart_desc->RxBuf[usart_desc->RxPut] = 0;
+		//	usart_desc->RxPut = 0;
+		//	usart_desc->RxReady = 1;
+		//}
+		//else {
+	//}
+//}
 }
 
 //============================================================
 // send a character if possible, wait if not
 
 void uart_putchar(USART_desc_t *usart_desc, uint8_t data){
-
+	usart_desc->TxWaiting = 1;
+	
 	while( (( (usart_desc->TxPut)+1 ) & TX_BUF_MASK) == usart_desc->TxGet ); // wait for room
 
 	usart_desc->TxBuf[usart_desc->TxPut]= data;	// put the byte in the buffer
 	usart_desc->TxPut = (usart_desc->TxPut + 1) & TX_BUF_MASK;		// advance the put pointer
+	
+	usart_desc->TxDelivered = 0;	
+	
 	usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | usart_desc->dreIntLevel;		// Enable DRE interrupt (might already be enabled)
+	usart_desc->TxWaiting = 0;
 }
 
 //============================================================
@@ -119,9 +97,11 @@ void USART_DataRegEmpty(USART_desc_t *usart_desc){
 
 	if (usart_desc->TxPut != usart_desc->TxGet){	// if there is something in the transmit buffer, send it
 		usart_desc->usart->DATA = usart_desc->TxBuf[usart_desc->TxGet];
+		usart_desc->TxTotal++;
 		usart_desc->TxGet = (usart_desc->TxGet + 1) & TX_BUF_MASK;	// advance the pointer, with wrap
 	}
 	else{	// else turn off DRE interrupts
+		usart_desc->TxDelivered = 1;
 		usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
 	}
 }

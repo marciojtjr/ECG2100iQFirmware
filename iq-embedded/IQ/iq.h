@@ -2,7 +2,8 @@
 #define iq_h
 
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
-#define COMPARE_VERSION
+//#define COMPARE_VERSION
+//#define LOGGING_VERSION
 
 #define VERSION 1.05
 
@@ -15,8 +16,6 @@
 // 1.01 - first update
 // 1.00 - initial release
 
-
-
 #define AnalogPowerOn() 	PORTC.DIRSET = PIN6_bm; PORTC.OUTSET = PIN6_bm
 #define AnalogPowerOff() 	PORTC.DIRSET = PIN6_bm; PORTC.OUTCLR = PIN6_bm
 
@@ -24,7 +23,7 @@
 #define FlashPowerOff()
 
 #define MainPowerOn() 	PORTF.DIRSET = PIN6_bm; PORTF.OUTSET = PIN6_bm; PORTF.PIN6CTRL = PORT_OPC_TOTEM_gc
-#define MainPowerOff()	{PORTF.DIRSET = PIN6_bm; PORTF.OUTCLR = PIN6_bm; PORTF.PIN6CTRL = PORT_OPC_TOTEM_gc; FlashPowerOff(); AnalogPowerOff();}
+#define MainPowerOff()	{ PORTF.DIRSET = PIN6_bm; PORTF.OUTCLR = PIN6_bm; PORTF.PIN6CTRL = PORT_OPC_TOTEM_gc; FlashPowerOff(); AnalogPowerOff(); }
 
 #define BatteryIsCharged() 	(PORTC.IN & PIN5_bm)
 #define BatteryIsCharging()	(!(PORTC.IN & PIN5_bm))

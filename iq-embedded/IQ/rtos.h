@@ -8,7 +8,11 @@
 
 // task definition template
 #define __Taskn                 NameOfTaskFunction
-#define __Taskn_priority        priority (0-7), 7 is highest priority
+#define __Taskn_priority        priority (0-7), 7 is LOWEST priority. 0 is the HIGHEST PRIORITY
+													@snobaste - priority is ignored so I don't even know why this is here
+													            everything has to have equal priority or else the one with
+																 the highest blocks everyone else
+																 
 #define __Taskn_init            RTR_ON or RTR_OFF (ready to run)
 
 -----------------------------------------------------------------------------------------------------------*/

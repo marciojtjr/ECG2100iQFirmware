@@ -111,6 +111,7 @@ int main(void){
 	DPLEDOff();
 	AnalogPowerOff();
 	FlashPowerOff();
+	//Seg7HP('P');
 	InitUSBDetect();
 	InitButton();
 	Flags.AcqActive = 0;

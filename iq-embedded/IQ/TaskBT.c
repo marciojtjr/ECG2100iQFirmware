@@ -23,30 +23,23 @@
 #include "usart_driver.h"
 #include "eeprom_driver.h"
 #include "adc_driver.h"
-#include "taskacq.h"
-#include "taskflash.h"
 #include "buffers.h"
-#include "crc.h"
-
-#define LOGGING
+#include "taskAcq.h"
+#include "taskFlash.h"
+#include "eeprom.h"
 
 #define BT_USART			USARTE0
 #define BT_USART_PORT PORTE
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
-char logBuffer[109];
-unsigned char logStatus = LOG_IDLE;
 
-void LogMessage(char *message) {
-	logStatus = LOG_WAITING;
+enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
+static unsigned char format = FORMAT_BINARY;
 
-	strncpy(logBuffer, message, 109);
-
-	while(logStatus != LOG_IDLE)
-		osYIELD;
+int print_bt_string(char *string) {
+	return fprintf(bt, string);
 }
-
 
 //##########################################################################################
 // define and allocate globals for the bluetooth task
@@ -103,16 +96,18 @@ BEGIN_TASK(TaskBT)
 
 	USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
 	USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
-	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N2
+	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
 	USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
-//	USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);  // Does not work for all Baud Rates (BAUD_RATE = 921600 for example)
+	//USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);  // Does not work for all Baud Rates (BAUD_RATE = 921600 for example)
 	USART_Rx_Enable(BTPortDescriptor.usart);
 	USART_Tx_Enable(BTPortDescriptor.usart);
   
     unsigned char ix = 0;
     static unsigned int FrameIndex = 0;
     short crc;
-	static unsigned char firstTime = 1;
+	static unsigned char sent = 0x00;
+	static uint32_t waiting = 0;
+	static uint32_t beforeSend = 0;
 
     BTString[ix++] = 0xAA;  // Preamble byte 1
     BTString[ix++] = 0x55;  // Preamble byte 2
@@ -131,7 +126,22 @@ BEGIN_TASK(TaskBT)
     #define BT_CRC      107
 
     #define BT_SIZE     109
-   
+	
+	static int firstTime = 0;
+	static int timer = 0;
+	
+#ifdef COMPARE_VERSION
+	static float secondsOfEcg = 0;
+	static unsigned int i;
+	static unsigned char j;
+	static unsigned long end;
+
+	static int endPage, endIndex;
+		
+	#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
+	#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
+#endif
+
 	//==========================================================================================
 	// Bluetooth command parser
 
@@ -140,317 +150,254 @@ BEGIN_TASK(TaskBT)
      
 		while(1)
             {
-#ifndef COMPARE_VERSION
-			if(BTReady && BTEnable)
-                {	// we have a lead fail model to decimate
-#ifndef LOGGING
-				BTReady=0;
-#endif
-
-				//if(logStatus == LOG_WAITING) {
-				//	char out = '@';
-				//	fwrite(&out, 1, 1, bt);
-				//	logStatus = LOG_IDLE;
-				//}
-
+#if !defined(COMPARE_VERSION) && !defined(LOGGING_VERSION)
+			if(BTEnable) {
 				if(BTPortDescriptor.RxReady) {
-					char c = '+';
-					//sscanf( (const char *)BTPortDescriptor.RxBuf, "%c", &c);
-					fwrite((const char *)BTPortDescriptor.RxBuf, 255, 1, bt);
-					BTPortDescriptor.RxReady=0;
-					//print_bt("%c", c);
-
-					if(firstTime) {
-						//osWAIT(255);
-						//osWAIT(255);
-						//osWAIT(255);
-						//osWAIT(255);
-						//fwrite(&c, 1, 1, bt);
-						//fwrite(&c, 1, 1, bt);
-						//fwrite(&c, 1, 1, bt);
-						//osWAIT(255);
-						//osWAIT(255);
-						//osWAIT(255);
-						//osWAIT(255);
-
-						//fwrite("at\n", 4, 1, bt);
-						//fwrite("set", 2, 1, bt);
-
-						firstTime = 0;
+					if(!strncmp("ba", BTPortDescriptor.RxBuf, 2)) {
+						acqState = FSM_ACQURING;
 					}
-				}
+					else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2)) {
+						acqState = FSM_WAITINGFORPACKET;
+						haveFinalPacket = 0;
+						BTStatus &= ~4;
+					}
+					
+					BTPortDescriptor.RxReady = 0;
+				}					
+				if(BTReady) {// we have a lead fail model to decimate
+					BTReady=0;
 
-#ifndef LOGGING
-				// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
+					// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
-				unsigned char m = M^1;	// use the LFBiasModel NOT being filled at the moment
+					unsigned char m = M^1;	// use the LFBiasModel NOT being filled at the moment
 
-				// first phase of Bluetooth sample production, we add up all four 16 bit samples from the lead-fail bias model, after scaling them back to 12 bits.
-				if(BTBufPhase==0)
-                    {
-                    unsigned char *btsp = &BTString[BT_DATA0];
-                    for (unsigned char k=0; k<4; k++)
-                        {
-                        for (unsigned char lead=0; lead<8; lead+=2)
-                            {
-                            btsp[0] = LFBiasModel[m][lead][k] >> 8;
-                            btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
-                            btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
-                            btsp += 3;
-                            }
-                        }
+					// first phase of Bluetooth sample production, we add up all four 16 bit samples from the lead-fail bias model, after scaling them back to 12 bits.
+					if(BTBufPhase==0)
+						{
+						unsigned char *btsp = &BTString[BT_DATA0];
+						for (unsigned char k=0; k<4; k++)
+							{
+							for (unsigned char lead=0; lead<8; lead+=2)
+								{
+								btsp[0] = LFBiasModel[m][lead][k] >> 8;
+								btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
+								btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
+								btsp += 3;
+								}
+							}
 
-                    /*
-                    for(unsigned char i=0; i<8; i++)
-                        {	// do all channels
-                        BTBuf[i] = ( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16);
-                        }
-                    */
-					BTBufPhase=1;
-				    }
+						/*
+						for(unsigned char i=0; i<8; i++)
+							{	// do all channels
+							BTBuf[i] = ( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16);
+							}
+						*/
+						BTBufPhase=1;
+						}
 				
-				// second phase of Bluetooth sample production, we add in the next four LFBiasModel subsamples, after scaling them back to 12 then average the eight subsamples (/8)
-				else
-                    {
-                    unsigned char *btsp = &BTString[BT_DATA1];
-                    for (unsigned char k=0; k<4; k++)
-                        {
-                        for (unsigned char lead=0; lead<8; lead+=2)
-                            {
-                            btsp[0] = LFBiasModel[m][lead][k] >> 8;
-                            btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
-                            btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
-                            btsp += 3;
-                            }
-                        }
-                    /*
-					for(unsigned char i=0;i<8;i++)
-                        {	// do all channels
-						BTBuf[i] = (BTBuf[i]+( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16)) /8;
-					    }
-                    */
-					BTBufPhase=0;
-                    /*
-					// now we have eight channels of 125Hz data, ready to go, send three hex bytes for each 12 bit channel, while also accumulating all channels for a checksum
-					unsigned char j=0;
-					int cs = 0;
-					BTString[j++]='*';
-					for(unsigned char i=0;i<8;i++)
-                        {	// do all channels
-						cs+=BTBuf[i];
-						BTString[j++]=bin2Hex(BTBuf[i]>>8);
-						BTString[j++]=bin2Hex(BTBuf[i]>>4);
-						BTString[j++]=bin2Hex(BTBuf[i]);
-					    }
-					BTString[j++]=bin2Hex(cs>>4);
-					BTString[j++]=bin2Hex(cs);
-					BTString[j++]=13; // carriage return
-					BTString[j++]=0;
-					print_bt("%s", BTString);
-                    */
+					// second phase of Bluetooth sample production, we add in the next four LFBiasModel subsamples, after scaling them back to 12 then average the eight subsamples (/8)
+					else
+						{
+						unsigned char *btsp = &BTString[BT_DATA1];
+						for (unsigned char k=0; k<4; k++)
+							{
+							for (unsigned char lead=0; lead<8; lead+=2)
+								{
+								btsp[0] = LFBiasModel[m][lead][k] >> 8;
+								btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
+								btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
+								btsp += 3;
+								}
+							}
+						/*
+						for(unsigned char i=0;i<8;i++)
+							{	// do all channels
+							BTBuf[i] = (BTBuf[i]+( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16)) /8;
+							}
+						*/
+						BTBufPhase=0;
+						/*
+						// now we have eight channels of 125Hz data, ready to go, send three hex bytes for each 12 bit channel, while also accumulating all channels for a checksum
+						unsigned char j=0;
+						int cs = 0;
+						BTString[j++]='*';
+						for(unsigned char i=0;i<8;i++)
+							{	// do all channels
+							cs+=BTBuf[i];
+							BTString[j++]=bin2Hex(BTBuf[i]>>8);
+							BTString[j++]=bin2Hex(BTBuf[i]>>4);
+							BTString[j++]=bin2Hex(BTBuf[i]);
+							}
+						BTString[j++]=bin2Hex(cs>>4);
+						BTString[j++]=bin2Hex(cs);
+						BTString[j++]=13; // carriage return
+						BTString[j++]=0;
+						print_bt("%s", BTString);
+						*/
 
-                    BTString[BT_TYPE] = 1;     // Record type
-                    BTString[BT_STATUS] = BTStatus;     // Status Flags
-                    BTString[BT_LEADOFF] = 0;     // Lead Off Indicator Bits
-                    BTString[BT_FRMINDEX] = FrameIndex >> 8;     // Lead Off Indicator Bits
-                    BTString[BT_FRMINDEX+1] = FrameIndex;     // Lead Off Indicator Bits
+						BTString[BT_TYPE] = 1;     // Record type
+						BTString[BT_STATUS] = BTStatus;     // Status Flags
+						BTString[BT_LEADOFF] = 0;     // Lead Off Indicator Bits
+						BTString[BT_FRMINDEX] = FrameIndex >> 8;     // Lead Off Indicator Bits
+						BTString[BT_FRMINDEX+1] = FrameIndex;     // Lead Off Indicator Bits
 
-                    crc = 0;
-                    for (unsigned char jx = BT_TYPE; jx < BT_CRC; jx++)
-                        crc = CRCCalc(crc, BTString[jx]);
+						crc = 0;
+						for (unsigned char jx = BT_TYPE; jx < BT_CRC; jx++)
+							crc = CRCCalc(crc, BTString[jx]);
 
-                    BTString[BT_CRC] = crc >> 8;
-                    BTString[BT_CRC+1] = crc;
-                    /*
-					for (jx = 0; jx < ix; jx++)
-						print_bt("%02X",BTString[jx]);
-					print_bt("\n");
-					*/
+						BTString[BT_CRC] = crc >> 8;
+						BTString[BT_CRC+1] = crc;
+						/*
+						for (jx = 0; jx < ix; jx++)
+							print_bt("%02X",BTString[jx]);
+						print_bt("\n");
+						*/
+						fwrite(BTString, BT_SIZE, 1, bt);
+						
+						if(acqState == FSM_WAITINGFORPACKET)
+							haveFinalPacket = 1;
+							
+						BTStatus &= ~8; // Clear pacer bit
 
-					//fwrite(BTString, BT_SIZE, 1, bt);
+						FrameIndex++;
+						}
 
-					FrameIndex++;
-				    }
+					}
+				}				
 #endif
-#endif
-
 #ifdef COMPARE_VERSION
-if(BTEnable) {
-	for(int i = 0; i < 255; i++)
-		put_byte('@');
-	BTEnable = 0;
-#endif
+				if(BTEnable) {
+					if(!BTReady && FlashPageNumber == 0) {
+						Seg7LP('B');
+		
+						// Initialize the test variables
+						secondsOfEcg = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
 
-#ifndef COMPARE_VERSION
-			if(BTEnable)
-                {	// we have a lead fail model to decimate
-					#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
-					#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
+						// truncate times to 100ms resolution
+						end = secondsOfEcg*10;
+						// convert to milliseconds
+						end*=100;
+						// set end to the last milliscond of the 100ms block
+						end+=99;
 
-					unsigned char Verbose = 0;	// used to control whether print_debug() messages are printed or ignored
-					unsigned char Debug = 0; // used to control print_debug() statements
+						// now we've got valid end times, convert that into flash page numbers and indexes
+						endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+						endIndex =  end%ECG_MS_PER_PAGE;
 
-					static unsigned char argC;
-					static char cmd[3];
-					static float data1,data2;
-					static unsigned int i;
-					static unsigned char j;
-					static unsigned long start, end;
-					static unsigned char byte;
-
-					static unsigned char format;
-					static unsigned int crc;
-
-					static int startPage, startIndex, endPage, endIndex;
-
-					enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
-
-					argC = 2;
-					data1 = 0.0f;
-					data2 = 9.9f;
-
-					if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of ECG
-						if(data1>ECG_RECORD_LENGTH-BLOCK_LEN*2){
-							data1 = ECG_RECORD_LENGTH-BLOCK_LEN*2;
-						}
-						data2 = data1;
-					}
-					else if(argC==2){ // we were given both a start time and an end time
-						if(data2<data1){	// fix end<start
-							data2 = data1;
-						}
-						else if(data2>ECG_RECORD_LENGTH-BLOCK_LEN){// fix end bigger than record length
-							data2 = ECG_RECORD_LENGTH-BLOCK_LEN;
-						}
-						else{
-							data2 = data2;
-						}
-					}
-
-					// truncate times to 100ms resolution
-					start = data1*10;
-					end = data2*10;
-					// convert to milliseconds
-					start*=100;
-					end*=100;
-					// set end to the last milliscond of the 100ms block
-					end+=99;
-
-					if(Verbose && (format == FORMAT_BINARY)){
-						print_bt("s%ld e%ld\r\n", start, end);
-					}
-					// now we've got valid start and end times, convert that into flash page numbers and indexes
-					startPage = start/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-					startIndex = start%ECG_MS_PER_PAGE;
-					endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-					endIndex =  end%ECG_MS_PER_PAGE;
-
-					if(Verbose){
-						print_bt("Start page  = %d\r\n",startPage);
-						print_bt("Start index = %d\r\n",startIndex);
-						print_bt("End page    = %d\r\n",endPage);
-						print_bt("End index   = %d\r\n",endIndex);
-					}
-
-					crc = 0xffff;
-
-					// dump ECG data from startPage
-					FlashPageNumber=startPage;
-					while(TaskFlashCmd != TF_IDLE); // should never happen
-					TaskFlashCmd = TF_READ_BUF1;
-					while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-						osYIELD;
-					}
-					for(i=startIndex;i<ECG_SAMPLES_PER_PAGE;i++){
-						if(format == FORMAT_DECIMAL){
-							for(j=0;j<12;j++){
-								print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
+						crc = 0xffff;
+						FlashPageNumber=FLASH_ECG_START_PAGE;
+		
+						BTReady = 1;
+					}	
+					else if(BTReady) {
+						BTReady = 0;
+						// Dump a page
+						beforeSend = BTPortDescriptor.TxTotal;
+						
+						// dump ECG data from full pages between startPage and endPage
+						if(FlashPageNumber<endPage){
+			
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
 							}
-							print_bt("\r\n");
-						}
-						else{ // FORMAT_BINARY
-							for(j=0;j<12;j++){
-								if(Debug){
-									put_byte(j);
-									crc(j);
-								}
-								else{
-									put_byte(Buf1.Data.ECG.Sample[i][j]);
-									crc(Buf1.Data.ECG.Sample[i][j]);
-								}
-							}
-						}
-					}
-					osYIELD;
-					print_bt_verbose("Start Page Done\r\n");
-
-					// dump ECG data from full pages between startPage and endPage
-					while(++FlashPageNumber<endPage){
-						while(TaskFlashCmd != TF_IDLE); // should never happen
-						TaskFlashCmd = TF_READ_BUF1;
-						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-							osYIELD;
-						}
-						for(i=0;i<ECG_SAMPLES_PER_PAGE;i++){
-							if(format == FORMAT_DECIMAL){
+							crc = 0;			
+							for(i=0;i<ECG_SAMPLES_PER_PAGE;i++){
 								for(j=0;j<12;j++){
-									print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
-								}
-								print_bt("\r\n");
-							}
-							else{ // FORMAT_BINARY
-								for(j=0;j<12;j++){
-									if(Debug){
-										put_byte(j);
-										crc(j);
-									}
-									else{
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										crc(Buf1.Data.ECG.Sample[i][j]);
-									}
-								}
-							}
-						}
-						osYIELD;
-						print_bt_verbose("Interior page %d done\r\n",FlashPageNumber);
-					}
-
-					// dump ECG data from endPage
-					FlashPageNumber=endPage;
-					while(TaskFlashCmd != TF_IDLE); // should never happen
-					TaskFlashCmd = TF_READ_BUF1;
-					while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-						osYIELD;
-					}
-					for(i=0;i<=endIndex;i++){
-						if(format == FORMAT_DECIMAL){
-							for(j=0;j<12;j++){
-								print_bt("%02X ",Buf1.Data.ECG.Sample[i][j]);
-							}
-							print_bt("\r\n");
-						}
-						else{ // FORMAT_BINARY
-							for(j=0;j<12;j++){
-								if(Debug){
-									put_byte(j);
-									crc(j);
-								}
-								else{
 									put_byte(Buf1.Data.ECG.Sample[i][j]);
-									crc(Buf1.Data.ECG.Sample[i][j]);
+									waiting++;
+									crc = CRCCalc(crc, Buf1.Data.ECG.Sample[i][j]);
 								}
 							}
+							put_byte(crc >> 8);
+							put_byte(crc);
+							waiting+=2;
 						}
-						osYIELD;
-					}
-					if(format == FORMAT_BINARY){
-						put_byte(crc);
-						put_byte(crc>>8);
-					}
-
-					BTEnable = 0;						
+						else {
+							FlashPageNumber=endPage;
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
+							}
+							for(i=0;i<=endIndex;i++){
+								for(j=0;j<12;j++){
+									put_byte(Buf1.Data.ECG.Sample[i][j]);
+									waiting++;
+								}
+							}
+						}			
+							
+					}												
+	
+					if(!BTReady && BTPortDescriptor.TxTotal - beforeSend >= waiting) {
+						// Spec sheet says max transmission delay is 20ms. Subject to change.
+						osWAIT(25);
+		
+						if(FlashPageNumber==endPage) {
+							// Make _absolutely sure_ the BT chip is done transmitting
+							osWAIT(200);
+			
+							BTEnable = 0;
+							BTReady = 0;
+						}
+						else {
+							BTReady = 1;	
+							FlashPageNumber++;
+							waiting = 0;
+						}					
+					}		
+				}
 #endif
-			    }
+#ifdef LOGGING_VERSION
+				if(BTEnable) {
+					osWAIT(25);
+					
+					if(BTPortDescriptor.RxReady) {
+						
+						fprintf(bt, "Message: %s\n", BTPortDescriptor.RxBuf);
+						
+						if(!strncmp("ba", BTPortDescriptor.RxBuf, 2)) {
+							print_bt("We have the start acquiring command :)\n");
+							acqState = FSM_ACQURING;
+						}
+						else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2)) {
+							print_bt("We have the stop acquiring command :D\n");
+							acqState = FSM_FULL;
+						}
+						
+						memset(BTPortDescriptor.RxBuf, 0, 255);
+						/*
+						if(firstTime == 0) {
+							
+							timer = 0;
+							while(timer != 50) {
+								osWAIT(25);
+								osYIELD;
+								timer++;
+							}
+							put_byte('+');
+							osWAIT(10);
+							put_byte('+');
+							osWAIT(10);
+							put_byte('+');
+							timer = 0;
+							while(timer != 50) {
+								osWAIT(25);
+								osYIELD;
+								timer++;
+							}
+							
+							firstTime = 1; 
+							print_bt("AT\r");
+						}
+						*/
+						BTPortDescriptor.RxReady=0;
+					}
+					
+				}					
+#endif
 			    osYIELD;	// let other stuff run
 		    }
 	    }

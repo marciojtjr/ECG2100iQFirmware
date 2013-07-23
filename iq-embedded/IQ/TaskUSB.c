@@ -115,6 +115,15 @@ void Dump(unsigned int i){
 	}
 }
 
+void dump_flags() {
+	/*
+	put_byte(Buf1.Data.ECG.Flag1);
+	put_byte(Buf1.Data.ECG.Flag2);
+	put_byte(Buf1.Data.ECG.Flag3);
+	put_byte(Buf1.Data.ECG.Flag4);
+	*/
+}
+
 //------------------------------------------------------------------------------------
 void Hello(void){
 	print_usb("\r\n\r\nSpaulding IQ BV:%d FV:%1.2f HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)(EE_Rd(EE_SERIAL_NUM)/1000000), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
@@ -233,12 +242,14 @@ BEGIN_TASK(TaskUSB)
 				//-------------------------------------
 				// report the flash CRC
 				else if(strncmp(cmd,"cc",2)==0){
+					/*
 					if(EE_Rd(EE_APP_CRC) == SP_ApplicationCRC()){
 						print_usb("CRC Okay = 0x%08lX", EE_Rd(EE_APP_CRC));
 					}
 					else{
 						print_usb("CRC Fail: Computed = 0x%08lX, EEPROM = 0x%08lX", SP_ApplicationCRC(), EE_Rd(EE_APP_CRC));
 					}
+					*/
 				}
 				//-------------------------------------
 				// enable/disable Verbose messages
@@ -755,6 +766,9 @@ BEGIN_TASK(TaskUSB)
 								}
 							}
 						}
+						
+						dump_flags();
+						
 						osYIELD;
 						print_verbose("Start Page Done\r\n");
 
@@ -785,6 +799,9 @@ BEGIN_TASK(TaskUSB)
 									}
 								}
 							}
+							
+							dump_flags();
+							
 							osYIELD;
 							print_verbose("Interior page %d done\r\n",FlashPageNumber);
 						}
@@ -817,6 +834,9 @@ BEGIN_TASK(TaskUSB)
 							}
 							osYIELD;
 						}
+						
+						dump_flags();
+						
 						if(format == FORMAT_BINARY){
 							put_byte(crc);
 							put_byte(crc>>8);
