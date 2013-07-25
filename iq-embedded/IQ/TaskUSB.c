@@ -116,12 +116,10 @@ void Dump(unsigned int i){
 }
 
 void dump_flags() {
-	/*
 	put_byte(Buf1.Data.ECG.Flag1);
-	put_byte(Buf1.Data.ECG.Flag2);
-	put_byte(Buf1.Data.ECG.Flag3);
-	put_byte(Buf1.Data.ECG.Flag4);
-	*/
+	//put_byte(Buf1.Data.ECG.Flag2);
+	//put_byte(Buf1.Data.ECG.Flag3);
+	//put_byte(Buf1.Data.ECG.Flag4);
 }
 
 //------------------------------------------------------------------------------------
@@ -767,7 +765,8 @@ BEGIN_TASK(TaskUSB)
 							}
 						}
 						
-						dump_flags();
+						put_byte(Buf1.Data.ECG.Flag1);
+						crc(Buf1.Data.ECG.Flag1);
 						
 						osYIELD;
 						print_verbose("Start Page Done\r\n");
@@ -800,7 +799,8 @@ BEGIN_TASK(TaskUSB)
 								}
 							}
 							
-							dump_flags();
+							put_byte(Buf1.Data.ECG.Flag1);
+							crc(Buf1.Data.ECG.Flag1);
 							
 							osYIELD;
 							print_verbose("Interior page %d done\r\n",FlashPageNumber);
@@ -835,7 +835,8 @@ BEGIN_TASK(TaskUSB)
 							osYIELD;
 						}
 						
-						dump_flags();
+						put_byte(Buf1.Data.ECG.Flag1);
+						crc(Buf1.Data.ECG.Flag1);
 						
 						if(format == FORMAT_BINARY){
 							put_byte(crc);

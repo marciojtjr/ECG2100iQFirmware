@@ -6,11 +6,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Bluetooth|AVR = Bluetooth|AVR
+		Comparison|AVR = Comparison|AVR
+		Logging|AVR = Logging|AVR
 		Production|AVR = Production|AVR
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Bluetooth|AVR.ActiveCfg = Bluetooth|AVR
 		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Bluetooth|AVR.Build.0 = Bluetooth|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Comparison|AVR.ActiveCfg = Comparison|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Comparison|AVR.Build.0 = Comparison|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Logging|AVR.ActiveCfg = Logging|AVR
+		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Logging|AVR.Build.0 = Logging|AVR
 		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Production|AVR.ActiveCfg = Production|AVR
 		{01E6ED85-3528-4754-89EF-1D2C81CF09BC}.Production|AVR.Build.0 = Production|AVR
 	EndGlobalSection

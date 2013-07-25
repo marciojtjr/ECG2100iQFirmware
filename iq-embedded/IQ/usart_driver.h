@@ -9,6 +9,7 @@
 #define TX_BUF_MASK ( TX_BUF_SIZE - 1 )
 
 extern int written;
+extern char readyForCommands;
 
 #if ( TX_BUF_SIZE & TX_BUF_MASK )
 #error TX_BUF_SIZE is not a power of 2
