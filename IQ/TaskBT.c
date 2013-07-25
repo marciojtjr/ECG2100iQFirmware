@@ -116,16 +116,32 @@ BEGIN_TASK(TaskBT)
     BTString[ix++] = 0xAF;  // Preamble byte 5
     BTString[ix++] = 0xFA;  // Preamble byte 6
 
+/* FOR PACE DETECTION */
     #define BT_PREAMBLE   0
     #define BT_TYPE       6
     #define BT_STATUS     7
     #define BT_LEADOFF    8
-    #define BT_FRMINDEX   9
-    #define BT_DATA0     11
-    #define BT_DATA1     59
-    #define BT_CRC      107
+	#define BT_PACESPIKE  9
+    #define BT_FRMINDEX   10
+    #define BT_DATA0     12
+    #define BT_DATA1     60
+    #define BT_CRC      108
 
-    #define BT_SIZE     109
+    #define BT_SIZE     110
+
+/* FOR NOT PACE DETECTION */
+/*
+	#define BT_PREAMBLE   0
+	#define BT_TYPE       6
+	#define BT_STATUS     7
+	#define BT_LEADOFF    8
+	#define BT_FRMINDEX   9
+	#define BT_DATA0     11
+	#define BT_DATA1     59
+	#define BT_CRC      107
+
+	#define BT_SIZE     109
+*/
 	
 	static int firstTime = 0;
 	static int timer = 0;
@@ -146,21 +162,52 @@ BEGIN_TASK(TaskBT)
 	// Bluetooth command parser
 
 	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
+		// Wait until we're in preacq before turning on the radio
+		while(acqState < FSM_PREACQ) {
+			osWAIT(1);
+		}			
+		
 		BTOn();
+		
+		// Wait until we've recieved "READY" from the BT chip
+		while(readyForCommands == 0) {
+			osWAIT(1);
+		}			
+		
+		// Set PIO5 as the CD pin
+		print_bt("SET CONTROL CD 20 1\r");
      
-		while(1)
-            {
+		while(1) {		
 #if !defined(COMPARE_VERSION) && !defined(LOGGING_VERSION)
-			if(BTEnable) {
+			if(!BTEnable && acqState != FSM_FULL) {
+				
+				// Wait until the CD pin goes high (which happens when we enter data mode)
+				if(PORTF.IN & PIN7_bm) {
+					BTEnable = 1;
+				}
+				
+			}	
+			else {
 				if(BTPortDescriptor.RxReady) {
+					
+					// If we have 'ba' in the Rx buffer, it's the command to begin acquisition
 					if(!strncmp("ba", BTPortDescriptor.RxBuf, 2)) {
 						acqState = FSM_ACQURING;
 					}
+					// If we have 'sa' in the Rx buffer, it's the command to stop acquisition
 					else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2)) {
 						acqState = FSM_WAITINGFORPACKET;
 						haveFinalPacket = 0;
 						BTStatus &= ~4;
 					}
+					
+					/*
+					// Simulates a pacer spike for testing
+					else if(!strncmp("spike", BTPortDescriptor.RxBuf, 5)) {
+						nextPacketIsSpike = 1;
+					}
+					*/
+					
 					
 					BTPortDescriptor.RxReady = 0;
 				}					
@@ -238,6 +285,11 @@ BEGIN_TASK(TaskBT)
 						BTString[BT_TYPE] = 1;     // Record type
 						BTString[BT_STATUS] = BTStatus;     // Status Flags
 						BTString[BT_LEADOFF] = 0;     // Lead Off Indicator Bits
+						BTString[BT_PACESPIKE] = ((BTStatus & 8) ? btSpikeIndex : 0);		// Pacer spike index bits
+						
+						//if(BTStatus & 8)
+						//	print_bt("We have a pacer spike on sample %d of 8\n", btSpikeIndex);
+							
 						BTString[BT_FRMINDEX] = FrameIndex >> 8;     // Lead Off Indicator Bits
 						BTString[BT_FRMINDEX+1] = FrameIndex;     // Lead Off Indicator Bits
 
@@ -252,6 +304,7 @@ BEGIN_TASK(TaskBT)
 							print_bt("%02X",BTString[jx]);
 						print_bt("\n");
 						*/
+						
 						fwrite(BTString, BT_SIZE, 1, bt);
 						
 						if(acqState == FSM_WAITINGFORPACKET)
@@ -356,43 +409,8 @@ BEGIN_TASK(TaskBT)
 					
 					if(BTPortDescriptor.RxReady) {
 						
-						fprintf(bt, "Message: %s\n", BTPortDescriptor.RxBuf);
-						
-						if(!strncmp("ba", BTPortDescriptor.RxBuf, 2)) {
-							print_bt("We have the start acquiring command :)\n");
-							acqState = FSM_ACQURING;
-						}
-						else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2)) {
-							print_bt("We have the stop acquiring command :D\n");
-							acqState = FSM_FULL;
-						}
-						
+						fprintf(bt, "Message: %s\n", BTPortDescriptor.RxBuf);				
 						memset(BTPortDescriptor.RxBuf, 0, 255);
-						/*
-						if(firstTime == 0) {
-							
-							timer = 0;
-							while(timer != 50) {
-								osWAIT(25);
-								osYIELD;
-								timer++;
-							}
-							put_byte('+');
-							osWAIT(10);
-							put_byte('+');
-							osWAIT(10);
-							put_byte('+');
-							timer = 0;
-							while(timer != 50) {
-								osWAIT(25);
-								osYIELD;
-								timer++;
-							}
-							
-							firstTime = 1; 
-							print_bt("AT\r");
-						}
-						*/
 						BTPortDescriptor.RxReady=0;
 					}
 					

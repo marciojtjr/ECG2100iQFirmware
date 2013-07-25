@@ -65,6 +65,10 @@ enum {ACQ_IRQ_IDLE,  ACQ_IRQ_VOICE, ACQ_IRQ_ECG, ACQ_IRQ_ECG_DECIMATE=ACQ_IRQ_EC
 	
 unsigned char acqState = FSM_START;
 unsigned char haveFinalPacket = 0;
+unsigned char btSpikeIndex = 0;
+unsigned char usbSpikeIndex = 0;
+unsigned char nextPacketIsSpike = 0;
+unsigned char haveUsbSpike = 0;
 
 unsigned char AcqIrqState = ACQ_IRQ_IDLE;	// used to hold the current acquisition interrupt state, a task may control acquisition via this "semaphore"
 enum {LOCKED, UNLOCKED};
@@ -381,8 +385,15 @@ void AcqInterrupt(){
 				#define LOWER_THRESH 3200
 				
 				// Check for a pacer spike
-				if((PORT_PACE_DETECT.IN & PACE_DETECT_L1) || (PORT_PACE_DETECT.IN & PACE_DETECT_L2))
+				if((PORT_PACE_DETECT.IN & PACE_DETECT_L1) || (PORT_PACE_DETECT.IN & PACE_DETECT_L2) || nextPacketIsSpike) {
+					btSpikeIndex = (M*4)+LFBiasModelIndex;
+					usbSpikeIndex = index;
+					if(AcqBufferLock == UNLOCKED) haveUsbSpike = 1;
+					
 					BTStatus |= 8;
+					
+					nextPacketIsSpike = 0;
+				}
 
 				// rezero any lead that goes out of bounds
 				if(Acc[V3]>UPPER_THRESH){
@@ -581,7 +592,7 @@ void AcqInterrupt(){
 						M^=1;	// switch models (ping-pong)
 						AbandonTimer--;	// run down the pre-acquisition abandonment timer
 						LFReady=1;			// tell the AcqTask the model is ready for analysis
-						BTReady=1;			// tell BTTask that the model is ready for decimation
+						if(BTEnable) BTReady=1;			// tell BTTask that the model is ready for decimation
 					}
 				#if BLUETOOTH != 1
 				}
@@ -617,23 +628,21 @@ void AcqInterrupt(){
 						index++;
 					}
 					if(index>=ECG_SAMPLES_PER_PAGE){ // index == ECG_SAMPLES_PER_PAGE, we've finished this page of memory
-						Buf1.Data.ECG.Flag1 = 1;
-						Buf1.Data.ECG.Flag2 = 2;
-						Buf1.Data.ECG.Flag3 = 3;
-						Buf1.Data.ECG.Flag4 = 4;
-						
-						Buf2.Data.ECG.Flag1 = 1;
-						Buf2.Data.ECG.Flag2 = 2;
-						Buf2.Data.ECG.Flag3 = 3;
-						Buf2.Data.ECG.Flag4 = 4;
+						//if(haveUsbSpike)
+						//	print_bt("We have a USB pacer spike on sample %d out of 21\n", Buf1.Data.ECG.Flag1>>1);
 						
 						if(Buf1.Status == BUF_FILLING){
+							// Pack in the spike index
+							Buf1.Data.ECG.Flag1 = (haveUsbSpike) | (usbSpikeIndex << 1);
 							Buf1.Status = BUF_FULL;
 						}
 						else{
+							// Pack in the spike index
+							Buf2.Data.ECG.Flag1 = (haveUsbSpike) | (usbSpikeIndex << 1);
 							Buf2.Status = BUF_FULL;
 						}
 						index=0;	// next interrupt will start a new buffer
+						haveUsbSpike = 0;
 					}
 				}
 				else{ //AcqBufferLock == UNLOCKED
@@ -886,7 +895,7 @@ BEGIN_TASK(TaskAcq)
 		BTBufPhase = 0;
        BTStatus = 0;               // Added by PRV
 		
-#ifndef COMPARE_VERSION
+#ifdef LOGGING_VERSION
 		BTEnable = 1;				// allow Bluetooth to send data
 #endif
 
@@ -963,6 +972,14 @@ BEGIN_TASK(TaskAcq)
 			osWAIT(30); //make sure button is released so we don't catch a bounce
 			LFBiasOff();	// disable lead fail bias for acquisition, so we don't interfere with other instruments (defib?)
 			acqState = FSM_ACQURING;
+			
+			// If we don't have a BT connection, don't bother
+			
+#ifndef COMPARE_VERSION
+			if(!BTEnable)
+				BTOff();
+#endif
+				
 			Seg7LP('A');
 
 			FlashPageNumber = FLASH_ECG_START_PAGE;
@@ -972,7 +989,7 @@ BEGIN_TASK(TaskAcq)
 			// BTBufPhase = 0;
           BTStatus |= 4;
 			//while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 && finalDecimation == 0)
-			while(acqState != FSM_FULL)
+			while(acqState != FSM_FULL && acqState != FSM_COMPARE)
                 { // run while there's still room in flash and button is not pressed
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
 
@@ -1014,11 +1031,11 @@ BEGIN_TASK(TaskAcq)
 						acqState = FSM_WAITINGFORPACKET;
 						haveFinalPacket = 0;
 #else
-						acqState = FSM_FULL;
+						acqState = FSM_COMPARE;
 #endif
 					}
 					
-					if(acqState == FSM_WAITINGFORPACKET && haveFinalPacket == 1) {
+					if((acqState == FSM_WAITINGFORPACKET && (haveFinalPacket == 1 || !BTEnable))) {
 						acqState = FSM_FULL;
 					}		
 													
@@ -1027,6 +1044,7 @@ BEGIN_TASK(TaskAcq)
 		
 			// we ran to the end of the ECG buffer, or the button was pressed
 			StopAcq();
+			BTEnable = 0;
 			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
 
 #ifndef COMPARE_VERSION

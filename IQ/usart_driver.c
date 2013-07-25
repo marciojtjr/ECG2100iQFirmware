@@ -11,6 +11,11 @@
 
 int written = 0;
 
+static int readyBufferPos = 0;
+char readyForCommands = 0;
+
+const char * const readyTest = "READY";
+
 //============================================================
 void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, USART_DREINTLVL_t dreIntLevel){
 	usart_desc->usart = usart;
@@ -30,6 +35,21 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 void USART_RXComplete(USART_desc_t *usart_desc){
 
 	uint8_t c = usart_desc->usart->DATA;	// get the byte
+	
+	// If we're recieving on BT, check to see if we've recieved "READY" yet
+	if(usart_desc == &BTPortDescriptor) {
+		if(!readyForCommands) {	
+			// Have we found the next consecutive character in "READY"?
+			if(c == readyTest[readyBufferPos]) {
+				// Keep going if we have
+				if(++readyBufferPos == 5)
+					readyForCommands = 1;
+			}
+			else
+				// If not, we need to restart
+				readyBufferPos = 0;
+		}
+	}
 	
 	if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
 		if(c=='\r'|| c=='\n'){

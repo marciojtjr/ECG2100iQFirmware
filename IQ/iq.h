@@ -3,8 +3,6 @@
 
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
 //#define COMPARE_VERSION
-//#define LOGGING_VERSION
-
 #define VERSION 1.05
 
 // 1.05 - Built for bluetooth (no change to original prototype)
