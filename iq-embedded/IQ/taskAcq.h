@@ -19,7 +19,7 @@ void UnPackECG(signed int *out, unsigned char *in);
 
 extern float VBatt;
 
-enum {FSM_START, FSM_EMPTY, FSM_VOICERECORDING, FSM_PREACQ, FSM_ACQURING, FSM_WAITINGFORPACKET, FSM_COMPARE, FSM_FULL, FSM_ERASING};
+enum {FSM_START, FSM_EMPTY, FSM_VOICERECORDING, FSM_PREACQ, FSM_ACQURING, FSM_WAITINGFORPACKET, FSM_COMPARE, FSM_FULL, FSM_DONE, FSM_ERASING, FSM_FULL_ON};
 extern unsigned char acqState;
 extern unsigned char btSpikeIndex;
 extern unsigned char usbSpikeIndex;

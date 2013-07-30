@@ -14,6 +14,9 @@
 // 1.01 - first update
 // 1.00 - initial release
 
+//TODO:
+// BT doesn't properly start again if back to 'E' after acquisition and button pressed before timing out
+
 #define AnalogPowerOn() 	PORTC.DIRSET = PIN6_bm; PORTC.OUTSET = PIN6_bm
 #define AnalogPowerOff() 	PORTC.DIRSET = PIN6_bm; PORTC.OUTCLR = PIN6_bm
 
