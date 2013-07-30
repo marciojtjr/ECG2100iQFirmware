@@ -28,7 +28,7 @@ iq.d iq.o iq.o: .././iq.c \
   .././usart_driver.h .././eeprom_driver.h .././adc_driver.h \
   .././taskAcq.h .././seg7.h .././ccpwrite.h .././sleepmgr.h \
   .././config_sleepmgr.h .././lowpower.h .././rtc_driver.h .././eeprom.h \
-  .././TaskFlash.h .././TaskAcq.h .././TaskWatchDog.h
+  .././TaskFlash.h .././TaskAcq.h .././TaskWatchDog.h .././taskBT.h
 
 c:/apps/winavr-20100110/lib/gcc/../../avr/include/avr/io.h:
 
@@ -117,3 +117,5 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/stdlib.h:
 .././TaskAcq.h:
 
 .././TaskWatchDog.h:
+
+.././taskBT.h:

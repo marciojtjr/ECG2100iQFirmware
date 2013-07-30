@@ -32,6 +32,8 @@
 #include "TaskAcq.h"
 #include "TaskWatchDog.h"
 
+#include "taskBT.h"
+
 #define SYS_FREQ 16000	//Hz
 #define RTC_PERIOD	60 // Configure RTC wakeup period to one minute, it clocks at 1 (1024Hz from 32KHz internal oscillator / 1024 prescaler)
 
@@ -173,17 +175,45 @@ BEGIN_TASK(TaskMain)
 		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
 
 		Seg7LP('F');
+		//acqState = FSM_FULL_ON;
+		
+		//MainPowerOn();
+		
+		//------------------------------------------------
+		// CODE FOR PULLING VOICE/ECG OFF IQ WILL GO HERE
+		//------------------------------------------------
 	}
 	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not.
 
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 
 		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
+			//osENABLE_TASK(TaskFlash);
+			//MainPowerOn();
+			
 			do{
 				MainPowerOff();
 				osWAIT(1);
 			}while(ButtonPressed());	// keep watchdog happy until button is released and we power down
 
+			// We made a connection while in Full
+			/*
+			if(BTEnable) {
+				AnalogPowerOn();
+				FlashPowerOn();
+				
+				while(!ButtonPressed() && acqState != FSM_DONE) {
+					osWAIT(1);
+				}
+			}
+			
+			FlashPowerOff();
+			AnalogPowerOff();
+			MainPowerOff();
+			
+			acqState = FSM_DONE;
+			*/
+			
 			// If we get here, we were plugged into USB while the button was being held, now the button is released but USB will keep us powered
 			// The easiest thing to do is probably to jump to the reset vector (letting the watchdog expire would take us to the bootstrap loader)
 			resetVec();

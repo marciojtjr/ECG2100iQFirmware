@@ -117,6 +117,8 @@ BEGIN_TASK(TaskBT)
     BTString[ix++] = 0xFA;  // Preamble byte 6
 
 /* FOR PACE DETECTION */
+
+
     #define BT_PREAMBLE   0
     #define BT_TYPE       6
     #define BT_STATUS     7
@@ -129,7 +131,9 @@ BEGIN_TASK(TaskBT)
 
     #define BT_SIZE     110
 
+
 /* FOR NOT PACE DETECTION */
+
 /*
 	#define BT_PREAMBLE   0
 	#define BT_TYPE       6
@@ -142,6 +146,7 @@ BEGIN_TASK(TaskBT)
 
 	#define BT_SIZE     109
 */
+
 	
 	static int firstTime = 0;
 	static int timer = 0;
@@ -163,7 +168,8 @@ BEGIN_TASK(TaskBT)
 
 	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		// Wait until we're in preacq before turning on the radio
-		while(acqState < FSM_PREACQ) {
+		// Or if we're full, let it go through as well
+		while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
 			osWAIT(1);
 		}			
 		
@@ -187,19 +193,62 @@ BEGIN_TASK(TaskBT)
 				}
 				
 			}	
-			else {
+			else if(BTEnable) {
 				if(BTPortDescriptor.RxReady) {
 					
 					// If we have 'ba' in the Rx buffer, it's the command to begin acquisition
-					if(!strncmp("ba", BTPortDescriptor.RxBuf, 2)) {
+					if(!strncmp("ba", BTPortDescriptor.RxBuf, 2) && acqState == FSM_PREACQ) {
 						acqState = FSM_ACQURING;
 					}
 					// If we have 'sa' in the Rx buffer, it's the command to stop acquisition
-					else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2)) {
+					else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2) && acqState == FSM_ACQURING) {
 						acqState = FSM_WAITINGFORPACKET;
 						haveFinalPacket = 0;
 						BTStatus &= ~4;
 					}
+					else if(!strncmp("ea", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+						int i = 0;
+						unsigned char EraseInProgress = 0;
+						
+						MainPowerOn();			// just in case we lose USB
+						EraseInProgress=1;	// keep auto power off from tripping if we lose USB
+						
+						if(TaskFlashCmd == TF_IDLE){
+							TaskFlashCmd = TF_ERASE_ALL;
+							i=0;
+							do{
+								osWAIT(100);
+								Seg7HP(0x23);
+								osWAIT(100);
+								Seg7HP(0x24);
+								osWAIT(100);
+								Seg7HP(0x25);
+								osWAIT(100);
+								Seg7HP(0x26);
+								osWAIT(100);
+								Seg7HP(0x21);
+								osWAIT(100);
+								Seg7HP(0x22);
+								if(i++%16==15){
+									
+								}
+							}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
+							ElapsedMinutes = 0;
+							Seg7HP(' ');
+							
+							EraseInProgress=0;	// all auto power off on loss of USB
+							acqState = FSM_DONE;
+						}						
+					}
+					
+					/*
+					else if(!strncmp("re", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL) {
+						print_bt("recieved re command\n");
+					}
+					else if(!strncmp("rv", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL) {
+						print_bt("recieved rv command\n");
+					}
+					*/															
 					
 					/*
 					// Simulates a pacer spike for testing
@@ -210,7 +259,12 @@ BEGIN_TASK(TaskBT)
 					
 					
 					BTPortDescriptor.RxReady = 0;
-				}					
+				}
+				
+				if(!(PORTF.IN & PIN7_bm) && acqState == FSM_FULL) {
+					acqState = FSM_DONE;
+				}
+					
 				if(BTReady) {// we have a lead fail model to decimate
 					BTReady=0;
 

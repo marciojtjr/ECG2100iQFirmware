@@ -108,8 +108,6 @@ unsigned int BTBuf[8];	// holds all eight channels of data, decimated from 1KHz 
 unsigned char BTString[6+1+1+1+2+8*12+2]; // Bigger now.
 unsigned char BTStatus;
 
-static unsigned long int high = 0, low = 0;
-
 //unsigned int test;
 
 //------------------------------------------------------------------------------------------
@@ -715,9 +713,6 @@ BEGIN_TASK(TaskAcq)
 		
 		acqState = FSM_START;
 		
-		high = 0;
-		low = 0;
-		
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
 		// if the button is still pressed after erasing, we wait for it to be released
 
@@ -994,12 +989,12 @@ BEGIN_TASK(TaskAcq)
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
 
 // Currently cannot stream and save at the same time. Look into this
-#ifdef COMPARE_VERSION
+//#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF1;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
-#endif
+//#endif
                 
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
@@ -1010,12 +1005,12 @@ BEGIN_TASK(TaskAcq)
 				}
 				if(Buf2.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
 // Currently cannot stream and save at the same time. Look into this
-#ifdef COMPARE_VERSION
+//#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF2;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
 						osYIELD;
 					}
-#endif
+//#endif
                 
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
@@ -1103,17 +1098,34 @@ BEGIN_TASK(TaskAcq)
 
             //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
 #ifndef COMPARE_VERSION
-            //break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+            break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
 #endif
             //=====================================================================================
 
 			if(ButtonTimer<LONG_BUTTON_TIME){	// a short or no press means stop and show 'F'
 				acqState = FSM_FULL;
 				Seg7LP('F');
-				ShutoffTimer = SHUTOFF_TIME;
-				while(ShutoffTimer-- && (ButtonPressed() == 0)){
-					osWAIT(1);
-				}
+				
+				if(!BTEnable) {
+					ShutoffTimer = SHUTOFF_TIME;
+					while(ShutoffTimer-- && (ButtonPressed() == 0)){
+						osWAIT(1);
+					}
+				}							
+				else {
+					ShutoffTimer = 0;
+					while(acqState != FSM_DONE) {
+						osWAIT(1);
+					}
+					
+					BTEnable = 0;
+					BTOff();
+					
+					// We're keeping ACQ active because we can go right back to another aquisition process after this
+					break;
+				}		
+						
+				
 				ElapsedMinutes = 1;	// Start the elapsed time timer. This tells TaskMain to enter low power mode
 				
 				osDISABLE_TASK(TaskAcq); // We're done!
