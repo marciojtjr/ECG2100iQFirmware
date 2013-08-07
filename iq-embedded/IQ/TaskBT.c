@@ -34,6 +34,7 @@ unsigned char BTBufReady;
 unsigned int BTBuf[8];
 unsigned char transferingFullData = 0;
 unsigned char transferingDataType = FULL_TRANSFER_NONE;
+char BTStateString[BT_STATE_SIZE];
 
 enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 static unsigned char format = FORMAT_BINARY;
@@ -120,7 +121,14 @@ BEGIN_TASK(TaskBT)
     BTString[ix++] = 0x3B;  // Preamble byte 4
     BTString[ix++] = 0xAF;  // Preamble byte 5
     BTString[ix++] = 0xFA;  // Preamble byte 6
-
+	
+	BTStateString[0] = 0xFA; // Status preamble byte 1
+	BTStateString[1] = 0xAF; // Status preamble byte 2
+	BTStateString[2] = 0x3B; // Status preamble byte 3
+	BTStateString[3] = 0xB3; // Status preamble byte 4
+	BTStateString[4] = 0x55; // Status preamble byte 5
+	BTStateString[5] = 0xAA; // Status preamble byte 6
+	
 /* FOR PACE DETECTION */
 
 
@@ -201,6 +209,9 @@ BEGIN_TASK(TaskBT)
 					
 					// Clear any status bits that have been set
 					BTStatus = 0;
+					
+					BTStateString[6] = acqState;
+					fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
 				}
 				
 			}	
