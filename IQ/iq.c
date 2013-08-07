@@ -364,7 +364,7 @@ BEGIN_TASK(TaskMain)
 						buttonTimer = 0;
 						while(ButtonPressed() && acqState != FSM_DONE) {
 							osWAIT(1);
-							if(++buttonTimer >= 7000) {
+							if(++buttonTimer >= 5000) {
 								BTOff();
 								BTEnable = 0;
 								unsigned char EraseInProgress = 0;
@@ -414,7 +414,7 @@ BEGIN_TASK(TaskMain)
 						buttonTimer = 0;
 						while(ButtonPressed() && !USBPresent()) {
 							osWAIT(1);
-							if(++buttonTimer >= 7000) {
+							if(++buttonTimer >= 5000) {
 								BTOff();
 								BTEnable = 0;
 								unsigned char EraseInProgress = 0;

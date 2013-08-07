@@ -908,6 +908,8 @@ BEGIN_TASK(TaskAcq)
 			LFReady=0;
 		}
 		
+		acqState = FSM_PREACQ;
+		
 #ifndef COMPARE_VERSION
 		osENABLE_TASK(TaskBT); // Make sure BT the task is running
 #endif
@@ -920,8 +922,6 @@ BEGIN_TASK(TaskAcq)
 #ifdef LOGGING_VERSION
 		BTEnable = 1;				// allow Bluetooth to send data
 #endif
-
-		acqState = FSM_PREACQ;
 		
 		do {	// pre-acquire while the button is not pressed		
 		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
