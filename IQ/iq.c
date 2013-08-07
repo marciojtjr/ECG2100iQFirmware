@@ -80,6 +80,7 @@ void RC32MClock(void){
 }
 
 unsigned int ElapsedMinutes;	// keeps track of time since the ECG was recorded, in minutes.
+unsigned int buttonTimer = 0;
 
 //! Global variable to keep track of which state the program is in.
 uint8_t gState = 0;
@@ -128,6 +129,9 @@ int main(void){
 	if(EE_Rd(EE_ABANDON_TIME)>600){
 		SetDefaults();
 	}
+	if(EE_Rd(EE_ENABLE_VOICE)>1) {
+		EE_Wr(EE_ENABLE_VOICE, 1);
+	}
 
 	while(1){
 
@@ -144,7 +148,6 @@ int main(void){
 	  return 0;  // should never get here
 	}
 }
-
 
 //------------------------------------------------------------------------------------------
 // handle powerups and elapsed time tracking
@@ -175,44 +178,20 @@ BEGIN_TASK(TaskMain)
 		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
 
 		Seg7LP('F');
-		//acqState = FSM_FULL_ON;
+		acqState = FSM_START;
 		
 		//MainPowerOn();
-		
-		//------------------------------------------------
-		// CODE FOR PULLING VOICE/ECG OFF IQ WILL GO HERE
-		//------------------------------------------------
 	}
 	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not.
 
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 
 		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
-			//osENABLE_TASK(TaskFlash);
-			//MainPowerOn();
 			
-			do{
+			do {
 				MainPowerOff();
 				osWAIT(1);
-			}while(ButtonPressed());	// keep watchdog happy until button is released and we power down
-
-			// We made a connection while in Full
-			/*
-			if(BTEnable) {
-				AnalogPowerOn();
-				FlashPowerOn();
-				
-				while(!ButtonPressed() && acqState != FSM_DONE) {
-					osWAIT(1);
-				}
-			}
-			
-			FlashPowerOff();
-			AnalogPowerOff();
-			MainPowerOff();
-			
-			acqState = FSM_DONE;
-			*/
+			}while(ButtonPressed());
 			
 			// If we get here, we were plugged into USB while the button was being held, now the button is released but USB will keep us powered
 			// The easiest thing to do is probably to jump to the reset vector (letting the watchdog expire would take us to the bootstrap loader)
@@ -314,15 +293,19 @@ BEGIN_TASK(TaskMain)
 
 			if(!USBPresent() && CLKSYS_IsReady(OSC_PLLRDY_bm) ){	// if we're not connected to USB (which supplies power) and we're running fast
 //			MainPowerOn();
-				LOWPOWER_Init();	// enter lowest power operating mode to conserve battery energy
-				SlowClock();
-				AnalogPowerOff();
-				FlashPowerOff();
-				InitUSBDetect();
-				InitButton();
+				if(acqState != FSM_FULL_ON) {
+					LOWPOWER_Init();	// enter lowest power operating mode to conserve battery energy
+					SlowClock();
+					AnalogPowerOff();
+					FlashPowerOff();
+					InitUSBDetect();
+					InitButton();
+				}
 			}
 
 			if( USBPresent() && !CLKSYS_IsReady(OSC_PLLRDY_bm) ){ // we're on USB power and not running at high speed, switch to high speed
+				acqState = FSM_START;
+				
 				FastClock();
 				FlashPowerOn();
 				InitUSBUART();
@@ -336,9 +319,6 @@ BEGIN_TASK(TaskMain)
 				}
 			}
 		}	// if(ElapsedMinutes())
-
-
-
 
 		// Now we've got to handle the 7-segment display
 		// If we're powered by USB, we can be 'F'ull, 'C'harging or 'E'mpty
@@ -362,9 +342,122 @@ BEGIN_TASK(TaskMain)
 			if(ButtonPressed()){ // if the button is pressed and TaskAcq is running (and therefore not handling the button), we'll display E or L if we're able to record and F if not
 				if( EE_Rd(EE_VOICE_RECORD_LENGTH)==0 && EE_Rd(EE_ECG_RECORD_LENGTH)==0 ){ // Flash is ready to acquire, see if the battery voltage is high enough to get through a recording
 					Seg7LP('E');
+					acqState = FSM_EMPTY;
 				}
 				else{	// Flash is full, we can't record
 					Seg7LP('F');
+					
+					if(!CLKSYS_IsReady(OSC_PLLRDY_bm) && acqState != FSM_FULL_ON) {
+						FastClock();
+						FlashPowerOn();
+						HIGHPOWER_Init();
+						acqState = FSM_FULL_ON;
+					}
+					else if(ElapsedMinutes && acqState == FSM_FULL_ON) {
+						AnalogPowerOn();
+						
+						osENABLE_TASK(TaskBT);
+						
+						readyForCommands = 1; // We know for sure the chip is ready
+						BTOn(); // Just call BTOn since the BT chip is for sure set up
+						
+						buttonTimer = 0;
+						while(ButtonPressed() && acqState != FSM_DONE) {
+							osWAIT(1);
+							if(++buttonTimer >= 7000) {
+								BTOff();
+								BTEnable = 0;
+								unsigned char EraseInProgress = 0;
+														
+								MainPowerOn();			// just in case we lose USB
+								EraseInProgress=1;	// keep auto power off from tripping if we lose USB
+														
+								if(TaskFlashCmd == TF_IDLE){
+									TaskFlashCmd = TF_ERASE_ALL;
+									do{
+										osWAIT(100);
+										Seg7HP(0x23);
+										osWAIT(100);
+										Seg7HP(0x24);
+										osWAIT(100);
+										Seg7HP(0x25);
+										osWAIT(100);
+										Seg7HP(0x26);
+										osWAIT(100);
+										Seg7HP(0x21);
+										osWAIT(100);
+										Seg7HP(0x22);
+									}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
+									ElapsedMinutes = 0;
+									Seg7HP(' ');
+															
+									EraseInProgress=0;	// all auto power off on loss of USB
+									acqState = FSM_DONE;
+								}
+							}
+						}
+						
+						buttonTimer = 0;
+						while(!BTEnable && !ButtonPressed() && acqState != FSM_DONE) {
+							osWAIT(1);
+							if(++buttonTimer >= 30000)
+								break;
+						}
+
+						// We made a connection while in Full
+						if(BTEnable) {
+							while(!ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
+								osWAIT(1);
+							}
+						}
+						// Wait for button bounce
+						buttonTimer = 0;
+						while(ButtonPressed() && !USBPresent()) {
+							osWAIT(1);
+							if(++buttonTimer >= 7000) {
+								BTOff();
+								BTEnable = 0;
+								unsigned char EraseInProgress = 0;
+														
+								MainPowerOn();			// just in case we lose USB
+								EraseInProgress=1;	// keep auto power off from tripping if we lose USB
+														
+								if(TaskFlashCmd == TF_IDLE){
+									TaskFlashCmd = TF_ERASE_ALL;
+									do{
+										osWAIT(100);
+										Seg7HP(0x23);
+										osWAIT(100);
+										Seg7HP(0x24);
+										osWAIT(100);
+										Seg7HP(0x25);
+										osWAIT(100);
+										Seg7HP(0x26);
+										osWAIT(100);
+										Seg7HP(0x21);
+										osWAIT(100);
+										Seg7HP(0x22);
+									}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
+									ElapsedMinutes = 0;
+									Seg7HP(' ');
+															
+									EraseInProgress=0;	// all auto power off on loss of USB
+									acqState = FSM_DONE;
+								}
+							}
+						}
+						
+						
+						osDISABLE_TASK(TaskBT);
+						
+						BTOff();
+						BTEnable = 0;
+						
+						transferingFullData = 0; // In case we were in the middle of a transmission
+						transferingDataType = FULL_TRANSFER_NONE;
+						
+						acqState = FSM_DONE;
+					}					
 				}
 			}
 			else{ // the button is released and we're still running, so blank the display (it draws a lot of power)

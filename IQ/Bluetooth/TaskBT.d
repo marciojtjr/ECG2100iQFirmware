@@ -26,7 +26,7 @@ TaskBT.d TaskBT.o TaskBT.o: .././TaskBT.c .././taskBT.h \
   c:/apps/winavr-20100110/lib/gcc/../../avr/include/math.h .././rtos.h \
   .././iq.h .././TC_driver.h .././clksys_driver.h .././wdt_driver.h \
   .././eeprom_driver.h .././adc_driver.h .././buffers.h .././taskAcq.h \
-  .././taskFlash.h .././eeprom.h
+  .././taskFlash.h .././eeprom.h .././crc.h
 
 .././taskBT.h:
 
@@ -103,3 +103,5 @@ c:/apps/winavr-20100110/lib/gcc/../../avr/include/math.h:
 .././taskFlash.h:
 
 .././eeprom.h:
+
+.././crc.h:

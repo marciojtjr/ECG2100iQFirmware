@@ -13,6 +13,7 @@ extern "C" {
 #endif
   
 void LOWPOWER_Init( void );
+void HIGHPOWER_Init( void );
 
 #ifdef __cplusplus
 } /* extern "C" */

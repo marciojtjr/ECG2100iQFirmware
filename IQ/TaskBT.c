@@ -28,11 +28,12 @@
 #include "taskFlash.h"
 #include "eeprom.h"
 
-#define BT_USART			USARTE0
-#define BT_USART_PORT PORTE
+#include "crc.h"
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
+unsigned char transferingFullData = 0;
+unsigned char transferingDataType = FULL_TRANSFER_NONE;
 
 enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 static unsigned char format = FORMAT_BINARY;
@@ -104,7 +105,11 @@ BEGIN_TASK(TaskBT)
   
     unsigned char ix = 0;
     static unsigned int FrameIndex = 0;
+#ifdef COMPARE_VERSION
     short crc;
+#else
+	static unsigned int crc;
+#endif
 	static unsigned char sent = 0x00;
 	static uint32_t waiting = 0;
 	static uint32_t beforeSend = 0;
@@ -151,17 +156,20 @@ BEGIN_TASK(TaskBT)
 	static int firstTime = 0;
 	static int timer = 0;
 	
-#ifdef COMPARE_VERSION
-	static float secondsOfEcg = 0;
+//#ifdef COMPARE_VERSION
+	static float secondsOfData = 0;
 	static unsigned int i;
 	static unsigned char j;
-	static unsigned long end;
+	static unsigned long start, end;
+	static float data1,data2;
+	static unsigned char argC;
+	static char cmd[3];
 
-	static int endPage, endIndex;
+	static int startPage, startIndex, endPage, endIndex;
 		
 	#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
 	#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
-#endif
+//#endif
 
 	//==========================================================================================
 	// Bluetooth command parser
@@ -190,6 +198,9 @@ BEGIN_TASK(TaskBT)
 				// Wait until the CD pin goes high (which happens when we enter data mode)
 				if(PORTF.IN & PIN7_bm) {
 					BTEnable = 1;
+					
+					// Clear any status bits that have been set
+					BTStatus = 0;
 				}
 				
 			}	
@@ -207,7 +218,6 @@ BEGIN_TASK(TaskBT)
 						BTStatus &= ~4;
 					}
 					else if(!strncmp("ea", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
-						int i = 0;
 						unsigned char EraseInProgress = 0;
 						
 						MainPowerOn();			// just in case we lose USB
@@ -215,7 +225,6 @@ BEGIN_TASK(TaskBT)
 						
 						if(TaskFlashCmd == TF_IDLE){
 							TaskFlashCmd = TF_ERASE_ALL;
-							i=0;
 							do{
 								osWAIT(100);
 								Seg7HP(0x23);
@@ -229,9 +238,6 @@ BEGIN_TASK(TaskBT)
 								Seg7HP(0x21);
 								osWAIT(100);
 								Seg7HP(0x22);
-								if(i++%16==15){
-									
-								}
 							}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
 							ElapsedMinutes = 0;
 							Seg7HP(' ');
@@ -240,15 +246,20 @@ BEGIN_TASK(TaskBT)
 							acqState = FSM_DONE;
 						}						
 					}
-					
-					/*
-					else if(!strncmp("re", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL) {
-						print_bt("recieved re command\n");
+					else if((!strncmp("re", BTPortDescriptor.RxBuf, 2) || !strncmp("rv", BTPortDescriptor.RxBuf, 2)) && acqState == FSM_FULL_ON) {
+						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%f%f"), &cmd, &data1, &data2);
+						transferingFullData = 1;
+						transferingDataType = (cmd[1] == 'e' ? FULL_TRANSFER_ECG : FULL_TRANSFER_VOICE);
+						BTReady = 0;
+						FlashPageNumber = 0;
+						waiting = 0;
 					}
-					else if(!strncmp("rv", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL) {
-						print_bt("recieved rv command\n");
+					else if(!strncmp("v+", BTPortDescriptor.RxBuf, 2)) {
+						EE_Wr(EE_ENABLE_VOICE, 1);
 					}
-					*/															
+					else if(!strncmp("v-", BTPortDescriptor.RxBuf, 2)) {
+						EE_Wr(EE_ENABLE_VOICE, 0);
+					}																		
 					
 					/*
 					// Simulates a pacer spike for testing
@@ -261,11 +272,192 @@ BEGIN_TASK(TaskBT)
 					BTPortDescriptor.RxReady = 0;
 				}
 				
-				if(!(PORTF.IN & PIN7_bm) && acqState == FSM_FULL) {
+				if(!(PORTF.IN & PIN7_bm) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+					BTEnable = 0;
 					acqState = FSM_DONE;
 				}
-					
-				if(BTReady) {// we have a lead fail model to decimate
+				
+				if(transferingFullData) {
+					if(!BTReady && FlashPageNumber == 0) {
+						Seg7LP('B');
+						
+						argC--;
+						
+						if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of ECG
+							if(data1>(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN*2){
+								data1 = (transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN*2;
+							}
+							data2 = data1;
+						}
+						else if(argC==2){ // we were given both a start time and an end time
+							if(data2<data1){	// fix end<start
+								data2 = data1;
+							}
+							else if(data2>(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN){// fix end bigger than record length
+								data2 = (transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN;
+							}
+							else{
+								data2 = data2;
+							}
+						}
+
+						//if no arguments, dump everything
+						if(argC == 0) {
+							data1 = 0;
+							data2 = (transferingDataType == FULL_TRANSFER_VOICE ?
+							floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 :
+							floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0);
+							data2 -= 0.1f; // We request 100ms less on the PC (not sure why?)
+						}
+
+						// truncate times to 100ms resolution
+						start = data1*10;
+						end = data2*10;
+						// convert to milliseconds
+						start*=100;
+						end*=100;
+						// set end to the last milliscond of the 100ms block
+						end+=99;
+
+						// now we've got valid end times, convert that into flash page numbers and indexes
+						if(transferingDataType == FULL_TRANSFER_VOICE) {
+							startPage = start/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
+							startIndex = start%VOICE_MS_PER_PAGE*16;
+							endPage = end/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
+							endIndex =  end%VOICE_MS_PER_PAGE*16;
+						}
+						else {
+							startPage = start/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+							startIndex = start%ECG_MS_PER_PAGE;
+							endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+							endIndex =  end%ECG_MS_PER_PAGE;
+						}						
+
+						crc = 0xffff;
+						FlashPageNumber=startPage;
+						beforeSend = BTPortDescriptor.TxTotal;
+		
+						BTReady = 1;
+					}	
+					else if(BTReady) {
+						BTReady = 0;
+						// Dump a page
+						beforeSend = BTPortDescriptor.TxTotal;
+						
+						// dump ECG data from full pages between startPage and endPage
+						if(FlashPageNumber == startPage) {
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
+							}
+							for(i=startIndex;i<(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_SAMPLES_PER_PAGE : ECG_SAMPLES_PER_PAGE);i++){
+								if(transferingDataType == FULL_TRANSFER_ECG) {
+									for(j=0;j<12;j++){
+										put_byte(Buf1.Data.ECG.Sample[i][j]);
+										crc(Buf1.Data.ECG.Sample[i][j]);
+									}
+								}
+								else {
+									put_byte(Buf1.Data.Byte[i]);
+									crc(Buf1.Data.Byte[i]);
+								}						
+							}
+							
+							if(transferingDataType == FULL_TRANSFER_ECG) {
+								put_byte(Buf1.Data.ECG.Flag1);
+								waiting++;
+								crc(Buf1.Data.ECG.Flag1);
+							}
+						}
+						else if(FlashPageNumber<endPage){	
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
+							}		
+							for(i=0;i<(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_SAMPLES_PER_PAGE : ECG_SAMPLES_PER_PAGE);i++){
+								if(transferingDataType == FULL_TRANSFER_ECG) {
+									for(j=0;j<12;j++){
+										put_byte(Buf1.Data.ECG.Sample[i][j]);
+										waiting++;
+										crc(Buf1.Data.ECG.Sample[i][j]);
+									}
+								}
+								else {
+									put_byte(Buf1.Data.Byte[i]);
+									waiting++;
+									crc(Buf1.Data.Byte[i]);
+								}							
+							}
+							if(transferingDataType == FULL_TRANSFER_ECG) {
+								put_byte(Buf1.Data.ECG.Flag1);
+								waiting++;
+								crc(Buf1.Data.ECG.Flag1);
+							}
+						}
+						else {
+							FlashPageNumber=endPage;
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
+							}
+							for(i=0;i<=(transferingDataType == FULL_TRANSFER_VOICE ? endIndex+VOICE_SAMPLES_PER_MS-1 : endIndex);i++){
+								if(transferingDataType == FULL_TRANSFER_ECG) {
+									for(j=0;j<12;j++){
+										put_byte(Buf1.Data.ECG.Sample[i][j]);
+										waiting++;
+										crc(Buf1.Data.ECG.Sample[i][j])
+									}
+								}
+								else {
+									put_byte(Buf1.Data.Byte[i]);
+									waiting++;
+									crc(Buf1.Data.Byte[i]);
+								}						
+							}
+							
+							if(transferingDataType == FULL_TRANSFER_ECG) {
+								put_byte(Buf1.Data.ECG.Flag1);
+								waiting++;
+								crc(Buf1.Data.ECG.Flag1);
+							}
+							
+							put_byte(crc);
+							put_byte(crc >> 8);
+							waiting+=2;
+						}
+						
+						// Place the pace flag at the end of the page
+						if(transferingDataType == FULL_TRANSFER_ECG) {
+							put_byte(Buf1.Data.ECG.Flag1);
+							waiting++;
+							crc(Buf1.Data.ECG.Flag1);
+						}						
+							
+					}												
+	
+					if(!BTReady && BTPortDescriptor.TxTotal - beforeSend >= waiting) {
+						// Spec sheet says max transmission delay is 20ms. Subject to change.
+						osWAIT(10);
+		
+						if(FlashPageNumber==endPage) {
+							// Make _absolutely sure_ the BT chip is done transmitting
+							osWAIT(200);
+							Seg7LP('F');
+							transferingFullData = 0;
+							transferingDataType = FULL_TRANSFER_NONE;
+							BTReady = 0;
+						}
+						else {
+							BTReady = 1;	
+							FlashPageNumber++;
+							waiting = 0;
+						}					
+					}		
+				}
+				if(BTReady && !transferingFullData) {// we have a lead fail model to decimate
 					BTReady=0;
 
 					// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
