@@ -50,6 +50,8 @@
 #define LFBiasTog() PORTC.OUTTGL = PIN4_bm;
 #define LFBias()		(PORTC.DIR && PIN4_bm)
 
+void StartFullAcquisitionMode();
+
 #define BIT_FIELD_SIZE 8
 
 typedef struct {

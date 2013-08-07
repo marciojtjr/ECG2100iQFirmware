@@ -32,4 +32,11 @@ void LogMessage(char *message);
 #define print_bt_debug(fmt,...) if(Debug) fprintf_P(bt, PSTR(fmt), ## __VA_ARGS__)
 #define print_bt_verbose(fmt,...) if(Verbose) fprintf_P(bt, PSTR(fmt), ## __VA_ARGS__)
 
+#define BT_USART			USARTE0
+#define BT_USART_PORT PORTE
+
+extern unsigned char transferingFullData;
+enum {FULL_TRANSFER_NONE, FULL_TRANSFER_VOICE, FULL_TRANSFER_ECG};
+extern unsigned char transferingDataType;
+
 #endif

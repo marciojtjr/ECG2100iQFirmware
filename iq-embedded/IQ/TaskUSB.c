@@ -857,6 +857,12 @@ BEGIN_TASK(TaskUSB)
 				else if(strncmp(cmd,"et",2)==0){
 					ElapsedMinutes = 0;
 				}
+				else if(!strncmp("v+", cmd, 2)) {
+					EE_Wr(EE_ENABLE_VOICE, 1);
+				}
+				else if(!strncmp("v-", cmd, 2)) {
+					EE_Wr(EE_ENABLE_VOICE, 0);
+				}
 
 				//-------------------------------------
 				// we didn't recognize a command, say ?

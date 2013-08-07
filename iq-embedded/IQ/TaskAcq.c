@@ -69,6 +69,8 @@ unsigned char btSpikeIndex = 0;
 unsigned char usbSpikeIndex = 0;
 unsigned char nextPacketIsSpike = 0;
 unsigned char haveUsbSpike = 0;
+unsigned int acqTimer = 0;
+unsigned char acqMinutes = 0;
 
 unsigned char AcqIrqState = ACQ_IRQ_IDLE;	// used to hold the current acquisition interrupt state, a task may control acquisition via this "semaphore"
 enum {LOCKED, UNLOCKED};
@@ -107,6 +109,7 @@ unsigned int BTBuf[8];	// holds all eight channels of data, decimated from 1KHz 
 // unsigned char BTString[29]; // room to store the Bluetooth sample output string.
 unsigned char BTString[6+1+1+1+2+8*12+2]; // Bigger now.
 unsigned char BTStatus;
+unsigned int enableVoice = 0;
 
 //unsigned int test;
 
@@ -383,14 +386,11 @@ void AcqInterrupt(){
 				#define LOWER_THRESH 3200
 				
 				// Check for a pacer spike
-				if((PORT_PACE_DETECT.IN & PACE_DETECT_L1) || (PORT_PACE_DETECT.IN & PACE_DETECT_L2) || nextPacketIsSpike) {
+				if((PORT_PACE_DETECT.IN & PACE_DETECT_L1) || (PORT_PACE_DETECT.IN & PACE_DETECT_L2)) {
 					btSpikeIndex = (M*4)+LFBiasModelIndex;
 					usbSpikeIndex = index;
-					if(AcqBufferLock == UNLOCKED) haveUsbSpike = 1;
-					
-					BTStatus |= 8;
-					
-					nextPacketIsSpike = 0;
+					if(AcqBufferLock == UNLOCKED) haveUsbSpike = 1;	
+					if(BTEnable) BTStatus |= 8;
 				}
 
 				// rezero any lead that goes out of bounds
@@ -696,6 +696,7 @@ BEGIN_TASK(TaskAcq)
 	static unsigned int ButtonTimer;
 	static unsigned int ShutoffTimer;
 	static unsigned char i,j;
+	static unsigned char preAcqButtonReleased = 0;
 
 	#define SHUTOFF_TIME 5000	// milliseconds
 	#define LONG_BUTTON_TIME 1000 // ms
@@ -712,6 +713,15 @@ BEGIN_TASK(TaskAcq)
 		AnalogPowerOn();
 		
 		acqState = FSM_START;
+		
+		enableVoice = EE_Rd(EE_ENABLE_VOICE);
+		
+		// In case we broke out during BT transmission
+		if(BTEnable) {
+			osDISABLE_TASK(TaskBT);
+			BTOff();
+			BTEnable = 0;
+		}		
 		
 		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
 		// if the button is still pressed after erasing, we wait for it to be released
@@ -787,7 +797,10 @@ BEGIN_TASK(TaskAcq)
 		osWAIT(30);	// wait for button to stop bouncing
 
 		LFBiasOff();
-		StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
+		
+		if(enableVoice) {
+			StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
+		}		
 		Buf1.Status = BUF_EMPTY; // make the buffers ready
 		Buf2.Status = BUF_EMPTY;
 
@@ -816,38 +829,40 @@ BEGIN_TASK(TaskAcq)
 				osWAIT(1);
 			}
 		}
-		FlashPageNumber = FLASH_VOICE_START_PAGE;	// start from the beginning
-		acqState = FSM_VOICERECORDING;
-		Seg7LP('r');	// we're recording
-		EnableBuffering();
-		while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
-			osWAIT(1);
+		
+		if(enableVoice) {
+			FlashPageNumber = FLASH_VOICE_START_PAGE;	// start from the beginning
+			acqState = FSM_VOICERECORDING;
+			Seg7LP('r');	// we're recording
+			EnableBuffering();
+			while(FlashPageNumber<=FLASH_VOICE_END_PAGE && ButtonPressed() ){ // run while there's still room in flash and the button is pressed
+				osWAIT(1);
 
-			if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 16ms
-				TaskFlashCmd = TF_WRITE_BUF1;
-				while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
-					osYIELD;
+				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 16ms
+					TaskFlashCmd = TF_WRITE_BUF1;
+					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
+						osYIELD;
+					}
+					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
+					FlashPageNumber++;
+					if(FlashPageNumber>FLASH_VOICE_END_PAGE){
+						break;
+					}
 				}
-				Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
-				FlashPageNumber++;
-				if(FlashPageNumber>FLASH_VOICE_END_PAGE){
-					break;
+				else if(Buf2.Status == BUF_FULL){ // wait for Buf2 to fill, which takes 16ms
+					TaskFlashCmd = TF_WRITE_BUF2;
+					while(TaskFlashCmd != TF_IDLE){	// write Buf2 while the interrupt routine fills Buf1
+						osYIELD;
+					}
+					Buf2.Status = BUF_EMPTY;
+					FlashPageNumber++;
+					if(FlashPageNumber>FLASH_VOICE_END_PAGE){
+						break;
+					}
 				}
 			}
-			else if(Buf2.Status == BUF_FULL){ // wait for Buf2 to fill, which takes 16ms
-				TaskFlashCmd = TF_WRITE_BUF2;
-				while(TaskFlashCmd != TF_IDLE){	// write Buf2 while the interrupt routine fills Buf1
-					osYIELD;
-				}
-				Buf2.Status = BUF_EMPTY;
-				FlashPageNumber++;
-				if(FlashPageNumber>FLASH_VOICE_END_PAGE){
-					break;
-				}
-			}
-		}
-		EE_Wr(EE_VOICE_RECORD_LENGTH,FlashPageNumber-FLASH_VOICE_START_PAGE-1);	// remember how much voice we recorded
-
+			EE_Wr(EE_VOICE_RECORD_LENGTH,FlashPageNumber-FLASH_VOICE_START_PAGE-1);	// remember how much voice we recorded
+		}		
 		//------------------------------------------------------------------------------------------
 		// Prepare for Lead QC
 
@@ -874,11 +889,17 @@ BEGIN_TASK(TaskAcq)
 		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
 
 		// Flash
-		while(FlashPageNumber>FLASH_VOICE_END_PAGE && ButtonPressed()){
-			Seg7LP(' ');
-			osWAIT(200);
-			Seg7LP('r');
-			osWAIT(200);
+		if(enableVoice) {
+			while(FlashPageNumber>FLASH_VOICE_END_PAGE && ButtonPressed()){
+				Seg7LP(' ');
+				osWAIT(200);
+				Seg7LP('r');
+				osWAIT(200);
+			}
+			preAcqButtonReleased = 1;
+		}
+		else {
+			preAcqButtonReleased = 0;
 		}
 
 		// start pre-acquisition here so lead QC can get going, but don't start buffering until the button is pressed
@@ -886,9 +907,15 @@ BEGIN_TASK(TaskAcq)
 		if(LFReady){
 			LFReady=0;
 		}
-
+		
+#ifndef COMPARE_VERSION
+		osENABLE_TASK(TaskBT); // Make sure BT the task is running
+#endif
 		BTBufPhase = 0;
        BTStatus = 0;               // Added by PRV
+#ifndef COMPARE_VERSION
+	   BTOn(); // if BT got killed, turn it back on
+#endif
 		
 #ifdef LOGGING_VERSION
 		BTEnable = 1;				// allow Bluetooth to send data
@@ -896,8 +923,9 @@ BEGIN_TASK(TaskAcq)
 
 		acqState = FSM_PREACQ;
 		
-		while(!ButtonPressed() && acqState != FSM_ACQURING){	// pre-acquire while the button is not pressed
-
+		do {	// pre-acquire while the button is not pressed		
+		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
+				
 			osYIELD;
 			if(LFReady){	// this will happen every four milliseconds
 				LFReady=0;
@@ -949,7 +977,13 @@ BEGIN_TASK(TaskAcq)
 					osWAIT(1);
 				}
 			}
-		}
+			
+			if(!ButtonPressed() && !preAcqButtonReleased) {
+				preAcqButtonReleased = 1;
+				osWAIT(30); // wait for bounce
+			}
+			
+		} while(((!ButtonPressed() && preAcqButtonReleased) || (ButtonPressed() && !preAcqButtonReleased)) && acqState != FSM_ACQURING);
 
 		// If we get a short button press, start recording ECG, if we get a long one, empty the voice buffer and start over at 'E'
 		// continue recording until the button is pressed again or we use up all the recording time
@@ -971,11 +1005,14 @@ BEGIN_TASK(TaskAcq)
 			// If we don't have a BT connection, don't bother
 			
 #ifndef COMPARE_VERSION
-			if(!BTEnable)
+			if(!BTEnable) {
+				osDISABLE_TASK(TaskBT);
 				BTOff();
+			}				
 #endif
 				
 			Seg7LP('A');
+			acqTimer = 0;
 
 			FlashPageNumber = FLASH_ECG_START_PAGE;
 			Buf1.Status = BUF_EMPTY;
@@ -986,9 +1023,9 @@ BEGIN_TASK(TaskAcq)
 			//while(FlashPageNumber<=FLASH_ECG_END_PAGE && ButtonPressed()==0 && finalDecimation == 0)
 			while(acqState != FSM_FULL && acqState != FSM_COMPARE)
                 { // run while there's still room in flash and button is not pressed
+				
 				if(Buf1.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
 
-// Currently cannot stream and save at the same time. Look into this
 //#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF1;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
@@ -998,13 +1035,20 @@ BEGIN_TASK(TaskAcq)
                 
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
+					if(!BTEnable) {
+						acqTimer = ((FlashPageNumber-FLASH_ECG_START_PAGE-1)*0.021*10.0)/10.0/60.0;
+						if(acqTimer>=acqMinutes+1) {
+							acqMinutes++;
+							Seg7LP('0'+acqMinutes);
+						}
+					}					
+					
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
 						StopAcq();
 						break;
 					}
 				}
 				if(Buf2.Status == BUF_FULL){ // wait for Buf1 to fill, which takes 21ms
-// Currently cannot stream and save at the same time. Look into this
 //#ifdef COMPARE_VERSION
 					TaskFlashCmd = TF_WRITE_BUF2;
 					while(TaskFlashCmd != TF_IDLE){	// write Buf1 while the interrupt routine fills Buf2
@@ -1014,6 +1058,14 @@ BEGIN_TASK(TaskAcq)
                 
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
+					if(!BTEnable) {
+						acqTimer = ((FlashPageNumber-FLASH_ECG_START_PAGE-1)*0.021*10.0)/10.0/60.0;
+						if(acqTimer>=acqMinutes+1) {
+							acqMinutes++;
+							Seg7LP('0'+acqMinutes);
+						}
+					}					
+					
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
 						StopAcq();
 						break;
@@ -1039,14 +1091,14 @@ BEGIN_TASK(TaskAcq)
 		
 			// we ran to the end of the ECG buffer, or the button was pressed
 			StopAcq();
-			BTEnable = 0;
+			//BTEnable = 0;
 			EE_Wr(EE_ECG_RECORD_LENGTH,FlashPageNumber-FLASH_ECG_START_PAGE-1);	// remember how much ECG we recorded
 
 #ifndef COMPARE_VERSION
            osWAIT(250);
 #endif
 #if BLUETOOTH && !defined(COMPARE_VERSION)
-			BTOff();
+			//BTOff();
 #endif
 			// determine if the button is being pressed, and for how long
 			// a short press shows 'F' and turns us off, a long one erases flash and sends us back to 'E'
@@ -1060,7 +1112,9 @@ BEGIN_TASK(TaskAcq)
 				}
 			}
 			
-#ifdef COMPARE_VERSION			
+#ifdef COMPARE_VERSION
+			osENABLE_TASK(TaskBT);
+			BTOn();
 			while(!ButtonPressed()) {
 				// Flash 'b' on the screen to let user know BT is ready
 				osWAIT(50);
@@ -1098,7 +1152,7 @@ BEGIN_TASK(TaskAcq)
 
             //======= BREAKS CODE BELOW FORCING CANCELATION OF RECORDING! =========================
 #ifndef COMPARE_VERSION
-            break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
+            //break;      // REMOVE BEFORE FLIGHT! Temporary! Disables F functionality.
 #endif
             //=====================================================================================
 
