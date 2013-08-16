@@ -67,7 +67,6 @@ unsigned char acqState = FSM_START;
 unsigned char haveFinalPacket = 0;
 unsigned char btSpikeIndex = 0;
 unsigned char usbSpikeIndex = 0;
-unsigned char nextPacketIsSpike = 0;
 unsigned char haveUsbSpike = 0;
 unsigned int acqTimer = 0;
 unsigned char acqMinutes = 0;
@@ -706,10 +705,11 @@ BEGIN_TASK(TaskAcq)
 	GroundUnused();		// ground unused analog inputs
 
 	AcqBufferLock = LOCKED;
-	StartAcq(ACQ_IRQ_IDLE); // shut down any acquisition that's already running
 	Flags.AcqActive = 1;
 
 	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
+		StartAcq(ACQ_IRQ_IDLE); // shut down any acquisition that's already running
+		
 		AnalogPowerOn();
 		
 		acqState = FSM_START;
@@ -1035,13 +1035,13 @@ BEGIN_TASK(TaskAcq)
                 
 					Buf1.Status = BUF_EMPTY; // return the buffer to the interrupt handler
 					FlashPageNumber++;
-					if(!BTEnable) {
-						acqTimer = ((FlashPageNumber-FLASH_ECG_START_PAGE-1)*0.021*10.0)/10.0/60.0;
-						if(acqTimer>=acqMinutes+1) {
-							acqMinutes++;
-							Seg7LP('0'+acqMinutes);
-						}
-					}					
+					
+					// Only update the timer on Buf1. Saves a bit of processor this way.
+					acqTimer = ((FlashPageNumber-FLASH_ECG_START_PAGE-1)*0.021*10.0)/10.0/60.0;
+					if(acqTimer>=acqMinutes+1) {
+						acqMinutes++;
+						Seg7LP('0'+acqMinutes);
+					}				
 					
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
 						StopAcq();
@@ -1057,14 +1057,7 @@ BEGIN_TASK(TaskAcq)
 //#endif
                 
 					Buf2.Status = BUF_EMPTY; // return the buffer to the interrupt handler
-					FlashPageNumber++;
-					if(!BTEnable) {
-						acqTimer = ((FlashPageNumber-FLASH_ECG_START_PAGE-1)*0.021*10.0)/10.0/60.0;
-						if(acqTimer>=acqMinutes+1) {
-							acqMinutes++;
-							Seg7LP('0'+acqMinutes);
-						}
-					}					
+					FlashPageNumber++;			
 					
 					if(FlashPageNumber>FLASH_ECG_END_PAGE){
 						StopAcq();

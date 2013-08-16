@@ -25,8 +25,6 @@ extern unsigned char btSpikeIndex;
 extern unsigned char usbSpikeIndex;
 extern unsigned char haveUsbSpike;
 
-extern unsigned char nextPacketIsSpike;
-
 extern unsigned char haveFinalPacket;
 
 #endif // taskacq_h

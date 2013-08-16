@@ -63,29 +63,20 @@ void LOWPOWER_Init( void ){
 }
 
 void HIGHPOWER_Init( void ) {
-	// Disable encryption, DMA and event system
-//PR.PRGEN |= PR_AES_bm | PR_DMA_bm | PR_EVSYS_bm | PR_RTC_bm;
+// Enable encryption, DMA and event system
 	PR.PRGEN = 0;
 
-// Disable all timers except Port C
-//PR.PRPC |= PR_HIRES_bm | PR_TC0_bm | PR_TC1_bm;
+// Enable all timers except Port C
 	PR.PRPD = 0;
 	PR.PRPE = 0;
 	PR.PRPF = 0;
 
-// Disable all comm ports except USART on PORTF and SPI on PORTD
+// Enable all comm ports except USART on PORTF and SPI on PORTD
 	PR.PRPC = 0;
 	PR.PRPD = 0;
-//PR.PRPD |= PR_SPI_bm | PR_USART0_bm | PR_USART1_bm;
 	PR.PRPE = 0;
-//PR.PRPF |= PR_USART0_bm;
 
-// Disable analog ports
+// Enable analog ports
 	PR.PRPA = 0;
 	PR.PRPB = 0;
-
-//!!!!!	CCPWrite(&NVM.CTRLB, NVM_EPRM_bm | NVM_FPRM_bm); // Enable EEPROM and Flash power reduction mode.
-
-//	ENABLE_PULLUP();
-//	ENABLE_PULLDOWN();
 }

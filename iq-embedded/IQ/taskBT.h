@@ -22,13 +22,8 @@ extern char logBuffer[109];
 extern char BTStateString[BT_STATE_SIZE];
 extern USART_desc_t BTPortDescriptor;
 
-enum {LOG_IDLE, LOG_WAITING};
-
-extern unsigned char logStatus;
-
 void BTOn(void);
 void BTOff(void);
-void LogMessage(char *message);
 
 // macro to make sending stuff a little easier
 #define print_bt(fmt,...)  fprintf_P(bt, PSTR(fmt), ## __VA_ARGS__)

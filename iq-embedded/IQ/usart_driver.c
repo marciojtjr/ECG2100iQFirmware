@@ -125,5 +125,3 @@ void USART_DataRegEmpty(USART_desc_t *usart_desc){
 		usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
 	}
 }
-
-
