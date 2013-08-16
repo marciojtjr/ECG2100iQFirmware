@@ -167,7 +167,7 @@ BEGIN_TASK(TaskMain)
 
 	//-------------------------------------------------------------------------------------------
 	// First, we handle the power-up condition, where the button was pressed or we were plugged into USB while we were off
-
+	
 	ElapsedMinutes = 0;	// we are powering up, there's no way we can know what the elapsed time is, so zero it
 
 	if(EE_Rd( (EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full
@@ -182,13 +182,40 @@ BEGIN_TASK(TaskMain)
 		
 		//MainPowerOn();
 	}
-	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not.
+	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not. (Now, with Full mode it causes problems. Look into it)
 
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 
-		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
+		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0 || (EE_Rd(EE_VOICE_RECORD_LENGTH) == 0 && EE_Rd(EE_ENABLE_VOICE) == 0)) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
 			
+			buttonTimer = 0;
 			do {
+				Seg7LP('F');
+				if(++buttonTimer >= 5000) {
+					MainPowerOn();
+														
+					if(TaskFlashCmd == TF_IDLE){
+						TaskFlashCmd = TF_ERASE_ALL;
+						do{
+							osWAIT(100);
+							Seg7HP(0x23);
+							osWAIT(100);
+							Seg7HP(0x24);
+							osWAIT(100);
+							Seg7HP(0x25);
+							osWAIT(100);
+							Seg7HP(0x26);
+							osWAIT(100);
+							Seg7HP(0x21);
+							osWAIT(100);
+							Seg7HP(0x22);
+						}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
+						ElapsedMinutes = 0;
+						Seg7HP(' ');
+						MainPowerOff();
+						break;
+					}
+				}									
 				MainPowerOff();
 				osWAIT(1);
 			}while(ButtonPressed());
@@ -291,20 +318,18 @@ BEGIN_TASK(TaskMain)
 
 			// While we are marking time, it's possible that we'll be pluggedinto/unplugged from USB. We have to adjust our clock speed to accommodate that
 
-			if(!USBPresent() && CLKSYS_IsReady(OSC_PLLRDY_bm) ){	// if we're not connected to USB (which supplies power) and we're running fast
+			if(!USBPresent() && CLKSYS_IsReady(OSC_PLLRDY_bm) && acqState != FSM_FULL_ON ){	// if we're not connected to USB (which supplies power) and we're running fast
 //			MainPowerOn();
-				if(acqState != FSM_FULL_ON) {
-					LOWPOWER_Init();	// enter lowest power operating mode to conserve battery energy
-					SlowClock();
-					AnalogPowerOff();
-					FlashPowerOff();
-					InitUSBDetect();
-					InitButton();
-				}
+				LOWPOWER_Init();	// enter lowest power operating mode to conserve battery energy
+				SlowClock();
+				AnalogPowerOff();
+				FlashPowerOff();
+				InitUSBDetect();
+				InitButton();
 			}
 
 			if( USBPresent() && !CLKSYS_IsReady(OSC_PLLRDY_bm) ){ // we're on USB power and not running at high speed, switch to high speed
-				acqState = FSM_START;
+				acqState = FSM_DONE;
 				
 				FastClock();
 				FlashPowerOn();
@@ -353,7 +378,7 @@ BEGIN_TASK(TaskMain)
 						HIGHPOWER_Init();
 						acqState = FSM_FULL_ON;
 					}
-					else if(ElapsedMinutes && acqState == FSM_FULL_ON) {
+					else if(CLKSYS_IsReady(OSC_PLLRDY_bm) && ElapsedMinutes && acqState == FSM_FULL_ON) {
 						AnalogPowerOn();
 						
 						osENABLE_TASK(TaskBT);
@@ -362,15 +387,13 @@ BEGIN_TASK(TaskMain)
 						BTOn(); // Just call BTOn since the BT chip is for sure set up
 						
 						buttonTimer = 0;
-						while(ButtonPressed() && acqState != FSM_DONE) {
+						while(ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
 							osWAIT(1);
 							if(++buttonTimer >= 5000) {
 								BTOff();
 								BTEnable = 0;
-								unsigned char EraseInProgress = 0;
 														
-								MainPowerOn();			// just in case we lose USB
-								EraseInProgress=1;	// keep auto power off from tripping if we lose USB
+								MainPowerOn();
 														
 								if(TaskFlashCmd == TF_IDLE){
 									TaskFlashCmd = TF_ERASE_ALL;
@@ -391,14 +414,13 @@ BEGIN_TASK(TaskMain)
 									ElapsedMinutes = 0;
 									Seg7HP(' ');
 															
-									EraseInProgress=0;	// all auto power off on loss of USB
 									acqState = FSM_DONE;
 								}
 							}
 						}
 						
 						buttonTimer = 0;
-						while(!BTEnable && !ButtonPressed() && acqState != FSM_DONE) {
+						while(!BTEnable && !ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
 							osWAIT(1);
 							if(++buttonTimer >= 30000)
 								break;
@@ -412,15 +434,13 @@ BEGIN_TASK(TaskMain)
 						}
 						// Wait for button bounce
 						buttonTimer = 0;
-						while(ButtonPressed() && !USBPresent()) {
+						while(ButtonPressed() && !USBPresent() && acqState != FSM_DONE) {
 							osWAIT(1);
 							if(++buttonTimer >= 5000) {
 								BTOff();
 								BTEnable = 0;
-								unsigned char EraseInProgress = 0;
 														
 								MainPowerOn();			// just in case we lose USB
-								EraseInProgress=1;	// keep auto power off from tripping if we lose USB
 														
 								if(TaskFlashCmd == TF_IDLE){
 									TaskFlashCmd = TF_ERASE_ALL;
@@ -441,7 +461,6 @@ BEGIN_TASK(TaskMain)
 									ElapsedMinutes = 0;
 									Seg7HP(' ');
 															
-									EraseInProgress=0;	// all auto power off on loss of USB
 									acqState = FSM_DONE;
 								}
 							}

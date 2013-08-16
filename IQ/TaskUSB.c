@@ -115,16 +115,9 @@ void Dump(unsigned int i){
 	}
 }
 
-void dump_flags() {
-	put_byte(Buf1.Data.ECG.Flag1);
-	//put_byte(Buf1.Data.ECG.Flag2);
-	//put_byte(Buf1.Data.ECG.Flag3);
-	//put_byte(Buf1.Data.ECG.Flag4);
-}
-
 //------------------------------------------------------------------------------------
 void Hello(void){
-	print_usb("\r\n\r\nSpaulding IQ BV:%d FV:%1.2f HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)(EE_Rd(EE_SERIAL_NUM)/1000000), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+	print_usb("\r\n\r\nSpaulding IQ BV:%d FV:%1.2f HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 }
 
 
@@ -160,6 +153,10 @@ BEGIN_TASK(TaskUSB)
 	static unsigned char j;
 	static unsigned long start, end;
 	static unsigned char byte;
+	
+	static float ecgLength;
+	static unsigned long trueEnd;
+	static int trueEndPage;
 
 	Hello();
 
@@ -215,6 +212,7 @@ BEGIN_TASK(TaskUSB)
 						argC=sscanf_P( (const char *)USBPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
 						EE_Wr(EE_SERIAL_NUM,start);
 					}
+
 					print_usb("SN:9-%02d-%02d-%04d-101",(int)(EE_Rd(EE_SERIAL_NUM)/1000000), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 				}
 
@@ -709,6 +707,8 @@ BEGIN_TASK(TaskUSB)
 								data2 = data2;
 							}
 						}
+						ecgLength = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
+						ecgLength -= 0.1f;
 
 						// truncate times to 100ms resolution
 						start = data1*10;
@@ -835,8 +835,16 @@ BEGIN_TASK(TaskUSB)
 							osYIELD;
 						}
 						
-						put_byte(Buf1.Data.ECG.Flag1);
-						crc(Buf1.Data.ECG.Flag1);
+						// If we're at the last page of the request
+						trueEnd = ecgLength*10;
+						trueEnd*=100;
+						trueEnd+=99;
+						trueEndPage = trueEnd/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+						if(FlashPageNumber == trueEndPage) {
+							// Dump the pace detection byte
+							put_byte(Buf1.Data.ECG.Flag1);
+							crc(Buf1.Data.ECG.Flag1);
+						}
 						
 						if(format == FORMAT_BINARY){
 							put_byte(crc);

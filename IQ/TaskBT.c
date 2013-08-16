@@ -27,6 +27,7 @@
 #include "taskAcq.h"
 #include "taskFlash.h"
 #include "eeprom.h"
+#include "seg7.h"
 
 #include "crc.h"
 
@@ -38,10 +39,6 @@ char BTStateString[BT_STATE_SIZE];
 
 enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 static unsigned char format = FORMAT_BINARY;
-
-int print_bt_string(char *string) {
-	return fprintf(bt, string);
-}
 
 //##########################################################################################
 // define and allocate globals for the bluetooth task
@@ -111,7 +108,6 @@ BEGIN_TASK(TaskBT)
 #else
 	static unsigned int crc;
 #endif
-	static unsigned char sent = 0x00;
 	static uint32_t waiting = 0;
 	static uint32_t beforeSend = 0;
 
@@ -159,19 +155,18 @@ BEGIN_TASK(TaskBT)
 
 	#define BT_SIZE     109
 */
-
-	
-	static int firstTime = 0;
-	static int timer = 0;
 	
 //#ifdef COMPARE_VERSION
-	static float secondsOfData = 0;
 	static unsigned int i;
 	static unsigned char j;
 	static unsigned long start, end;
 	static float data1,data2;
 	static unsigned char argC;
 	static char cmd[3];
+	
+	static float ecgLength;
+	static unsigned long trueEnd;
+	static int trueEndPage;
 
 	static int startPage, startIndex, endPage, endIndex;
 		
@@ -198,7 +193,14 @@ BEGIN_TASK(TaskBT)
 		
 		// Set PIO5 as the CD pin
 		print_bt("SET CONTROL CD 20 1\r");
-     
+		
+		// Make sure our name is our serial number
+		print_bt("SET BT NAME SpauCliQ%02d%02d%04d\r",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		
+		// Make status updates as fast as possible
+		print_bt("SET BT PAGEMODE 4 2000 1\r");
+		print_bt("SET BT ROLE 0 f 7d00\r");
+		
 		while(1) {		
 #if !defined(COMPARE_VERSION) && !defined(LOGGING_VERSION)
 			if(!BTEnable && acqState != FSM_FULL) {
@@ -210,12 +212,18 @@ BEGIN_TASK(TaskBT)
 					// Clear any status bits that have been set
 					BTStatus = 0;
 					
+					// Write out our current state
 					BTStateString[6] = acqState;
 					fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
 				}
 				
 			}	
 			else if(BTEnable) {
+				if((PORTF.IN & PIN7_bm)==0) {
+					BTEnable = 0;
+					if(acqState == FSM_FULL || acqState == FSM_FULL_ON) acqState = FSM_DONE;
+				}
+				
 				if(BTPortDescriptor.RxReady) {
 					
 					// If we have 'ba' in the Rx buffer, it's the command to begin acquisition
@@ -228,11 +236,9 @@ BEGIN_TASK(TaskBT)
 						haveFinalPacket = 0;
 						BTStatus &= ~4;
 					}
-					else if(!strncmp("ea", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
-						unsigned char EraseInProgress = 0;
-						
+					// 'ea' Erase All
+					else if(!strncmp("ea", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {		
 						MainPowerOn();			// just in case we lose USB
-						EraseInProgress=1;	// keep auto power off from tripping if we lose USB
 						
 						if(TaskFlashCmd == TF_IDLE){
 							TaskFlashCmd = TF_ERASE_ALL;
@@ -252,15 +258,18 @@ BEGIN_TASK(TaskBT)
 							}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
 							ElapsedMinutes = 0;
 							Seg7HP(' ');
-							
-							EraseInProgress=0;	// all auto power off on loss of USB
+
 							acqState = FSM_DONE;
 						}						
 					}
+					// 're' and 'rv' obtain Voice/ECG Data
 					else if((!strncmp("re", BTPortDescriptor.RxBuf, 2) || !strncmp("rv", BTPortDescriptor.RxBuf, 2)) && acqState == FSM_FULL_ON) {
 						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%f%f"), &cmd, &data1, &data2);
 						transferingFullData = 1;
+						// Figure out if it's voice or ECG we want
 						transferingDataType = (cmd[1] == 'e' ? FULL_TRANSFER_ECG : FULL_TRANSFER_VOICE);
+						
+						// Prepare BT
 						BTReady = 0;
 						FlashPageNumber = 0;
 						waiting = 0;
@@ -270,7 +279,26 @@ BEGIN_TASK(TaskBT)
 					}
 					else if(!strncmp("v-", BTPortDescriptor.RxBuf, 2)) {
 						EE_Wr(EE_ENABLE_VOICE, 0);
-					}																		
+					}
+					else if(!strncmp("?v", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
+						print_bt("%1.1f\r\n", floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 );
+					}
+					else if(!strncmp("?e", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
+						print_bt("%1.1f\r\n", floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0 );
+					}
+					else if(!strncmp("?t", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
+						print_bt("%d\r\n", ElapsedMinutes);
+					}
+					else if(!strncmp("sn", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
+						if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
+							argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+							EE_Wr(EE_SERIAL_NUM,start);
+						}
+						print_bt("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+					}
+					else if(!strncmp("et", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
+						ElapsedMinutes = 0;
+					}												
 					
 					/*
 					// Simulates a pacer spike for testing
@@ -281,11 +309,6 @@ BEGIN_TASK(TaskBT)
 					
 					
 					BTPortDescriptor.RxReady = 0;
-				}
-				
-				if(!(PORTF.IN & PIN7_bm) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
-					BTEnable = 0;
-					acqState = FSM_DONE;
 				}
 				
 				if(transferingFullData) {
@@ -320,6 +343,12 @@ BEGIN_TASK(TaskBT)
 							floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0);
 							data2 -= 0.1f; // We request 100ms less on the PC (not sure why?)
 						}
+						
+						// Save the ECG length for later use
+						if(transferingDataType == FULL_TRANSFER_ECG) {
+							ecgLength = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
+							ecgLength -= 0.1f;
+						}							
 
 						// truncate times to 100ms resolution
 						start = data1*10;
@@ -430,23 +459,23 @@ BEGIN_TASK(TaskBT)
 							}
 							
 							if(transferingDataType == FULL_TRANSFER_ECG) {
-								put_byte(Buf1.Data.ECG.Flag1);
-								waiting++;
-								crc(Buf1.Data.ECG.Flag1);
-							}
+								// If we're at the last page of the request
+								trueEnd = ecgLength*10;
+								trueEnd*=100;
+								trueEnd+=99;
+								trueEndPage = trueEnd/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+								if(FlashPageNumber == trueEndPage) {
+									// Dump the pace detection byte
+									put_byte(Buf1.Data.ECG.Flag1);
+									waiting++;
+									crc(Buf1.Data.ECG.Flag1);
+								}
+							}							
 							
 							put_byte(crc);
 							put_byte(crc >> 8);
 							waiting+=2;
-						}
-						
-						// Place the pace flag at the end of the page
-						if(transferingDataType == FULL_TRANSFER_ECG) {
-							put_byte(Buf1.Data.ECG.Flag1);
-							waiting++;
-							crc(Buf1.Data.ECG.Flag1);
-						}						
-							
+							}																						
 					}												
 	
 					if(!BTReady && BTPortDescriptor.TxTotal - beforeSend >= waiting) {
