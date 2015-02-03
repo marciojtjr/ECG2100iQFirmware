@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include <avr/io.h>
 #include "avr_compiler.h"
 #include "spi_driver.h"
@@ -39,9 +41,9 @@ unsigned int FlashPageNumber;					// set by others to tell us which page to read
 BEGIN_TASK(TaskFlash)
 
 	static unsigned char sector, endSector;
-	static unsigned int i;
+	//static unsigned int i;
 
-	DPLEDOn();
+	//DPLEDOn();
 	FlashPowerOn();
 	osWAIT(10);
 
@@ -53,6 +55,7 @@ BEGIN_TASK(TaskFlash)
            true,										// use double speed
            SPI_PRESCALER_DIV4_gc);	// that's clk/2 or 16mbps
 
+/*
 	do{	// check memory ID until it's correct
 		osWAIT(1);
 		SPI_SS_Lo(&spiDescriptor);
@@ -64,6 +67,7 @@ BEGIN_TASK(TaskFlash)
 		SPI_SS_Hi(&spiDescriptor);
 	}while(Buf1.Data.Byte[0]!=0x20);
 	DPLEDOff();
+*/
 
 	//===========================================================================================
 	// endlessly watch for commands from AcqTask (program) or USBTask (read, erase)
@@ -131,7 +135,7 @@ BEGIN_TASK(TaskFlash)
 					}while(status==FSTS_BUSY);
 				}
 			}
-
+/*
 			//-----------------------------------------------------------------------------------------
 			// Write the bytes in Buf1 or Buf2 to the page specified by FlashPageNumber
 			else if(TaskFlashCmd == TF_WRITE_BUF1 || TaskFlashCmd == TF_WRITE_BUF2){
@@ -182,7 +186,7 @@ BEGIN_TASK(TaskFlash)
 				}
 				SPI_SS_Hi(&spiDescriptor); // deselect
 			}
-
+*/
 			//-----------------------------------------------------------------------------------------
 			// Put Flash into deep powerdown
 			else if(TaskFlashCmd == TF_SLEEP){
@@ -236,6 +240,4 @@ BEGIN_TASK(TaskFlash)
 
 END_TASK
 
-
-
-
+#endif

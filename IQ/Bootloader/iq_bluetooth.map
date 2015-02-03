@@ -1,0 +1,724 @@
+Archive member included because of file (symbol)
+
+c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+                              c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o (exit)
+c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+                              main.o (__do_copy_data)
+c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+                              main.o (__do_clear_bss)
+
+Allocating common symbols
+Common symbol       size              file
+
+AppCRC              0x4               main.o
+timeout             0x4               serial.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00100000         xr
+data             0x00802000         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+LOAD main.o
+LOAD serial.o
+LOAD sp_driver.o
+LOAD taskPaceSimu.o
+LOAD rtos.o
+LOAD wdt_driver.o
+LOAD clksys_driver.o
+LOAD TC_driver.o
+LOAD iq.o
+LOAD TaskAcq.o
+LOAD usart_driver.o
+LOAD adc_driver.o
+LOAD eeprom_driver.o
+LOAD TaskUSB.o
+LOAD TaskFlash.o
+LOAD spi_driver.o
+LOAD lowpower.o
+LOAD rtc_driver.o
+LOAD sleepmgr.o
+LOAD ccpwrite.o
+LOAD seg7.o
+LOAD buffers.o
+LOAD ulaw.o
+LOAD eeprom.o
+LOAD TaskBT.o
+LOAD TaskWatchDog.o
+LOAD crc.o
+START GROUP
+END GROUP
+Address of section .text set to 0x10000
+LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a
+LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4\libc.a
+LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00010000      0xd02
+ *(.vectors)
+ .vectors       0x00010000      0x1e8 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+                0x00010000                __vector_default
+                0x00010000                __vectors
+ *(.vectors)
+ *(.progmem.gcc*)
+ *(.progmem*)
+                0x000101e8                . = ALIGN (0x2)
+                0x000101e8                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x000101e8        0x0 linker stubs
+ *(.trampolines*)
+                0x000101e8                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x000101e8                __ctors_start = .
+ *(.ctors)
+                0x000101e8                __ctors_end = .
+                0x000101e8                __dtors_start = .
+ *(.dtors)
+                0x000101e8                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x000101e8        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+                0x000101e8                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x000101e8        0xc c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x000101f4       0x1a c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+                0x000101f4                __do_copy_data
+ .init4         0x0001020e       0x10 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+                0x0001020e                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x0001021e        0x8 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+ *(.init9)
+ *(.text)
+ .text          0x00010226        0x4 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+                0x00010226                __vector_38
+                0x00010226                __vector_104
+                0x00010226                __vector_22
+                0x00010226                __vector_63
+                0x00010226                __vector_28
+                0x00010226                __vector_67
+                0x00010226                __vector_1
+                0x00010226                __vector_119
+                0x00010226                __vector_32
+                0x00010226                __vector_75
+                0x00010226                __vector_71
+                0x00010226                __vector_91
+                0x00010226                __vector_34
+                0x00010226                __vector_62
+                0x00010226                __vector_77
+                0x00010226                __vector_102
+                0x00010226                __vector_24
+                0x00010226                __vector_12
+                0x00010226                __vector_55
+                0x00010226                __vector_69
+                0x00010226                __vector_81
+                0x00010226                __vector_90
+                0x00010226                __vector_46
+                0x00010226                __bad_interrupt
+                0x00010226                __vector_72
+                0x00010226                __vector_114
+                0x00010226                __vector_6
+                0x00010226                __vector_110
+                0x00010226                __vector_31
+                0x00010226                __vector_92
+                0x00010226                __vector_35
+                0x00010226                __vector_78
+                0x00010226                __vector_74
+                0x00010226                __vector_117
+                0x00010226                __vector_39
+                0x00010226                __vector_107
+                0x00010226                __vector_3
+                0x00010226                __vector_105
+                0x00010226                __vector_98
+                0x00010226                __vector_23
+                0x00010226                __vector_68
+                0x00010226                __vector_30
+                0x00010226                __vector_73
+                0x00010226                __vector_45
+                0x00010226                __vector_25
+                0x00010226                __vector_93
+                0x00010226                __vector_61
+                0x00010226                __vector_11
+                0x00010226                __vector_54
+                0x00010226                __vector_99
+                0x00010226                __vector_13
+                0x00010226                __vector_17
+                0x00010226                __vector_19
+                0x00010226                __vector_56
+                0x00010226                __vector_7
+                0x00010226                __vector_49
+                0x00010226                __vector_41
+                0x00010226                __vector_86
+                0x00010226                __vector_100
+                0x00010226                __vector_101
+                0x00010226                __vector_64
+                0x00010226                __vector_88
+                0x00010226                __vector_109
+                0x00010226                __vector_43
+                0x00010226                __vector_27
+                0x00010226                __vector_5
+                0x00010226                __vector_113
+                0x00010226                __vector_33
+                0x00010226                __vector_76
+                0x00010226                __vector_115
+                0x00010226                __vector_47
+                0x00010226                __vector_52
+                0x00010226                __vector_37
+                0x00010226                __vector_95
+                0x00010226                __vector_103
+                0x00010226                __vector_96
+                0x00010226                __vector_89
+                0x00010226                __vector_108
+                0x00010226                __vector_4
+                0x00010226                __vector_44
+                0x00010226                __vector_82
+                0x00010226                __vector_106
+                0x00010226                __vector_118
+                0x00010226                __vector_51
+                0x00010226                __vector_9
+                0x00010226                __vector_2
+                0x00010226                __vector_21
+                0x00010226                __vector_15
+                0x00010226                __vector_66
+                0x00010226                __vector_36
+                0x00010226                __vector_79
+                0x00010226                __vector_58
+                0x00010226                __vector_70
+                0x00010226                __vector_83
+                0x00010226                __vector_29
+                0x00010226                __vector_60
+                0x00010226                __vector_121
+                0x00010226                __vector_40
+                0x00010226                __vector_85
+                0x00010226                __vector_94
+                0x00010226                __vector_8
+                0x00010226                __vector_26
+                0x00010226                __vector_48
+                0x00010226                __vector_116
+                0x00010226                __vector_112
+                0x00010226                __vector_111
+                0x00010226                __vector_80
+                0x00010226                __vector_14
+                0x00010226                __vector_84
+                0x00010226                __vector_57
+                0x00010226                __vector_53
+                0x00010226                __vector_10
+                0x00010226                __vector_50
+                0x00010226                __vector_16
+                0x00010226                __vector_59
+                0x00010226                __vector_18
+                0x00010226                __vector_97
+                0x00010226                __vector_20
+                0x00010226                __vector_42
+                0x00010226                __vector_87
+                0x00010226                __vector_65
+                0x00010226                __vector_120
+ .text          0x0001022a      0x1b2 main.o
+                0x0001022a                gotoApp
+                0x00010240                FastClock
+                0x0001028c                BlockLoad
+                0x00010354                BlockRead
+ .text          0x000103dc       0x6a serial.o
+                0x000103dc                initbootuart
+                0x00010410                sendchar
+                0x0001042c                recchar
+ .text          0x00010446        0x0 sp_driver.o
+ .text          0x00010446        0x0 taskPaceSimu.o
+ .text          0x00010446        0x0 rtos.o
+ .text          0x00010446        0x0 wdt_driver.o
+ .text          0x00010446       0xca clksys_driver.o
+                0x00010446                CLKSYS_XOSC_Config
+                0x0001045c                CLKSYS_PLL_Config
+                0x00010468                CLKSYS_Disable
+                0x0001047c                CLKSYS_Prescalers_Config
+                0x00010488                CLKSYS_Main_ClockSource_Select
+                0x000104ae                CLKSYS_RTC_ClockSource_Enable
+                0x000104be                CLKSYS_AutoCalibration_Enable
+                0x000104f8                CLKSYS_XOSC_FailureDetection_Enable
+                0x00010504                CLKSYS_Configuration_Lock
+ .text          0x00010510        0x0 TC_driver.o
+ .text          0x00010510        0x0 iq.o
+ .text          0x00010510        0x0 TaskAcq.o
+ .text          0x00010510        0x0 usart_driver.o
+ .text          0x00010510        0x0 adc_driver.o
+ .text          0x00010510      0x282 eeprom_driver.o
+                0x00010510                EEPROM_WaitForNVM
+                0x0001051a                EEPROM_ReadByte
+                0x0001057c                EEPROM_FlushBuffer
+                0x000105ae                EEPROM_WriteByte
+                0x0001061c                EEPROM_LoadByte
+                0x0001064c                EEPROM_LoadPage
+                0x00010678                EEPROM_AtomicWritePage
+                0x000106c8                EEPROM_ErasePage
+                0x00010718                EEPROM_SplitWritePage
+                0x00010768                EEPROM_EraseAll
+ .text          0x00010792        0x0 TaskUSB.o
+ .text          0x00010792        0x0 TaskFlash.o
+ .text          0x00010792        0x0 spi_driver.o
+ .text          0x00010792        0x0 lowpower.o
+ .text          0x00010792        0x0 rtc_driver.o
+ .text          0x00010792        0x0 sleepmgr.o
+ .text          0x00010792       0x2a ccpwrite.o
+                0x00010792                CCPWrite
+ .text          0x000107bc       0xc0 seg7.o
+                0x000107bc                Seg7A
+                0x000107d4                Seg7B
+                0x000107ec                Seg7C
+                0x00010804                Seg7D
+                0x0001081c                Seg7E
+                0x00010834                Seg7F
+                0x0001084c                Seg7G
+                0x00010864                Seg7DP
+ .text          0x0001087c        0x0 buffers.o
+ .text          0x0001087c        0x0 ulaw.o
+ .text          0x0001087c      0x14a eeprom.o
+                0x0001087c                EE_Rd
+                0x0001093a                EE_Wr
+ .text          0x000109c6        0x0 TaskBT.o
+ .text          0x000109c6        0x0 TaskWatchDog.o
+ .text          0x000109c6        0x0 crc.o
+ .text          0x000109c6        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .text          0x000109c6        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .text          0x000109c6        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+                0x000109c6                . = ALIGN (0x2)
+ *(.text.*)
+ .text.startup  0x000109c6      0x338 main.o
+                0x000109c6                main
+ .text.libgcc   0x00010cfe        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .text.libgcc   0x00010cfe        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .text.libgcc   0x00010cfe        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+                0x00010cfe                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x00010cfe        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+                0x00010cfe                _exit
+                0x00010cfe                exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x00010cfe        0x4 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ *(.fini0)
+                0x00010d02                _etext = .
+
+.data           0x00802000        0x0 load address 0x00010d02
+                0x00802000                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00802000        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+ .data          0x00802000        0x0 main.o
+ .data          0x00802000        0x0 serial.o
+ .data          0x00802000        0x0 sp_driver.o
+ .data          0x00802000        0x0 taskPaceSimu.o
+ .data          0x00802000        0x0 rtos.o
+ .data          0x00802000        0x0 wdt_driver.o
+ .data          0x00802000        0x0 clksys_driver.o
+ .data          0x00802000        0x0 TC_driver.o
+ .data          0x00802000        0x0 iq.o
+ .data          0x00802000        0x0 TaskAcq.o
+ .data          0x00802000        0x0 usart_driver.o
+ .data          0x00802000        0x0 adc_driver.o
+ .data          0x00802000        0x0 eeprom_driver.o
+ .data          0x00802000        0x0 TaskUSB.o
+ .data          0x00802000        0x0 TaskFlash.o
+ .data          0x00802000        0x0 spi_driver.o
+ .data          0x00802000        0x0 lowpower.o
+ .data          0x00802000        0x0 rtc_driver.o
+ .data          0x00802000        0x0 sleepmgr.o
+ .data          0x00802000        0x0 ccpwrite.o
+ .data          0x00802000        0x0 seg7.o
+ .data          0x00802000        0x0 buffers.o
+ .data          0x00802000        0x0 ulaw.o
+ .data          0x00802000        0x0 eeprom.o
+ .data          0x00802000        0x0 TaskBT.o
+ .data          0x00802000        0x0 TaskWatchDog.o
+ .data          0x00802000        0x0 crc.o
+ .data          0x00802000        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .data          0x00802000        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .data          0x00802000        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ *(.gnu.linkonce.d*)
+                0x00802000                . = ALIGN (0x2)
+                0x00802000                _edata = .
+                0x00802000                PROVIDE (__data_end, .)
+
+.bss            0x00802000        0xa
+                0x00802000                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x00802000        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+ .bss           0x00802000        0x2 main.o
+                0x00802000                appVec
+ .bss           0x00802002        0x0 serial.o
+ .bss           0x00802002        0x0 sp_driver.o
+ .bss           0x00802002        0x0 taskPaceSimu.o
+ .bss           0x00802002        0x0 rtos.o
+ .bss           0x00802002        0x0 wdt_driver.o
+ .bss           0x00802002        0x0 clksys_driver.o
+ .bss           0x00802002        0x0 TC_driver.o
+ .bss           0x00802002        0x0 iq.o
+ .bss           0x00802002        0x0 TaskAcq.o
+ .bss           0x00802002        0x0 usart_driver.o
+ .bss           0x00802002        0x0 adc_driver.o
+ .bss           0x00802002        0x0 eeprom_driver.o
+ .bss           0x00802002        0x0 TaskUSB.o
+ .bss           0x00802002        0x0 TaskFlash.o
+ .bss           0x00802002        0x0 spi_driver.o
+ .bss           0x00802002        0x0 lowpower.o
+ .bss           0x00802002        0x0 rtc_driver.o
+ .bss           0x00802002        0x0 sleepmgr.o
+ .bss           0x00802002        0x0 ccpwrite.o
+ .bss           0x00802002        0x0 seg7.o
+ .bss           0x00802002        0x0 buffers.o
+ .bss           0x00802002        0x0 ulaw.o
+ .bss           0x00802002        0x0 eeprom.o
+ .bss           0x00802002        0x0 TaskBT.o
+ .bss           0x00802002        0x0 TaskWatchDog.o
+ .bss           0x00802002        0x0 crc.o
+ .bss           0x00802002        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .bss           0x00802002        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .bss           0x00802002        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+ *(.bss*)
+ *(COMMON)
+ COMMON         0x00802002        0x4 main.o
+                0x00802002                AppCRC
+ COMMON         0x00802006        0x4 serial.o
+                0x00802006                timeout
+                0x0080200a                PROVIDE (__bss_end, .)
+                0x00010d02                __data_load_start = LOADADDR (.data)
+                0x00010d02                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x0080200a        0x0
+                0x0080200a                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x0080200a                PROVIDE (__noinit_end, .)
+                0x0080200a                _end = .
+                0x0080200a                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000        0x0
+ *(.eeprom*)
+                0x00810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab           0x00000000      0x6cc
+ *(.stab)
+ .stab          0x00000000      0x6cc c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+
+.stabstr        0x00000000       0x85
+ *(.stabstr)
+ .stabstr       0x00000000       0x85 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avrxmega4/crtx64a3.o
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000      0x148
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x28 main.o
+ .debug_aranges
+                0x00000028       0x20 serial.o
+ .debug_aranges
+                0x00000048       0x20 clksys_driver.o
+ .debug_aranges
+                0x00000068       0x20 eeprom_driver.o
+ .debug_aranges
+                0x00000088       0x20 ccpwrite.o
+ .debug_aranges
+                0x000000a8       0x20 seg7.o
+ .debug_aranges
+                0x000000c8       0x20 eeprom.o
+ .debug_aranges
+                0x000000e8       0x20 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .debug_aranges
+                0x00000108       0x20 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .debug_aranges
+                0x00000128       0x20 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info     0x00000000     0x1c59
+ *(.debug_info)
+ .debug_info    0x00000000      0x717 main.o
+ .debug_info    0x00000717      0x30d serial.o
+ .debug_info    0x00000a24      0x51f clksys_driver.o
+ .debug_info    0x00000f43      0x454 eeprom_driver.o
+ .debug_info    0x00001397       0xe1 ccpwrite.o
+ .debug_info    0x00001478      0x355 seg7.o
+ .debug_info    0x000017cd      0x1e6 eeprom.o
+ .debug_info    0x000019b3       0xe2 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .debug_info    0x00001a95       0xe2 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .debug_info    0x00001b77       0xe2 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev   0x00000000      0x77c
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000      0x170 main.o
+ .debug_abbrev  0x00000170       0xd9 serial.o
+ .debug_abbrev  0x00000249        0x1 taskPaceSimu.o
+ .debug_abbrev  0x0000024a        0x1 rtos.o
+ .debug_abbrev  0x0000024b        0x1 wdt_driver.o
+ .debug_abbrev  0x0000024c      0x139 clksys_driver.o
+ .debug_abbrev  0x00000385        0x1 TC_driver.o
+ .debug_abbrev  0x00000386        0x1 iq.o
+ .debug_abbrev  0x00000387        0x1 TaskAcq.o
+ .debug_abbrev  0x00000388        0x1 usart_driver.o
+ .debug_abbrev  0x00000389        0x1 adc_driver.o
+ .debug_abbrev  0x0000038a      0x174 eeprom_driver.o
+ .debug_abbrev  0x000004fe        0x1 TaskUSB.o
+ .debug_abbrev  0x000004ff        0x1 TaskFlash.o
+ .debug_abbrev  0x00000500        0x1 spi_driver.o
+ .debug_abbrev  0x00000501        0x1 lowpower.o
+ .debug_abbrev  0x00000502        0x1 rtc_driver.o
+ .debug_abbrev  0x00000503        0x1 sleepmgr.o
+ .debug_abbrev  0x00000504       0xb2 ccpwrite.o
+ .debug_abbrev  0x000005b6       0xbe seg7.o
+ .debug_abbrev  0x00000674        0x1 buffers.o
+ .debug_abbrev  0x00000675        0x1 ulaw.o
+ .debug_abbrev  0x00000676       0xc7 eeprom.o
+ .debug_abbrev  0x0000073d        0x1 TaskBT.o
+ .debug_abbrev  0x0000073e        0x1 TaskWatchDog.o
+ .debug_abbrev  0x0000073f        0x1 crc.o
+ .debug_abbrev  0x00000740       0x14 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .debug_abbrev  0x00000754       0x14 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .debug_abbrev  0x00000768       0x14 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+
+.debug_line     0x00000000      0xbc3
+ *(.debug_line)
+ .debug_line    0x00000000      0x276 main.o
+ .debug_line    0x00000276       0xf3 serial.o
+ .debug_line    0x00000369        0x0 taskPaceSimu.o
+ .debug_line    0x00000369        0x0 rtos.o
+ .debug_line    0x00000369        0x0 wdt_driver.o
+ .debug_line    0x00000369      0x1c0 clksys_driver.o
+ .debug_line    0x00000529        0x0 TC_driver.o
+ .debug_line    0x00000529        0x0 iq.o
+ .debug_line    0x00000529        0x0 TaskAcq.o
+ .debug_line    0x00000529        0x0 usart_driver.o
+ .debug_line    0x00000529        0x0 adc_driver.o
+ .debug_line    0x00000529      0x1eb eeprom_driver.o
+ .debug_line    0x00000714        0x0 TaskUSB.o
+ .debug_line    0x00000714        0x0 TaskFlash.o
+ .debug_line    0x00000714        0x0 spi_driver.o
+ .debug_line    0x00000714        0x0 lowpower.o
+ .debug_line    0x00000714        0x0 rtc_driver.o
+ .debug_line    0x00000714        0x0 sleepmgr.o
+ .debug_line    0x00000714      0x17c ccpwrite.o
+ .debug_line    0x00000890      0x107 seg7.o
+ .debug_line    0x00000997        0x0 buffers.o
+ .debug_line    0x00000997        0x0 ulaw.o
+ .debug_line    0x00000997       0x83 eeprom.o
+ .debug_line    0x00000a1a        0x0 TaskBT.o
+ .debug_line    0x00000a1a        0x0 TaskWatchDog.o
+ .debug_line    0x00000a1a        0x0 crc.o
+ .debug_line    0x00000a1a       0x88 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_exit.o)
+ .debug_line    0x00000aa2       0x93 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_copy_data.o)
+ .debug_line    0x00000b35       0x8e c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.0.65/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avrxmega4\libgcc.a(_clear_bss.o)
+
+.debug_frame    0x00000000      0x454
+ *(.debug_frame)
+ .debug_frame   0x00000000       0xc4 main.o
+ .debug_frame   0x000000c4       0x44 serial.o
+ .debug_frame   0x00000108       0xb4 clksys_driver.o
+ .debug_frame   0x000001bc      0x120 eeprom_driver.o
+ .debug_frame   0x000002dc       0x3c ccpwrite.o
+ .debug_frame   0x00000318       0x94 seg7.o
+ .debug_frame   0x000003ac       0xa8 eeprom.o
+
+.debug_str      0x00000000      0xea1
+ *(.debug_str)
+ .debug_str     0x00000000      0x6f8 main.o
+                                0x745 (size before relaxing)
+ .debug_str     0x000006f8       0x88 serial.o
+                                0x1fd (size before relaxing)
+ .debug_str     0x00000780      0x2a6 clksys_driver.o
+                                0x668 (size before relaxing)
+ .debug_str     0x00000a26      0x3ba eeprom_driver.o
+                                0x4ff (size before relaxing)
+ .debug_str     0x00000de0       0x4d ccpwrite.o
+                                 0xf3 (size before relaxing)
+ .debug_str     0x00000e2d       0x3d seg7.o
+                                0x25c (size before relaxing)
+ .debug_str     0x00000e6a       0x37 eeprom.o
+                                0x1db (size before relaxing)
+
+.debug_loc      0x00000000      0xaa4
+ *(.debug_loc)
+ .debug_loc     0x00000000      0x2d0 main.o
+ .debug_loc     0x000002d0       0x52 serial.o
+ .debug_loc     0x00000322      0x183 clksys_driver.o
+ .debug_loc     0x000004a5      0x349 eeprom_driver.o
+ .debug_loc     0x000007ee       0x85 ccpwrite.o
+ .debug_loc     0x00000873      0x231 eeprom.o
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(iq_bluetooth.elf elf32-avr)
+LOAD linker stubs
+
+.debug_ranges   0x00000000       0x18
+ .debug_ranges  0x00000000       0x18 main.o

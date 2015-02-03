@@ -1,3 +1,5 @@
+
+#ifndef BOOTLOADER
 #ifndef WDT_DRIVER_H
 #define WDT_DRIVER_H
 
@@ -24,4 +26,5 @@ bool WDT_EnableWindowMode( void );
 bool WDT_EnableWindowModeAndSetTimeout( WDT_WPER_t period );
 void WDT_DisableWindowMode( void );
 
+#endif
 #endif

@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include "spi_driver.h"
 
 // Initialize SPI module as master
@@ -53,4 +55,4 @@ uint8_t SPI_TransceiveByte(SPI_Descriptor_t *descriptor, uint8_t TXdata){
 	while(!(descriptor->module->STATUS & SPI_IF_bm)); 	// wait complete
 	return(descriptor->module->DATA);	// return received byte
 }
-
+#endif

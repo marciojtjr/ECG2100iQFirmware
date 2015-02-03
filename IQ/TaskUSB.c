@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include <avr/io.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -28,6 +30,23 @@
 #include "crc.h"
 #include "seg7.h"
 #include "TaskWatchDog.h"
+#include "taskBT.h"
+#include "taskUSB.h"
+
+#include "apple.h"
+
+#ifdef WORKING
+#define BYTETOBINARYPATTERN "%d%d%d%d%d%d%d%d"
+#define BYTETOBINARY(byte)  \
+(byte & 0x80 ? 1 : 0), \
+(byte & 0x40 ? 1 : 0), \
+(byte & 0x20 ? 1 : 0), \
+(byte & 0x10 ? 1 : 0), \
+(byte & 0x08 ? 1 : 0), \
+(byte & 0x04 ? 1 : 0), \
+(byte & 0x02 ? 1 : 0), \
+(byte & 0x01 ? 1 : 0)
+#endif
 
 //#include "sp_driver.h"
 
@@ -42,15 +61,15 @@ enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 USART_desc_t USBPortDescriptor;	// a descriptor for the USART connected to the USB bridge chip
 static int put_usb( char c, FILE *stream){
 	uart_putchar(&USBPortDescriptor,c);
-	return(0);
+	return(0); 
 }
 
 #define put_byte(c) uart_putchar(&USBPortDescriptor,c)
-
-static FILE usb_str = FDEV_SETUP_STREAM(put_usb, 0, _FDEV_SETUP_WRITE);
+ 
+FILE usb_str = FDEV_SETUP_STREAM(put_usb, 0, _FDEV_SETUP_WRITE);
 FILE *usb;
 
-unsigned char Base64[64] PROGMEM = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+const unsigned char Base64[64] PROGMEM = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
 unsigned char Verbose = 0;	// used to control whether print_debug() messages are printed or ignored
 unsigned char Debug = 0; // used to control print_debug() statements
 unsigned char FlowControl;
@@ -58,9 +77,13 @@ unsigned char EraseInProgress = 0;
 
 // macro to make printing stuff a little easier
 #define print_usb(fmt,...)  fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
-#define print_debug(fmt,...) if(Debug) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
+//#define print_debug(fmt,...) if(Debug) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
 #define print_verbose(fmt,...) if(Verbose) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__)
 
+long int result;
+unsigned char usbConfigured = 0;
+
+/*
 //------------------------------------------------------------------------------------
 // Unpack ECG data using array math
 void UnPackECGA(signed int out[], unsigned char in[]){
@@ -88,10 +111,14 @@ void UnPackECGP(signed int *out, unsigned char *in){
 		*out++ = temp>>4;					// scale back to 12 bits
 	}
 }
+*/
 
-static unsigned char format;
-static unsigned int crc;
+//static unsigned char format;
+//static unsigned int crc;
+static unsigned int i;
+static unsigned char j;
 
+/*
 void Dump(unsigned int i){
 	unsigned char j;
 
@@ -114,10 +141,28 @@ void Dump(unsigned int i){
 		}
 	}
 }
+*/
 
 //------------------------------------------------------------------------------------
-void Hello(void){
-	print_usb("\r\n\r\nSpaulding IQ BV:%d FV:%1.2f HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+void Hello(int type){
+	if(type == PRINT_USB) {
+		print_usb("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+	}
+	else if(type == PRINT_BT) {
+		print_bt("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+	}
+	else if(type == PRINT_BT_APPLE) {
+		sprintf(AppleBTString, "\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		j = strlen(AppleBTString);
+
+		appleCrc = 0;
+		for(i = 0; i < j; i++) {
+			appleCrc += AppleBTString[i];
+		}
+
+		sendECGPacketWithLength(j);
+		//DPLEDTog();
+	}
 }
 
 
@@ -129,17 +174,19 @@ BEGIN_TASK(TaskUSB)
 
 	//------------------------------------------------------------------------------------------
 	// prepare the USB USART
+	if(!usbConfigured) {
+		usb = &usb_str;
+		USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
+		USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
 
-	usb = &usb_str;
-	USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
-	USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
-
-	USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
-	USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
-	USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-	USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
-	USART_Rx_Enable(USBPortDescriptor.usart);
-	USART_Tx_Enable(USBPortDescriptor.usart);
+		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
+		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
+		USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+		USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
+		USART_Rx_Enable(USBPortDescriptor.usart);
+		USART_Tx_Enable(USBPortDescriptor.usart);
+		usbConfigured = 1;
+	}
 
 
 	//==========================================================================================
@@ -149,25 +196,24 @@ BEGIN_TASK(TaskUSB)
 	static unsigned char argC;
 	static char cmd[3];
 	static float data1,data2;
-	static unsigned int i;
-	static unsigned char j;
-	static unsigned long start, end;
-	static unsigned char byte;
+	static unsigned long start;//, end;
+	//static unsigned char byte;
 	
-	static float ecgLength;
-	static unsigned long trueEnd;
-	static int trueEndPage;
+	//static float ecgLength;
+	//static unsigned long trueEnd;
+	//static int trueEndPage;
 
-	Hello();
+	Hello(PRINT_USB);
 
 	while(1){
-
-		static int startPage, startIndex, endPage, endIndex;
+		//DPLEDOn();
+		//static int startPage, startIndex, endPage, endIndex;
 
 		USBWatchTimer = FLASH_WATCH_TIME; // longest command is erase all flash "ea" which can take up to 80 seconds, according to the data sheet.
 
 		AnalogPowerOn();
 
+/*
 	#if ENABLE_DEBUG
 		Verbose = EE_Rd(EE_VERBOSE);
 		Debug = EE_Rd(EE_DEBUG);
@@ -179,11 +225,12 @@ BEGIN_TASK(TaskUSB)
 		FlowControl = 0;
 		format=FORMAT_BINARY;
 	#endif
+*/
 
 		if(USBPortDescriptor.RxReady){	// we have a command
 			//--------------------------------------------------------------------------
 			if(USBPortDescriptor.RxBuf[0]==0){	// just a CR, no command, so send out operating summary
-				Hello();
+				Hello(PRINT_USB);
 				if(BatteryIsCharging()){
 					print_usb("\r\nBattery: Charging");
 				}
@@ -202,7 +249,9 @@ BEGIN_TASK(TaskUSB)
 				//-------------------------------------
 				// "UPdate" transfer control to the bootstrap loader
 				if(strncmp(cmd,"up",2)==0){
-					while(1); // wait for watchdog timer to get us
+					//while(1) {
+					//} // wait for watchdog timer to get us
+					while(1) {};
 				}
 
 				//-------------------------------------
@@ -213,7 +262,28 @@ BEGIN_TASK(TaskUSB)
 						EE_Wr(EE_SERIAL_NUM,start);
 					}
 
-					print_usb("SN:9-%02d-%02d-%04d-101",(int)(EE_Rd(EE_SERIAL_NUM)/1000000), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+					print_usb("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+				}
+				else if(strncmp(cmd, "ba",2 )==0) {
+						AnalogPowerOn();
+						
+						InitADCs(); // start the ADCs and then we'll override a few settings
+						ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
+						ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
+						ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+						ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+						ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
+						ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
+						osWAIT(50);	// wait for power to stabilize
+						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
+						osWAIT(1); // wait for conversions to complete
+						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
+						osWAIT(1); // wait for conversions to complete
+						VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+
+						AnalogPowerOff();
+										
+						print_usb("Battery voltage: %0.2f\n", VBatt);
 				}
 
 
@@ -228,6 +298,7 @@ BEGIN_TASK(TaskUSB)
 						}
 						else if(data1>4.1) {
 							data1=4.1;
+							
 							print_usb("Limiting to %1.3f",data1);
 						}
 						EE_Wr(EE_LB,data1*1000);
@@ -290,12 +361,6 @@ BEGIN_TASK(TaskUSB)
 						EE_Wr(EE_FLOW_CONTROL, FlowControl);
 					}
 					print_usb("Flow Control = %d",FlowControl);
-				}
-
-				//-------------------------------------
-				// print the battery voltage
-				else if(strncmp(cmd,"vb",2)==0){
-					print_usb("VBatt = %f/r/n",VBatt);
 				}
 
 				//-------------------------------------
@@ -472,6 +537,7 @@ BEGIN_TASK(TaskUSB)
 
 				//-------------------------------------
 				// Erase All Flash via bulk erase command
+				
 				else if(strncmp(cmd,"ea",2)==0){
 					MainPowerOn();			// just in case we lose USB
 					EraseInProgress=1;	// keep auto power off from tripping if we lose USB
@@ -507,6 +573,7 @@ BEGIN_TASK(TaskUSB)
 					}
 				}
 				
+				/*
 				//-------------------------------------
 				// Report length of the voice recording, in seconds
 				else if(strncmp(cmd,"?v",2)==0){
@@ -536,9 +603,6 @@ BEGIN_TASK(TaskUSB)
 				//	 A starting page and offset
 				//   An ending page and offset
 				//	 A range of complete pages to read
-
-				#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
-				#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
 
 				else if(strncmp(cmd,"rv",2)==0){
 					if(argC){
@@ -765,8 +829,12 @@ BEGIN_TASK(TaskUSB)
 							}
 						}
 						
+						#ifdef BLUETOOTH
 						put_byte(Buf1.Data.ECG.Flag1);
 						crc(Buf1.Data.ECG.Flag1);
+						put_byte(Buf1.Data.ECG.Flag2);
+						crc(Buf1.Data.ECG.Flag2);
+						#endif
 						
 						osYIELD;
 						print_verbose("Start Page Done\r\n");
@@ -799,8 +867,12 @@ BEGIN_TASK(TaskUSB)
 								}
 							}
 							
+							#ifdef BLUETOOTH
 							put_byte(Buf1.Data.ECG.Flag1);
 							crc(Buf1.Data.ECG.Flag1);
+							put_byte(Buf1.Data.ECG.Flag2);
+							crc(Buf1.Data.ECG.Flag2);
+							#endif
 							
 							osYIELD;
 							print_verbose("Interior page %d done\r\n",FlashPageNumber);
@@ -840,10 +912,14 @@ BEGIN_TASK(TaskUSB)
 						trueEnd*=100;
 						trueEnd+=99;
 						trueEndPage = trueEnd/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-						if(FlashPageNumber == trueEndPage) {
+						if(FlashPageNumber == trueEndPage || endIndex == ECG_SAMPLES_PER_PAGE-1) {
 							// Dump the pace detection byte
+							#ifdef BLUETOOTH
 							put_byte(Buf1.Data.ECG.Flag1);
 							crc(Buf1.Data.ECG.Flag1);
+							put_byte(Buf1.Data.ECG.Flag2);
+							crc(Buf1.Data.ECG.Flag2);
+							#endif
 						}
 						
 						if(format == FORMAT_BINARY){
@@ -871,6 +947,342 @@ BEGIN_TASK(TaskUSB)
 				else if(!strncmp("v-", cmd, 2)) {
 					EE_Wr(EE_ENABLE_VOICE, 0);
 				}
+				*/
+				else if(!strncmp("vr", cmd, 2)) {
+					InitADCs(); // start the ADCs and then we'll override a few settings
+					ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
+					ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
+					ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+					ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+					ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
+					ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
+					osWAIT(50);	// wait for power to stabilize
+					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
+					osWAIT(1); // wait for conversions to complete
+					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
+					osWAIT(1); // wait for conversions to complete
+					
+					VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+					short battMV = round(VBatt*100);
+					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
+				}
+#ifdef WORKING
+
+				else if(!strncmp("bt", cmd, 2)) {
+					print_usb("Entering Bluetooth passthrough mode...\r\n");
+					
+					osDISABLE_TASK(TaskBT);
+					BTOff();
+					
+					//iAP2Packet_t packet;
+					/*
+					USART_Rx_Disable(USBPortDescriptor.usart);
+					USART_Tx_Disable(USBPortDescriptor.usart);
+					USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+					USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
+					USART_Rx_Enable(USBPortDescriptor.usart);
+					USART_Tx_Enable(USBPortDescriptor.usart);
+					
+					USART_Rx_Disable(BTPortDescriptor.usart);
+					USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+					USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+					USART_Rx_Enable(BTPortDescriptor.usart);
+					USART_Tx_Enable(BTPortDescriptor.usart);
+					*/
+					
+					inBluetoothUpdateMode = 1;
+
+					RESET_TASK(TaskBT);
+					osENABLE_TASK(TaskBT);
+					//BTOn();				
+					
+					Seg7LP('B');
+					InitButton();
+					USBWatchTimer = 0; // Keep us awake
+					
+					//osWAIT(250);
+					//osWAIT(250);
+					//osWAIT(250);
+					//osWAIT(250);
+					//print_bt("SET PROFILE IAP PROD:\"abc\" MF:\"def\" MDL:\"xyz\" SN:\"#12345\" PROTO:\"com.bluegiga.iwrap\" SEED:\"1234567890\" APP:\"com.spauldingclinical.IQApp\" FW:5.0.0 HW:1.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r");				
+					//print_bt("RESET\r");
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+					//osWAIT(250);	
+					while(!ButtonPressed()) {	
+						if(PORTF.IN & PIN7_bm) {
+							//uart_putchar(&BTPortDescriptor,appleString[0]);
+							//uart_putchar(&BTPortDescriptor,appleString[1]);
+							//uart_putchar(&BTPortDescriptor,appleString[2]);
+							//uart_putchar(&BTPortDescriptor,appleString[3]);
+							//uart_putchar(&BTPortDescriptor,appleString[4]);
+							//uart_putchar(&BTPortDescriptor,appleString[5]);
+							//print_bt("TEST");
+														
+						}
+						
+						
+						//if(BTPortDescriptor.RxReady) {
+							//for(int i = 0; i < RX_BUF_SIZE; i++)
+							//	print_usb("%x ", BTPortDescriptor.RxBuf[i]);
+								
+							//print_usb("%s ", BTPortDescriptor.RxBuf);					
+							
+							//print_usb("\r\n\r\n");
+							
+							//if(iniAPMode) {
+							//	getApplePacket(BTPortDescriptor.RxBuf);
+							//	printApplePacket(recievedPacket);
+							//	checkRecievedPacketAndSendNext();
+							//}
+							
+							//else {
+							//									for(int i = 0; i < RX_BUF_SIZE; i++)
+							//		print_usb("%x ", BTPortDescriptor.RxBuf[i]);
+								
+							//}
+							//memset(BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);						
+							
+							//BTPortDescriptor.RxReady = 0;
+						//}
+						
+						//print_usb("Connection type = %s\r\n", (connectionType == CONNECTION_APPLE ? "APPLE" : "ANDROID"));
+						osWAIT(1);
+					}
+					print_usb("Exiting Bluetooth passthrough mode...\r\n");
+					inBluetoothUpdateMode = 0;
+					
+					BTOff();
+				}
+				else if(!strncmp("b9", cmd, 2)) {
+					osDISABLE_TASK(TaskBT);
+					
+					BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
+					BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+										
+					USART_Rx_Disable(BTPortDescriptor.usart);
+					USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
+					USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_EVEN_gc, true);	//8N2
+					USART_Baudrate_Set(BTPortDescriptor.usart, 33, -1); //115200 bps
+					USART_Rx_Enable(BTPortDescriptor.usart);
+					USART_Tx_Enable(BTPortDescriptor.usart);
+										
+					BTOn();
+										
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);								
+										
+					print_bt("SET CONTROL BAUD 921600,8n1\r");
+					
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+							
+					BTOff();
+					
+					print_usb("Bluetooth successfully set to 921600,8n1\r");
+				}
+				else if(!strncmp("b1", cmd, 2)) {
+					osDISABLE_TASK(TaskBT);
+					
+					BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
+					BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+										
+					USART_Rx_Disable(BTPortDescriptor.usart);
+					USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
+					USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+					USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+					USART_Rx_Enable(BTPortDescriptor.usart);
+					USART_Tx_Enable(BTPortDescriptor.usart);
+										
+					BTOn();
+										
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);										
+										
+					print_bt("SET CONTROL BAUD 115200,8e1\r");
+					
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);
+					osWAIT(250);		
+					
+					BTOff();
+					
+					print_usb("Bluetooth successfully set to 115200,8e1\r");
+				}
+				else if(!strncmp("bu", cmd, 2)) {
+					osDISABLE_TASK(TaskBT);
+								
+					USART_Rx_Disable(USBPortDescriptor.usart);
+					USART_Tx_Disable(USBPortDescriptor.usart);
+					USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_EVEN_gc, false);	//8N2
+					USART_Baudrate_Set(USBPortDescriptor.usart, 33, -1); //921600 bps
+					// 115200
+					USART_Rx_Enable(USBPortDescriptor.usart);
+					USART_Tx_Enable(USBPortDescriptor.usart);
+					
+										
+					BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
+					BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+								
+					USART_Rx_Disable(BTPortDescriptor.usart);
+					USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_EVEN_gc, false);	//8N2
+					USART_Baudrate_Set(BTPortDescriptor.usart, 33, -1); //115200 bps
+					//USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);  // Does not work for all Baud Rates (BAUD_RATE = 921600 for example)
+					USART_Rx_Enable(BTPortDescriptor.usart);
+					USART_Tx_Enable(BTPortDescriptor.usart);
+					
+					BTOn();
+					
+						
+					inBluetoothUpdateMode = 1;
+					
+					Seg7LP('B');
+					InitButton();
+					USBWatchTimer = 0; // Keep us awake
+					
+					while(inBluetoothUpdateMode) {
+						if(ButtonPressed()) {
+							inBluetoothUpdateMode = 0;
+						}							
+						osWAIT(1);
+					}
+					inBluetoothUpdateMode = 0;
+					
+					USART_Rx_Disable(USBPortDescriptor.usart);
+					USART_Tx_Disable(USBPortDescriptor.usart);
+					USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+					USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
+					// 115200
+					USART_Rx_Enable(USBPortDescriptor.usart);
+					USART_Tx_Enable(USBPortDescriptor.usart);		
+				}
+				else if(!strncmp("ad", cmd, 2)) {
+					InitADCs();
+					StartAcq(ACQ_IRQ_ECG);
+					//ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
+					USBWatchTimer = 0;
+
+					while(!ButtonPressed()) {
+						osWAIT(50);	// wait for power to stabilize
+
+						float delta = 4095 * 0.05f;
+						float zeroVolts = 4095.0f/2.0f - delta;
+						int voltage = 0;
+						//int voltage = ((RL_Mon-zeroVolts-delta)/(4095.0f-delta))*3.3f*1000;
+						
+						//VBatt = (ADCB.CH0.RES + ADCB.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+
+						print_usb("\r%d %d %f %d %dmv", ADCB.CH0.RES, ADCA.CH2.RES, delta, voltage, BTLeadOff);
+					}
+
+					StopAcq();
+				}
+			else if(!strncmp("sp", cmd, 2)) {
+					//LFBiasOn();
+					acqState = FSM_PREACQ;
+					
+					InitADCs(); // start the ADCs and then we'll override a few settings
+					//ADC_Reference_Config(&ADCB, ADC_REFSEL_VCC_gc); 		    // temporarily use internal bandgap
+					//ADC_Prescaler_Config(&ADCB, ADC_PRESCALER_DIV256_gc);	    // 128KSPS @ 32MHZ
+					//ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_V1, 0);		// monitor battery voltage on ADCA
+					//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+					//ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0); // monitor ground
+					//ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0); // monitor ground
+					osWAIT(50);	// wait for power to stabilize
+					USBWatchTimer = 0; // Keep us awak
+
+					StartAcq(ACQ_IRQ_ECG);
+					osENABLE_TASK(TaskBT); // Make sure BT the task is running
+					BTBufPhase = 0;
+					BTStatus = 0;
+					BTEnable = 1;
+					BTOn(); // if BT got killed, turn it back on
+					
+					//PORTC.DIRSET = PIN4_bm; PORTC.PIN4CTRL = PORT_OPC_TOTEM_gc;
+				//for(i = 0; i < 1000; i++) {
+					
+					//currentFFTLead = selectedLead;
+					//LFBiasOn();
+					
+					static volatile short min = 0, max = 0;
+					static volatile unsigned char needMinMax = 1;
+					static volatile unsigned short counter = 0;
+					static volatile double accumulator = 0;
+					static volatile float alpha = 0.00005f;
+					static volatile int16_t compressed = 0;
+					static volatile int8_t temp[3];
+					while(!ButtonPressed()) {
+						temp[0] = Lead[V3]  >> 8;
+						temp[1] = (Lead[V3] & 0xF0) | ((0 >> 4) & 0x0F);
+						temp[2] = 0 >> 8;
+
+						compressed = (int16_t) ((temp[0] << 4) | ((temp[1] & 0xf0) >> 4));
+						//compressed = (Lead[V3] >> 4);
+
+						if(needMinMax) {
+							min = max = compressed;
+							needMinMax = 0;
+						} else {
+							if(compressed < min) min = compressed;
+							if(compressed > max) max = compressed;
+						}
+
+						accumulator = (alpha * compressed) + (1.0 - alpha) * accumulator;
+
+						if(++counter == 1000) {
+							counter = 0;
+							print_usb("Min = %d, Max = %d, Avg = %lf\r\n", min, max, accumulator);
+						}
+						//wdt_reset();
+						//ADCB.CH2.RES
+						//print_usb("%04x\r\n", Lead[V1]);
+																													
+						//osYIELD;
+						osWAIT(1);
+					}
+					
+					StopAcq();
+				//}
+				//ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
+				//osWAIT(1); // wait for conversions to complete
+				//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+			}
+			// Command to start a new simple Bluetooth session for Apple testing
+			else if(!strncmp("ap", cmd, 2)) {
+				resetAppleVariables();
+				resetUsartAppleVariables();
+				
+				USBWatchTimer = 0;
+				StartAcq(ACQ_IRQ_ECG);
+				osENABLE_TASK(TaskBT); // Make sure BT the task is running
+				BTBufPhase = 0;
+				BTStatus = 0; 
+				BTOn(); // if BT got killed, turn it back on
+				while(!ButtonPressed()) {
+					// Just keep us awake for testing
+					osWAIT(1);
+				}
+				
+			}
+#endif
+
 
 				//-------------------------------------
 				// we didn't recognize a command, say ?
@@ -895,3 +1307,4 @@ ISR(USARTF0_RXC_vect){
 ISR(USARTF0_DRE_vect){
 	USART_DataRegEmpty(&USBPortDescriptor);
 }
+#endif

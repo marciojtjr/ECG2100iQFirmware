@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include <avr/io.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -37,6 +39,7 @@
 
 #define RTR_ON                  0x80      // mask bit for rtr status of task,  0=stopped, 1=run
 #define RTR_OFF                 0x00      // used to set rtr initially off
+#define ENABLED                 0x40
 #define SEMA_BITS               0x0F      // mask bits 0-3 in status for semaphore number
                                           // 0 = none wanted, 1-15 = semaphore wanted
 //-----------------------------------------------------------------------------------------------------------
@@ -124,6 +127,12 @@ const struct PROGMEM ta {
 
 //###########################################################################################################
 // RTOS PRIVATE FUNCTIONS
+
+
+void __resetTask(uint8_t tn) {
+  myTasks[tn].goto_label = 0;
+}
+
 
 //-----------------------------------------------------------------------------------------------------------
 // error handling function, use to troubleshoot problems
@@ -347,6 +356,19 @@ void __set_priority(uint8_t tn, uint8_t pri){
   }
 }
 
+void __enable_task(uint8_t tn, uint8_t i) {
+  myTasks[tn].status |= ENABLED;
+  __set_rtr(tn, i);
+}
+void __disable_task(uint8_t tn, uint8_t i) {
+  myTasks[tn].status ^= ENABLED;
+  __clear_rtr(tn);
+}
+
+int __get_enabled(uint8_t tn, uint8_t i) {
+  return (myTasks[tn].status & ENABLED);
+}
+
 /*-----------------------------------------------------------------------------------------------------------
  enable task number ready to run status if a valid task number, and not waiting for a semaphore
  also check if the task tn owns a semaphore (only if semaphores enabled)
@@ -375,6 +397,10 @@ void __set_rtr(uint8_t tn, uint8_t i){
     myTasks[tn].ticks = 0;                      // clear tick counter, so if task was waiting, it will
                                                 // not be re-enabled when wait time is done
   }
+}
+
+int __get_rtr(uint8_t tn) {
+  return ((myTasks[tn].status & RTR_ON) && (!myTasks[tn].ticks));
 }
 
 /*-----------------------------------------------------------------------------------------------------------
@@ -484,3 +510,4 @@ void StartScheduler(void){
   __schedule(); //start scheduler (never returns)
 }
 
+#endif

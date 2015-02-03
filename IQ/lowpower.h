@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef LOWPOWER_H
 #define LOWPOWER_H
 
@@ -11,8 +13,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-void LOWPOWER_Init( void );
+
+//void LOWPOWER_Init( void );
 void HIGHPOWER_Init( void );
 
 #ifdef __cplusplus
@@ -20,3 +22,4 @@ void HIGHPOWER_Init( void );
 #endif
 
 #endif // LOWPOWER_H
+#endif

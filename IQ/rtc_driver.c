@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 /* This file has been prepared for Doxygen automatic documentation generation.*/
 /*! \file *********************************************************************
  *
@@ -161,3 +163,5 @@ void RTC_SetPrescaler( RTC_PRESCALER_t prescaler )
 {
 	RTC.CTRL = ( RTC.CTRL & ~RTC_PRESCALER_gm ) | prescaler;
 }
+
+#endif

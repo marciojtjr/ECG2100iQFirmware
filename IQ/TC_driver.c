@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include "avr_compiler.h"
 #include "TC_driver.h"
 
@@ -302,3 +304,4 @@ void TC1_Reset( volatile TC1_t * tc )
 	/* Issue Reset command. */
 	tc->CTRLFSET = TC_CMD_RESET_gc;
 }
+#endif

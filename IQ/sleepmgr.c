@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 // This file has been prepared for Doxygen automatic documentation generation.
 /*! \file *********************************************************************
  *
@@ -59,7 +61,7 @@
 /*============================ PRIVATE VARIABLES AND CONSTANTS ===============*/
 
 // Use macro from "config_sleepmgr.h" to define sleep mode config values.
-SLEEPMGR_DEFINE_MODES;
+const SLEEPMGR_DEFINE_MODES;
 //! Sleep mode lock counters.
 SLEEPMGR_lock_t SLEEPMGR_locks[SLEEPMGR_NUM_MODES];
 
@@ -201,3 +203,4 @@ void SLEEPMGR_CancelSleep( void )
 
 
 /* EOF */
+#endif

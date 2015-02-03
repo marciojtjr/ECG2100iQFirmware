@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef TC_DRIVER_H
 #define TC_DRIVER_H
 
@@ -137,4 +139,5 @@ void TC1_SetCCDIntLevel( volatile TC1_t * tc, TC_CCDINTLVL_t intLevel );
 void TC1_Reset( volatile TC1_t * tc );
 
 
+#endif
 #endif

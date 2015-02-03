@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef RTOS_H
 #define RTOS_H
 
@@ -27,11 +29,11 @@
 
 #define __Task2                 TaskUSB
 #define __Task2_priority        2
-#define __Task2_init            RTR_ON
+#define __Task2_init            RTR_OFF
 
 #define __Task3                 TaskFlash
 #define __Task3_priority        2
-#define __Task3_init            RTR_ON
+#define __Task3_init            RTR_OFF
 
 #define __Task4                 TaskWatchDog
 #define __Task4_priority        2
@@ -40,7 +42,17 @@
 #if BLUETOOTH
 #define __Task5                 TaskBT
 #define __Task5_priority        2
+#ifndef WORKING
+#define __Task5_init            RTR_OFF
+#else
 #define __Task5_init            RTR_ON
+#endif
+#endif
+
+#ifdef WORKING
+#define __Task6						TaskPaceSimu
+#define __Task6_priority			2
+#define __Task6_init				RTR_ON
 #endif
 
 /*-----------------------------------------------------------------------------------------------------------
@@ -199,6 +211,9 @@ void    __set_priority  (uint8_t tn, uint8_t pri);
 void    __set_rtr       (uint8_t tn, uint8_t i);
 void    __clear_rtr     (uint8_t tn);
 void    __wait          (uint8_t nTicks);
+void    __resetTask     (uint8_t tn);
+void    __enable_task(uint8_t tn, uint8_t i);
+void    __disable_task(uint8_t tn, uint8_t i);
 #if (SEMAPHORES_ON)
 uint8_t __getSema       (uint8_t n);
 void    __releaseSema   (uint8_t n);
@@ -302,7 +317,10 @@ void    __releaseSema   (uint8_t n);
 -----------------------------------------------------------------------------------------------------------*/
 
 #define osCLEAR_RTR(taskname)           __clear_rtr(taskname ## NUMBER)
-#define osDISABLE_TASK(taskname)        __clear_rtr(taskname ## NUMBER)
+#define osDISABLE_TASK(taskname)        __disable_task(taskname ## NUMBER, 1)
+
+  // This is going to get freaky
+#define RESET_TASK(taskname) __resetTask(taskname ## NUMBER);
 
 /*-----------------------------------------------------------------------------------------------------------
  get ownership of a semaphore, if available, otherwise suspend until it becomes available
@@ -339,13 +357,15 @@ void    __releaseSema   (uint8_t n);
 
 #if (SEMAPHORES_ON)
 #define osSET_RTR(taskname)             __set_rtr(taskname ## NUMBER,nSemas)
-#define osENABLE_TASK(taskname)         __set_rtr(taskname ## NUMBER,nSemas)
+#define osENABLE_TASK(taskname)         __enable_task(taskname ## NUMBER,nSemas)
 #else
 #define osSET_RTR(taskname)             __set_rtr(taskname ## NUMBER,1)
-#define osENABLE_TASK(taskname)         __set_rtr(taskname ## NUMBER,1)
+#define osGET_RTR(taskname)             __get_rtr(taskname ## NUMBER,1)
+#define osENABLE_TASK(taskname)         __enable_task(taskname ## NUMBER,1)
+#define osIS_TASK_ENABLED(taskname)     __get_enabled(taskname ## NUMBER,1)
 #endif
 
 /*---------------------------------------------------------------------------------------------------------*/
 
 #endif // RTOS_H
-
+#endif

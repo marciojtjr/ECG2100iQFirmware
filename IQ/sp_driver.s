@@ -1,3 +1,4 @@
+
 ;******************************************************************************
 ;*
 ;* XMEGA Self-programming driver assembly source file.
@@ -67,6 +68,8 @@
 ;******************************************************************************
 
 #include <avr\io.h>
+
+#ifdef BOOTLOADER
 
 /* Define the size of the flash page if not defined in the header files. */
 #ifndef PROGMEM_PAGE_SIZE
@@ -789,3 +792,4 @@ SP_CommonSPM:
 	
 ; END OF FILE
 
+#endif

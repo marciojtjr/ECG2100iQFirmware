@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef SPI_DRIVER_H
 #define SPI_DRIVER_H
 
@@ -34,4 +36,5 @@ void SPI_Init(SPI_Descriptor_t *descriptor,		// pointer to port descriptor
 
 uint8_t SPI_TransceiveByte(SPI_Descriptor_t *spi, uint8_t TXdata);
 
+#endif
 #endif

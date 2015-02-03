@@ -1,3 +1,5 @@
+#ifdef BOOTLOADER
+
 /* This file has been prepared for Doxygen automatic documentation generation.*/
 /*! \file *********************************************************************
  *
@@ -282,3 +284,4 @@ void SP_LockSPM(void);
 void SP_WaitForSPM(void);
 
 #endif /* SP_DRIVER_H */
+#endif

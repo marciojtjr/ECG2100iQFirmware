@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef taskflash_h
 #define taskflash_h
 
@@ -74,3 +76,4 @@ extern unsigned char TaskFlashCmd;		// holds the currently executing flash comma
 extern unsigned int FlashPageNumber;	// holds the currently active flash page number
 
 #endif // taskflash_h
+#endif

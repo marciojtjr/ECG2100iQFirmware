@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #if BLUETOOTH
 #include "taskBT.h"
 
@@ -28,45 +29,127 @@
 #include "taskFlash.h"
 #include "eeprom.h"
 #include "seg7.h"
+#include "taskUSB.h"
+#include "taskAcq.h"
+
+#include "apple.h"
 
 #include "crc.h"
 
 unsigned char BTBufReady;
 unsigned int BTBuf[8];
+char BTLeadOff = 0;
 unsigned char transferingFullData = 0;
 unsigned char transferingDataType = FULL_TRANSFER_NONE;
 char BTStateString[BT_STATE_SIZE];
+unsigned char btConfigured = 0;
+static unsigned int FrameIndex = 0;
+unsigned char connectionNeedsReset = 0;
+int16_t keepAliveTimer = -1;
+unsigned long long appleCrc = 0;
 
-enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
-static unsigned char format = FORMAT_BINARY;
+unsigned char connectionType = CONNECTION_ANDROID;
+unsigned char waitingForFirstCommand = 1;
+char AppleBTString[APPLE_BT_STRING_SIZE];
+int appleStringIndex = 0;
+unsigned char isThereAnActiveConnection = 0;
+
+//enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
+
+//static unsigned char format = FORMAT_BINARY;
+int RFCOMMTimer = -1;
+
+static uint8_t outBufferPos;
 
 //##########################################################################################
 // define and allocate globals for the bluetooth task
 
+void resetAllVariables(void) {
+	outBufferPos = 0;
+	BTLeadOff = 0;
+	transferingFullData = 0;
+	transferingDataType = FULL_TRANSFER_NONE;
+	btConfigured = 0;
+	FrameIndex = 0;
+	connectionNeedsReset = 0;
+	keepAliveTimer = -1;
+	appleCrc = 0;
+
+	//connectionType = CONNECTION_ANDROID;
+	waitingForFirstCommand = 1;
+	appleStringIndex = 0;
+	isThereAnActiveConnection = 0;
+	RFCOMMTimer = -1;
+	
+	memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
+	
+	resetAppleVariables();
+	resetUsartAppleVariables();
+}
+
 USART_desc_t BTPortDescriptor;	// a descriptor for the USART connected to the Bluetooth transceiver
 static int put_bt( char c, FILE *stream){
-	uart_putchar(&BTPortDescriptor,c);
+	if(connectionType == CONNECTION_ANDROID) {
+		//while(!BTRTS()) {
+		//	wdt_reset();
+			//DPLEDOff();
+		//}
+	}
+	//DPLEDOn();
+	//if(BTRTS()) {
+	uart_putchar(&BTPortDescriptor, c);
 	return(0);
 }
 
-#define put_byte(c) uart_putchar(&BTPortDescriptor,c)
+void put_byte(char c) {
+	//DPLEDTog();
+	if(connectionType == CONNECTION_ANDROID) {
+		//while(!BTRTS()) {
+		//	wdt_reset();
+			//DPLEDOff();
+		//}
+		//DPLEDOn();
+		//if(BTRTS()) {
+		uart_putchar(&BTPortDescriptor, c);
+		//	DPLEDOn();
+		//} else {
+		//	DPLEDOff();
+		//}
+		//DPLEDTog();
+	} else {
+		AppleBTString[appleStringIndex++] = c;
+		if(appleStringIndex == APPLE_BT_STRING_SIZE) {
+			sendECGPacketWithLength(APPLE_BT_STRING_SIZE);
+			appleStringIndex = 0;
+			//DPLEDTog();
+			
+			//osWAIT(50);
+		}			
+	}
+}
 
-static FILE bt_str = FDEV_SETUP_STREAM(put_bt, 0, _FDEV_SETUP_WRITE);
+FILE bt_str = FDEV_SETUP_STREAM(put_bt, 0, _FDEV_SETUP_WRITE);
 FILE *bt;
 
 void BTOn(void){
 	PORTF.DIRSET = PIN0_bm;
 	PORTF.OUTSET = PIN0_bm;
 	PORTF.PIN0CTRL = PORT_OPC_TOTEM_gc;
+	//isThereAnActiveConnection = 0;
 }
 
 void BTOff(void){
+	//connectionType = CONNECTION_UNKNOWN;
+
 	PORTF.DIRSET = PIN0_bm;
 	PORTF.OUTCLR = PIN0_bm;
 	PORTF.PIN0CTRL = PORT_OPC_TOTEM_gc;
+	//isThereAnActiveConnection = 0;
+	
+	resetAllVariables();
 }
 
-unsigned char Hex[16] PROGMEM = {"0123456789ABCDEF"};
+const unsigned char Hex[16] PROGMEM = {"0123456789ABCDEF"};
 char bin2Hex(unsigned char c){
 	return(pgm_read_byte(&Hex[c & 0xf]));
 }
@@ -77,39 +160,57 @@ CRCCalc(short crc, short x)
     x = ((crc>>8) ^ x) & 0xff;
     x ^= x>>4;
     return (crc << 8) ^ (x << 12) ^ (x <<5) ^ x;
-    }
-
-
+	}    
 
 //==========================================================================================
 // Bluetooth Task
 
 BEGIN_TASK(TaskBT)
-
 	//------------------------------------------------------------------------------------------
 	// prepare the Bluetooth USART
+	/*
+#ifdef BAUDRATECHANGER
+	#define BT_BAUD_RATE 115200
+#else
 	#define BT_BAUD_RATE 921600
+#endif
+*/
+
 	bt = &bt_str;
 	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
 	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
 
-	USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
-	USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
-	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-	USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+	if(!btConfigured) {
+		USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc); // setup USART, DRE interrupt priority is LOW
+		USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_HI_gc); // receive interrupt priority is HIGH
+#ifdef BAUDRATECHANGER
+		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+		USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);
+#else
+		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc,	false);	//8N1
+		USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+#endif
+
+		btConfigured = 1;
+	}
+	
+	//USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_EVEN_gc, false);	//8E1
+	//USART_Baudrate_Set(BTPortDescriptor.usart, 33, -1); //921600 bps
+	//USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/115200-1), 0);
+	
 	//USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);  // Does not work for all Baud Rates (BAUD_RATE = 921600 for example)
 	USART_Rx_Enable(BTPortDescriptor.usart);
 	USART_Tx_Enable(BTPortDescriptor.usart);
-  
-    unsigned char ix = 0;
-    static unsigned int FrameIndex = 0;
-#ifdef COMPARE_VERSION
-    short crc;
-#else
+	
+	static unsigned char ix = 0;
+	//unsigned int FrameIndex = 0;
+	//#ifdef COMPARE_VERSION
+	//    short crc;
+	//#else
 	static unsigned int crc;
-#endif
-	static uint32_t waiting = 0;
-	static uint32_t beforeSend = 0;
+	//#endif
+	//static uint32_t waiting = 0;
+	//static uint32_t beforeSend = 0;
 
     BTString[ix++] = 0xAA;  // Preamble byte 1
     BTString[ix++] = 0x55;  // Preamble byte 2
@@ -125,459 +226,417 @@ BEGIN_TASK(TaskBT)
 	BTStateString[4] = 0x55; // Status preamble byte 5
 	BTStateString[5] = 0xAA; // Status preamble byte 6
 	
-/* FOR PACE DETECTION */
-
-
-    #define BT_PREAMBLE   0
-    #define BT_TYPE       6
-    #define BT_STATUS     7
-    #define BT_LEADOFF    8
-	#define BT_PACESPIKE  9
-    #define BT_FRMINDEX   10
-    #define BT_DATA0     12
-    #define BT_DATA1     60
-    #define BT_CRC      108
-
-    #define BT_SIZE     110
-
-
-/* FOR NOT PACE DETECTION */
-
-/*
-	#define BT_PREAMBLE   0
-	#define BT_TYPE       6
-	#define BT_STATUS     7
-	#define BT_LEADOFF    8
-	#define BT_FRMINDEX   9
-	#define BT_DATA0     11
-	#define BT_DATA1     59
-	#define BT_CRC      107
-
-	#define BT_SIZE     109
-*/
-	
-//#ifdef COMPARE_VERSION
 	static unsigned int i;
-	static unsigned char j;
-	static unsigned long start, end;
-	static float data1,data2;
+	//static unsigned char j;
+	static unsigned long start;//, end;
+	//static float data1,data2;
+	//static int dataInt;
 	static unsigned char argC;
 	static char cmd[3];
-	
-	static float ecgLength;
-	static unsigned long trueEnd;
-	static int trueEndPage;
+	static int currentBTIndex = BT_DATA0;
 
-	static int startPage, startIndex, endPage, endIndex;
-		
-	#define BLOCK_LEN 0.1	// set the size of a dumped block, in seconds
-	#define BLOCK_LEN_MS (BLOCK_LEN*1000)	// set the size of a dumped block, in milliseconds
+	//static float ecgLength;
+	//static unsigned long trueEnd;
+	//static int trueEndPage;
+
+	//static int startPage, startIndex, endPage, endIndex;
+
+	//#ifdef COMPARE_VERSION
+	//	static int secondsOfEcg = 0;
+	//#endif
+
+	//static int pinTimer = 0;
+
+	static unsigned char *btsp = &BTString[BT_DATA0];
+	static unsigned char k;
+	static unsigned char lead;
+	static unsigned char jx;
+
+	static int32_t y0;
+	static int32_t y1;
+	static int32_t yPrior[8];
+	static int16_t z0, z1;
+	static int16_t outBuffer[8][8];
+	
+	
 //#endif
 
 	//==========================================================================================
 	// Bluetooth command parser
 
-	if( (MCU.JTAGUID != 0xff) && !USBPresent() ){	// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
+	if(!USBPresent()){
+		//Seg7HP('b');
+		//while(1) {
+		//	osWAIT(50);
+		//}
+		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		// Wait until we're in preacq before turning on the radio
 		// Or if we're full, let it go through as well
 		while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
 			osWAIT(1);
 		}			
+		//acqState = FSM_PREACQ;
 		
+		//BTReady = 1;	
 		BTOn();
 		
 		// Wait until we've recieved "READY" from the BT chip
 		while(readyForCommands == 0) {
 			osWAIT(1);
-		}			
+		}
+		print_bt("SET CONTROL INIT SET CONTROL AUTOCALL\r");	
+		osWAIT(50);	
 		
 		// Set PIO5 as the CD pin
 		print_bt("SET CONTROL CD 20 1\r");
+		osWAIT(50);
 		
 		// Make sure our name is our serial number
 		print_bt("SET BT NAME SpauCliQ%02d%02d%04d\r",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
-		
+		osWAIT(50);
+		//print_bt("SET BT NAME SpauCliQ69696969\r");
+		//print_bt("SET BT NAME SN:90000000101\r");
 		// Make status updates as fast as possible
-		print_bt("SET BT PAGEMODE 4 2000 1\r");
-		print_bt("SET BT ROLE 0 f 7d00\r");
+		//print_bt("SET BT PAGEMODE 4 2000 1\r");
+		//print_bt("SET BT ROLE 0 f 7d00\r");
+
+		print_bt("SET BT PAIRCOUNT 1\r");
+		osWAIT(50);
+		//osWAIT(250);
+		print_bt("SET CONTROL CONFIG 0000 2000 2000 1980\r");
+		osWAIT(50);
+		//osWAIT(250);
 		
+		// Make sure our UART settings are correct
+#ifdef BAUDRATECHANGER
+		while(1) {
+			print_bt("SET CONTROL BAUD 921600,8n1\r");
+			osWAIT(1);
+		}	
+#endif	
+		//print_bt("SET PROFILE SPP\r");
+		osWAIT(50);
+		
+		readyForCommands = 0;
+		//print_bt("")
+		osWAIT(50);
+		// Add entry for iOS devices
+		//print_usb("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"BT2.0\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"none\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, MCU.JTAGUID);
+		print_bt("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"%d\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"none\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, (int)EE_Rd(EE_BOOT_VERSION));
+		osWAIT(250);
+		print_bt("RESET\r");
+		//print_bt("SDP ADD 00000000-deca-fade-deca-deafdecacaff Wireless iAP\r");
+		while(readyForCommands == 0) {
+			osWAIT(1);
+		}
+		
+		print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+		//print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+
+		//volatile int lastConnection = EE_Rd(EE_LAST_CONNECTION_TYPE);
+
+		//connectionType = CONNECTION_APPLE;
+		//if(lastConnection == CONNECTION_APPLE) {
+			
+			/*
+		if(connectionType == CONNECTION_APPLE) {
+			print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+			//Seg7HP('9');
+		}
+		//else if (lastConnection == CONNECTION_ANDROID) {
+		else if(connectionType == CONNECTION_ANDROID) {
+			ignoreNextRFCOMM = 1;
+			print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+			//Seg7HP('A');
+		}	
+		*/		
+		//} else {
+		//	print_bt("SET CONTROL AUTOCALL\r");
+		//}
+		
+		//print_bt("SET CONTROL AUTOCALL 1101 2000 IAP\r");
+		
+		memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+
+		//print_usb("TaskBT set up, going for the loop\r\n");
+
+
 		while(1) {		
-#if !defined(COMPARE_VERSION) && !defined(LOGGING_VERSION)
-			if(!BTEnable && acqState != FSM_FULL) {
+			if(needToDropPairing) {
+				needToDropPairing = 0;
 				
+				//print_usb("Pairing lost. Resetting.\r\n");
+				connectionType = CONNECTION_ANDROID;
+				//Seg7HP('r');
+				//ignoreNextRFCOMM = 1;
+				//print_bt("SET CONTROL AUTOCALL 1101 1000 RFCOMM\r");
+				osWAIT(25);
+				print_bt("SET BT PAIR *\r");
+				osWAIT(25);
+				
+				//resetAppleVariables();
+				//resetUsartAppleVariables();
+				resetAllVariables();
+				//connectionType = CONNECTION_ANDROID;
+				//connectionNeedsReset = 1;
+
+				//connectionType = CONNECTION_UNKNOWN;
+				//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
+			}
+			if(!BTEnable && acqState != FSM_FULL) {
+				//Seg7HP('b');
 				// Wait until the CD pin goes high (which happens when we enter data mode)
 				if(PORTF.IN & PIN7_bm) {
+					//pinTimer = 0;
+					keepAliveTimer = -1;
+					DPLEDOn();
+					//print_usb("Pin goes high\r\n");
 					BTEnable = 1;
 					
 					// Clear any status bits that have been set
 					BTStatus = 0;
 					
-					// Write out our current state
-					BTStateString[6] = acqState;
-					fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
 				}
-				
+
+				if(BTPortDescriptor.RxReady) {
+					memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+					BTPortDescriptor.RxReady = 0;
+				}
 			}	
-			else if(BTEnable) {
+			if(BTEnable) {	
+				// if pin goes low for more than 500ms, it's a disconnect	
+				
 				if((PORTF.IN & PIN7_bm)==0) {
+					//inBluetoothUpdateMode = 1;
+					//print_usb("Exiting data mode...\r\n");
+					//waitingForFirstCommand = 1;
+					
+					BTOff();
+					DPLEDOff();
+					//resetAppleVariables();
+					//resetUsartAppleVariables();
+					resetAllVariables();
 					BTEnable = 0;
-					if(acqState == FSM_FULL || acqState == FSM_FULL_ON) acqState = FSM_DONE;
+					connectionNeedsReset = 1;
+					//Seg7HP('d');
+					waitingForFirstCommand = 1;
+					//if(acqState == FSM_FULL || acqState == FSM_FULL_ON) acqState = FSM_DONE;
 				}
 				
 				if(BTPortDescriptor.RxReady) {
 					
-					// If we have 'ba' in the Rx buffer, it's the command to begin acquisition
-					if(!strncmp("ba", BTPortDescriptor.RxBuf, 2) && acqState == FSM_PREACQ) {
-						acqState = FSM_ACQURING;
-					}
-					// If we have 'sa' in the Rx buffer, it's the command to stop acquisition
-					else if(!strncmp("sa", BTPortDescriptor.RxBuf, 2) && acqState == FSM_ACQURING) {
-						acqState = FSM_WAITINGFORPACKET;
-						haveFinalPacket = 0;
-						BTStatus &= ~4;
-					}
-					// 'ea' Erase All
-					else if(!strncmp("ea", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {		
-						MainPowerOn();			// just in case we lose USB
-						
-						if(TaskFlashCmd == TF_IDLE){
-							TaskFlashCmd = TF_ERASE_ALL;
-							do{
-								osWAIT(100);
-								Seg7HP(0x23);
-								osWAIT(100);
-								Seg7HP(0x24);
-								osWAIT(100);
-								Seg7HP(0x25);
-								osWAIT(100);
-								Seg7HP(0x26);
-								osWAIT(100);
-								Seg7HP(0x21);
-								osWAIT(100);
-								Seg7HP(0x22);
-							}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-							ElapsedMinutes = 0;
-							Seg7HP(' ');
-
-							acqState = FSM_DONE;
-						}						
-					}
-					// 're' and 'rv' obtain Voice/ECG Data
-					else if((!strncmp("re", BTPortDescriptor.RxBuf, 2) || !strncmp("rv", BTPortDescriptor.RxBuf, 2)) && acqState == FSM_FULL_ON) {
-						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%f%f"), &cmd, &data1, &data2);
-						transferingFullData = 1;
-						// Figure out if it's voice or ECG we want
-						transferingDataType = (cmd[1] == 'e' ? FULL_TRANSFER_ECG : FULL_TRANSFER_VOICE);
-						
-						// Prepare BT
-						BTReady = 0;
-						FlashPageNumber = 0;
-						waiting = 0;
-					}
-					else if(!strncmp("v+", BTPortDescriptor.RxBuf, 2)) {
-						EE_Wr(EE_ENABLE_VOICE, 1);
-					}
-					else if(!strncmp("v-", BTPortDescriptor.RxBuf, 2)) {
-						EE_Wr(EE_ENABLE_VOICE, 0);
-					}
-					else if(!strncmp("?v", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
-						print_bt("%1.1f\r\n", floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 );
-					}
-					else if(!strncmp("?e", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
-						print_bt("%1.1f\r\n", floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0 );
-					}
-					else if(!strncmp("?t", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
-						print_bt("%d\r\n", ElapsedMinutes);
-					}
-					else if(!strncmp("sn", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
-						if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
-							argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
-							EE_Wr(EE_SERIAL_NUM,start);
-						}
-						print_bt("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
-					}
-					else if(!strncmp("et", BTPortDescriptor.RxBuf, 2) && acqState == FSM_FULL_ON) {
-						ElapsedMinutes = 0;
-					}												
+					//if(ignoreNextRxReady) {
+					//	BTPortDescriptor.RxReady = 0;
+//ignoreNextRxReady = 0;
+						//Seg7HP('r');
+					//	continue;
+					//}
 					
+					// We have a command, drop the timer
+					if(RFCOMMTimer != -1) {
+						RFCOMMTimer = -1;
+						//Seg7HP('r');
+					}						
+					
+					if(iniAPMode) {
+						//DPLEDTog();
+						getApplePacket(BTPortDescriptor.RxBuf);
+						//memset(BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+
+						//keepAliveTimer = 0;
+
+						// Clear buffer right away
+						//memset(BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+						//printApplePacket(recievedPacket);
+						checkRecievedPacketAndSendNext();
+
+						if(haveCommandFromAppleDevice) {
+							//DPLEDTog();
+							
+							haveCommandFromAppleDevice = 0;
+						}
+						else {
+							BTPortDescriptor.RxReady = 0;
+							// Don't continue with parsing commands if we don't have one
+							continue;
+						}
+					}
+					if(!strncmp("do", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+						if(connectionType == CONNECTION_APPLE) {
+							Hello(PRINT_BT_APPLE);
+						} else {
+							Hello(PRINT_BT);
+						}
+					}
 					/*
-					// Simulates a pacer spike for testing
-					else if(!strncmp("spike", BTPortDescriptor.RxBuf, 5)) {
-						nextPacketIsSpike = 1;
-					}
-					*/
+					else if(!strncmp("dc", BTPortDescriptor.RxBuf, 2)) {
+						
+						BTOff();
+
+						DPLEDOff();
+
+						resetAppleVariables();
+						resetUsartAppleVariables();
+
+						//Seg7HP('d');
+
+						//print_usb("Pin goes low\r\n");
+						BTEnable = 0;
+						//BTOff();
+						//osWAIT(100);
+						connectionNeedsReset = 1;
+						*/
+								/*
+								BTOff();
+
+								DPLEDOff();
+
+								resetAppleVariables();
+								resetUsartAppleVariables();
+
+								//Seg7HP('d');
+
+							//print_usb("Pin goes low\r\n");
+								BTEnable = 0;
+								//osWAIT(100);
+								connectionNeedsReset = 1;
+								keepAliveTimer = -1;
+								*/
+					//}	
 					
-					
-					BTPortDescriptor.RxReady = 0;
-				}
-				
-				if(transferingFullData) {
-					if(!BTReady && FlashPageNumber == 0) {
-						Seg7LP('B');
-						
-						argC--;
-						
-						if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of ECG
-							if(data1>(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN*2){
-								data1 = (transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN*2;
-							}
-							data2 = data1;
-						}
-						else if(argC==2){ // we were given both a start time and an end time
-							if(data2<data1){	// fix end<start
-								data2 = data1;
-							}
-							else if(data2>(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN){// fix end bigger than record length
-								data2 = (transferingDataType == FULL_TRANSFER_VOICE ? VOICE_RECORD_LENGTH : ECG_RECORD_LENGTH)-BLOCK_LEN;
-							}
-							else{
-								data2 = data2;
-							}
-						}
+					else if(!strncmp("ka", BTPortDescriptor.RxBuf, 2)) {
+						// If we get a keep alive command, reset the timer, connection is still active
+						keepAliveTimer = 0;
+						//Seg7HP('A');
+						//DPLEDTog();
+						//print_usb("Keep alive recieved.\r\n");
+					}			
+					/*
+					else if(!strncmp("pa", BTPortDescriptor.RxBuf, 2)&& (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+						currentBTIndex = BT_DATA0;
+						//volatile int dataInt;
 
-						//if no arguments, dump everything
-						if(argC == 0) {
-							data1 = 0;
-							data2 = (transferingDataType == FULL_TRANSFER_VOICE ?
-							floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 :
-							floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0);
-							data2 -= 0.1f; // We request 100ms less on the PC (not sure why?)
-						}
-						
-						// Save the ECG length for later use
-						if(transferingDataType == FULL_TRANSFER_ECG) {
-							ecgLength = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
-							ecgLength -= 0.1f;
-						}							
+						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%d"), &cmd, &dataInt);
 
-						// truncate times to 100ms resolution
-						start = data1*10;
-						end = data2*10;
-						// convert to milliseconds
-						start*=100;
-						end*=100;
-						// set end to the last milliscond of the 100ms block
-						end+=99;
+						start = dataInt*8;
+						end = start + 8;
 
-						// now we've got valid end times, convert that into flash page numbers and indexes
-						if(transferingDataType == FULL_TRANSFER_VOICE) {
-							startPage = start/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
-							startIndex = start%VOICE_MS_PER_PAGE*16;
-							endPage = end/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
-							endIndex =  end%VOICE_MS_PER_PAGE*16;
-						}
-						else {
-							startPage = start/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-							startIndex = start%ECG_MS_PER_PAGE;
-							endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-							endIndex =  end%ECG_MS_PER_PAGE;
-						}						
+						//print_usb("CurrentBTIndex = %d\r\n", currentBTIndex);
 
-						crc = 0xffff;
-						FlashPageNumber=startPage;
-						beforeSend = BTPortDescriptor.TxTotal;
-		
-						BTReady = 1;
-					}	
-					else if(BTReady) {
-						BTReady = 0;
-						// Dump a page
-						beforeSend = BTPortDescriptor.TxTotal;
-						
-						// dump ECG data from full pages between startPage and endPage
-						if(FlashPageNumber == startPage) {
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							for(i=startIndex;i<(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_SAMPLES_PER_PAGE : ECG_SAMPLES_PER_PAGE);i++){
-								if(transferingDataType == FULL_TRANSFER_ECG) {
-									for(j=0;j<12;j++){
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										crc(Buf1.Data.ECG.Sample[i][j]);
-									}
-								}
-								else {
-									put_byte(Buf1.Data.Byte[i]);
-									crc(Buf1.Data.Byte[i]);
-								}						
-							}
-							
-							if(transferingDataType == FULL_TRANSFER_ECG) {
-								put_byte(Buf1.Data.ECG.Flag1);
-								waiting++;
-								crc(Buf1.Data.ECG.Flag1);
-							}
-						}
-						else if(FlashPageNumber<endPage){	
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}		
-							for(i=0;i<(transferingDataType == FULL_TRANSFER_VOICE ? VOICE_SAMPLES_PER_PAGE : ECG_SAMPLES_PER_PAGE);i++){
-								if(transferingDataType == FULL_TRANSFER_ECG) {
-									for(j=0;j<12;j++){
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										waiting++;
-										crc(Buf1.Data.ECG.Sample[i][j]);
-									}
-								}
-								else {
-									put_byte(Buf1.Data.Byte[i]);
-									waiting++;
-									crc(Buf1.Data.Byte[i]);
-								}							
-							}
-							if(transferingDataType == FULL_TRANSFER_ECG) {
-								put_byte(Buf1.Data.ECG.Flag1);
-								waiting++;
-								crc(Buf1.Data.ECG.Flag1);
-							}
-						}
-						else {
-							FlashPageNumber=endPage;
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							for(i=0;i<=(transferingDataType == FULL_TRANSFER_VOICE ? endIndex+VOICE_SAMPLES_PER_MS-1 : endIndex);i++){
-								if(transferingDataType == FULL_TRANSFER_ECG) {
-									for(j=0;j<12;j++){
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										waiting++;
-										crc(Buf1.Data.ECG.Sample[i][j])
-									}
-								}
-								else {
-									put_byte(Buf1.Data.Byte[i]);
-									waiting++;
-									crc(Buf1.Data.Byte[i]);
-								}						
-							}
-							
-							if(transferingDataType == FULL_TRANSFER_ECG) {
-								// If we're at the last page of the request
-								trueEnd = ecgLength*10;
-								trueEnd*=100;
-								trueEnd+=99;
-								trueEndPage = trueEnd/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-								if(FlashPageNumber == trueEndPage) {
-									// Dump the pace detection byte
-									put_byte(Buf1.Data.ECG.Flag1);
-									waiting++;
-									crc(Buf1.Data.ECG.Flag1);
-								}
-							}							
-							
-							put_byte(crc);
-							put_byte(crc >> 8);
-							waiting+=2;
-							}																						
-					}												
-	
-					if(!BTReady && BTPortDescriptor.TxTotal - beforeSend >= waiting) {
-						// Spec sheet says max transmission delay is 20ms. Subject to change.
-						osWAIT(10);
-		
-						if(FlashPageNumber==endPage) {
-							// Make _absolutely sure_ the BT chip is done transmitting
-							osWAIT(200);
-							Seg7LP('F');
-							transferingFullData = 0;
-							transferingDataType = FULL_TRANSFER_NONE;
-							BTReady = 0;
-						}
-						else {
-							BTReady = 1;	
-							FlashPageNumber++;
-							waiting = 0;
-						}					
-					}		
-				}
-				if(BTReady && !transferingFullData) {// we have a lead fail model to decimate
-					BTReady=0;
+						//print_usb("Start = %d\r\	n", start);
+						//print_usb("End = %d\r\n", end);
 
-					// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
+						startPage = (start)/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+						//print_usb("Startpage = %d\r\n", startPage);
+						startIndex = (start)%ECG_MS_PER_PAGE;
+						//print_usb("StartIndex = %d\r\n", startIndex);
 
-					unsigned char m = M^1;	// use the LFBiasModel NOT being filled at the moment
-
-					// first phase of Bluetooth sample production, we add up all four 16 bit samples from the lead-fail bias model, after scaling them back to 12 bits.
-					if(BTBufPhase==0)
-						{
-						unsigned char *btsp = &BTString[BT_DATA0];
-						for (unsigned char k=0; k<4; k++)
-							{
-							for (unsigned char lead=0; lead<8; lead+=2)
-								{
-								btsp[0] = LFBiasModel[m][lead][k] >> 8;
-								btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
-								btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
-								btsp += 3;
-								}
-							}
-
-						/*
-						for(unsigned char i=0; i<8; i++)
-							{	// do all channels
-							BTBuf[i] = ( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16);
-							}
-						*/
-						BTBufPhase=1;
-						}
-				
-					// second phase of Bluetooth sample production, we add in the next four LFBiasModel subsamples, after scaling them back to 12 then average the eight subsamples (/8)
-					else
-						{
-						unsigned char *btsp = &BTString[BT_DATA1];
-						for (unsigned char k=0; k<4; k++)
-							{
-							for (unsigned char lead=0; lead<8; lead+=2)
-								{
-								btsp[0] = LFBiasModel[m][lead][k] >> 8;
-								btsp[1] = (LFBiasModel[m][lead][k] & 0xF0) | ((LFBiasModel[m][lead+1][k] >> 4) & 0x0F);
-								btsp[2] = LFBiasModel[m][lead+1][k] >> 8;
-								btsp += 3;
-								}
-							}
-						/*
-						for(unsigned char i=0;i<8;i++)
-							{	// do all channels
-							BTBuf[i] = (BTBuf[i]+( LFBiasModel[m][i][0]/16 + LFBiasModel[m][i][1]/16 + LFBiasModel[m][i][2]/16 + LFBiasModel[m][i][3]/16)) /8;
-							}
-						*/
-						BTBufPhase=0;
-						/*
-						// now we have eight channels of 125Hz data, ready to go, send three hex bytes for each 12 bit channel, while also accumulating all channels for a checksum
-						unsigned char j=0;
-						int cs = 0;
-						BTString[j++]='*';
-						for(unsigned char i=0;i<8;i++)
-							{	// do all channels
-							cs+=BTBuf[i];
-							BTString[j++]=bin2Hex(BTBuf[i]>>8);
-							BTString[j++]=bin2Hex(BTBuf[i]>>4);
-							BTString[j++]=bin2Hex(BTBuf[i]);
-							}
-						BTString[j++]=bin2Hex(cs>>4);
-						BTString[j++]=bin2Hex(cs);
-						BTString[j++]=13; // carriage return
-						BTString[j++]=0;
-						print_bt("%s", BTString);
-						*/
+						endPage = (end)/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
+						//print_usb("EndPage = %d\r\n", endPage);
+						endIndex = (end)%ECG_MS_PER_PAGE;
+						//print_usb("EndIndex = %d\r\n", endIndex);
 
 						BTString[BT_TYPE] = 1;     // Record type
-						BTString[BT_STATUS] = BTStatus;     // Status Flags
-						BTString[BT_LEADOFF] = 0;     // Lead Off Indicator Bits
-						BTString[BT_PACESPIKE] = ((BTStatus & 8) ? btSpikeIndex : 0);		// Pacer spike index bits
-						
-						//if(BTStatus & 8)
-						//	print_bt("We have a pacer spike on sample %d of 8\n", btSpikeIndex);
+						BTString[BT_STATUS] = 4;     // Status Flags
+						BTString[BT_LEADOFF] = 0;     // Lead Off Indicator Bits	
 							
-						BTString[BT_FRMINDEX] = FrameIndex >> 8;     // Lead Off Indicator Bits
-						BTString[BT_FRMINDEX+1] = FrameIndex;     // Lead Off Indicator Bits
+						BTString[BT_FRMINDEX] = dataInt >> 8;     // Lead Off Indicator Bits
+						BTString[BT_FRMINDEX+1] = dataInt;     // Lead Off Indicator Bits
+
+						FlashPageNumber = startPage;
+						while(TaskFlashCmd != TF_IDLE); // should never happen
+						TaskFlashCmd = TF_READ_BUF1;
+						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+							osYIELD;
+						}
+						for(i = startIndex; i < (startPage == endPage ? endIndex : ECG_MS_PER_PAGE); i++) {
+							// POPULATE
+							for(j = 0; j < 12; j++, currentBTIndex++) {
+								BTString[(currentBTIndex)] = Buf1.Data.ECG.Sample[i][j];
+							}
+							
+						}
+						//print_usb("CurrentBTIndex after first page = %d\r\n", currentBTIndex);
+						btSpikeIndex = 0xFF;
+						btSpikeIndex2 = 0xFF;
+
+						uint16_t temp = ((Buf1.Data.ECG.Flag1 << 8) | Buf1.Data.ECG.Flag2);
+
+						
+						if(temp & 1) {
+							usbSpikeIndex = (temp >> 1) & 0x1F;
+							usbSpikeIndex2 = (temp >> 6) & 0x1F;
+							usbSpikeIndex3 = (temp >> 11) & 0x1F;
+
+							if(usbSpikeIndex && usbSpikeIndex >= startIndex && (startPage == endPage ? usbSpikeIndex <= endIndex : usbSpikeIndex <= ECG_MS_PER_PAGE)) {
+								btSpikeIndex = usbSpikeIndex-startIndex;
+							}
+							if(usbSpikeIndex2 && usbSpikeIndex2 >= startIndex && (startPage == endPage ? usbSpikeIndex2 <= endIndex : usbSpikeIndex2 <= ECG_MS_PER_PAGE)) {
+								if(btSpikeIndex == 0xFF)
+									btSpikeIndex = usbSpikeIndex2-startIndex;
+								else
+									btSpikeIndex2 = usbSpikeIndex2-startIndex;
+							}
+							if(usbSpikeIndex3 && usbSpikeIndex3 >= startIndex && (startPage == endPage ? usbSpikeIndex3 <= endIndex : usbSpikeIndex3 <= ECG_MS_PER_PAGE)) {
+								if(btSpikeIndex == 0xFF)
+									btSpikeIndex = usbSpikeIndex3-startIndex;
+								else
+									btSpikeIndex2 = usbSpikeIndex3-startIndex;
+							}
+						}
+						
+
+						if(startPage != endPage) {
+							FlashPageNumber = endPage;
+							while(TaskFlashCmd != TF_IDLE); // should never happen
+							TaskFlashCmd = TF_READ_BUF1;
+							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
+								osYIELD;
+							}
+							for(i = 0; i < endIndex; i++) {
+								for(j = 0; j < 12; j++, currentBTIndex++) {
+									BTString[(currentBTIndex)] = Buf1.Data.ECG.Sample[i][j];
+								}
+							}
+							//print_usb("CurrentBTIndex after second page = %d\r\n", currentBTIndex);
+
+							uint16_t temp = ((Buf1.Data.ECG.Flag1 << 8) | Buf1.Data.ECG.Flag2);
+
+							
+							if(temp & 1) {
+								usbSpikeIndex = (temp >> 1) & 0x1F;
+								usbSpikeIndex2 = (temp >> 6) & 0x1F;
+								usbSpikeIndex3 = (temp >> 11) & 0x1F;
+
+								if(usbSpikeIndex && usbSpikeIndex >= 0 && usbSpikeIndex <= endIndex) {
+									if(btSpikeIndex == 0xFF)
+										btSpikeIndex = usbSpikeIndex;
+									else
+										btSpikeIndex2 = usbSpikeIndex;
+								}
+								if(usbSpikeIndex2 && usbSpikeIndex2 >= 0 && usbSpikeIndex2 <= endIndex) {
+									if(btSpikeIndex == 0xFF)
+										btSpikeIndex = usbSpikeIndex2;
+									else
+										btSpikeIndex2 = usbSpikeIndex2;
+								}
+								if(usbSpikeIndex3 && usbSpikeIndex3 >= 0 && (startPage == endPage ? usbSpikeIndex3 <= endIndex : usbSpikeIndex3 <= ECG_MS_PER_PAGE)) {
+									if(btSpikeIndex == 0xFF)
+										btSpikeIndex = usbSpikeIndex3;
+									else
+										btSpikeIndex2 = usbSpikeIndex3;
+								}
+							}
+							
+						}
+						
+
+						if(btSpikeIndex != 0xFF || btSpikeIndex2 != 0xFF) {
+							BTStatus |= 8;
+						}
+
+						BTString[BT_PACESPIKE] = ((temp & 1) ? btSpikeIndex : 0);		// Pacer spike index bits
+						if(btSpikeIndex2 != 0xFF && (temp & 1)) BTString[BT_PACESPIKE] |= (btSpikeIndex2 << 4);	
 
 						crc = 0;
 						for (unsigned char jx = BT_TYPE; jx < BT_CRC; jx++)
@@ -585,126 +644,337 @@ BEGIN_TASK(TaskBT)
 
 						BTString[BT_CRC] = crc >> 8;
 						BTString[BT_CRC+1] = crc;
-						/*
-						for (jx = 0; jx < ix; jx++)
-							print_bt("%02X",BTString[jx]);
-						print_bt("\n");
-						*/
+
+						if(connectionType == CONNECTION_ANDROID) {
+							fwrite(BTString, BT_SIZE, 1, bt);
+						} else {
+							memcpy(AppleBTString, BTString, BT_SIZE);
+							sendECGPacketWithLength(BT_SIZE);
+						}
+
+						//print_bt("we want packet %d", dataInt);
+					}
+					
+					else if(!strncmp("v+", BTPortDescriptor.RxBuf, 2)) {
+						EE_Wr(EE_ENABLE_VOICE, 1);
+					}
+					else if(!strncmp("v-", BTPortDescriptor.RxBuf, 2)) {
+						EE_Wr(EE_ENABLE_VOICE, 0);
+					}
+					else if(!strncmp("s+", BTPortDescriptor.RxBuf, 2)) {
+						continuousMode = 1;
+						EE_Wr(EE_ENABLE_CONTINUOUS, 1);
+					}
+					else if(!strncmp("s-", BTPortDescriptor.RxBuf, 2)) {
+						continuousMode = 0;
+						EE_Wr(EE_ENABLE_CONTINUOUS, 0);
+					}
+
+					else if(!strncmp("q+", BTPortDescriptor.RxBuf, 2)) {
+						LFBiasEnable = 1;
+						EE_Wr(EE_LFBIAS_ENABLE, 1);
+					}
+					else if(!strncmp("q-", BTPortDescriptor.RxBuf, 2)) {
+						LFBiasEnable = 0;
+						EE_Wr(EE_LFBIAS_ENABLE, 0);
+					}
+					*/
+					else if(!strncmp("sn", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+						if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
+							argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+							EE_Wr(EE_SERIAL_NUM,start);
+						}
+						print_bt("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+					}
+					/*
+					else if(!strncmp("et", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+						ElapsedMinutes = 0;
+					}
+					*/
+
+					else if(!strncmp("?s", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+						//DPLEDOn();
 						
-						fwrite(BTString, BT_SIZE, 1, bt);
+						// Report status
+						//fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
+
+						// Write out our current state
+						short battMV = round(VBatt*100);
+						BTStateString[6] = acqState;
+						BTStateString[7] = battMV;
+						BTStateString[8] = battMV >> 8;
+
+						//Seg7HP('S');
 						
-						if(acqState == FSM_WAITINGFORPACKET)
-							haveFinalPacket = 1;
+						if(connectionType != CONNECTION_APPLE) {
+							fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
 							
-						BTStatus &= ~8; // Clear pacer bit
+							//connectionType = CONNECTION_ANDROID;
+						} else {
+							sentPacket.payload[0] = getSessionID()[0];
+							sentPacket.payload[1] = getSessionID()[1];
+							strncpy(&sentPacket.payload[2], BTStateString, BT_STATE_SIZE);
+							
+							sentPacket.start = 0x55;
+							sentPacket.length = BT_STATE_SIZE+6;
+							//sentPacket.length = 6+APPLE_BT_STRING_SIZE;
+							sentPacket.lingoID = 0;
+							sentPacket.commandID = 0x42;
+							sentPacket.transID = getCurrentTransID();
+							
+							sendPacket();
+						}
+					}
+					else if(!strncmp("ss", BTPortDescriptor.RxBuf, 2) && waitingForFirstCommand) {
+						//inBluetoothUpdateMode = 0;
+						//print_usb("Entering data mode...\r\n");
+						
+						//isThereAnActiveConnection = 1;
+						waitingForFirstCommand = 0;
+						keepAliveTimer = 0;
+						//continue;
+
+						//Seg7HP('b');
+						//startStreaming();
+					}												
+					
+					memset((void*)BTPortDescriptor.RxBuf, 0 , RX_BUF_SIZE);
+					BTPortDescriptor.RxReady = 0;
+				}
+
+				if(BTReady && !waitingForFirstCommand) {// we have a lead fail model to decimate
+					BTReady=0;
+
+					// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
+
+					
+					unsigned char m = M^1;	// use the LFBiasModel NOT being filled at the moment
+					
+					// fill our buffer
+					for(i = 0; i < 8; i++) {
+					
+						// Fill our buffer
+//#if SAMPLING_RATE == 500
+						if(connectionType == CONNECTION_APPLE) {
+							y0 = LFBiasModel[m][i][0]+LFBiasModel[m][i][1];
+							y1 = LFBiasModel[m][i][2]+LFBiasModel[m][i][3];
+							z0 = (yPrior[i]+y0)/4;
+							z1 = (y0+y1)/4;
+													
+							yPrior[i] = y1;
+													
+							outBuffer[i][outBufferPos] = z0;
+							outBuffer[i][outBufferPos+1] = z1;
+							
+						} else {
+//#else
+							
+							outBuffer[i][outBufferPos] = LFBiasModel[m][i][0];
+							outBuffer[i][outBufferPos+1] = LFBiasModel[m][i][1];
+							outBuffer[i][outBufferPos+2] = LFBiasModel[m][i][2];
+							outBuffer[i][outBufferPos+3] = LFBiasModel[m][i][3];
+						}
+//#endif
+					}
+//#if SAMPLING_RATE == 500
+
+					if(connectionType == CONNECTION_APPLE) {
+						outBufferPos+=2;
+					}						
+//#else
+					else {
+						outBufferPos+=4;
+					}						
+//#endif
+					
+					if(outBufferPos == 8) {
+						
+						// Set up the BT spike indexes
+						for(i = 0; i < 3; i ++) {
+							if(pacerSpikes[i] != 0xFF) {
+								BTStatus |= 8;
+//#if SAMPLING_RATE == 500
+								if(connectionType == CONNECTION_APPLE) {
+									if(btSpikeIndex == 0xFF)
+										btSpikeIndex = (pacerSpikes[i]/2.0f);
+									else if(btSpikeIndex2 == 0xFF)
+										btSpikeIndex2 = (pacerSpikes[i]/2.0f);
+									else if(btSpikeIndex3 == 0xFF)
+										btSpikeIndex3 = (pacerSpikes[i]/2.0f);
+								}
+								
+//#else
+								else {
+									if(btSpikeIndex == 0xFF) 
+										btSpikeIndex = pacerSpikes[i];
+									else if(btSpikeIndex2 == 0xFF)
+										btSpikeIndex2 = pacerSpikes[i];
+								}
+//#endif					
+							}
+						}
+						
+						memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
+
+						samplesSinceLastPacket = 0;
+
+						// Blast
+						outBufferPos = 0;
+
+						// Pack
+#if BITS == 12
+						for(k = 0; k < 8; k++) {
+							for(lead = 0; lead < 8; lead += 2) {
+								btsp[0] = outBuffer[lead][k] >> 8;
+								btsp[1] = (outBuffer[lead][k] & 0xF0) | ((outBuffer[lead+1][k] >> 4) & 0x0F);
+								btsp[2] = outBuffer[lead+1][k] >> 8;
+								btsp += 3;
+							}
+						}
+						
+#else 
+						for(k = 0; k < 8; k++) {
+							for(lead = 0; lead < 8; lead++) {
+								//*btsp++ = (outBuffer[lead][k] >> 8);
+								//*btsp++ = (outBuffer[lead][k] & 0xFF);
+								*((int16_t*)(btsp)) = outBuffer[lead][k];
+								btsp+=2;
+							}
+						}
+#endif
+						btsp = &BTString[BT_DATA0];
+					
+						//BTString[BT_TYPE] = 1;     // Record type
+						BTString[BT_STATUS] = BTStatus;     // Status Flags
+						// Pack in our bad leads
+						BTLeadOff = 0;
+						for(i = 0; i < 8; i++) {
+							BTLeadOff |= (badLeads[i]<<i);
+						}
+						BTString[BT_LEADOFF] = BTLeadOff;     // Lead Off Indicator Bits
+						BTString[BT_PACESPIKE] = ((BTStatus & 8) ? btSpikeIndex : 0);		// Pacer spike index bits
+						//BTString[BT_PACESPIKE2] = (((BTStatus & 8) && btSpikeIndex3 != 0xFF )? btSpikeIndex3:0);
+						if(btSpikeIndex2 != 0xFF && (BTStatus & 8)) BTString[BT_PACESPIKE] |= (btSpikeIndex2 << 4);
+						if(btSpikeIndex3 != 0xFF && (BTStatus & 8)) BTString[BT_PACESPIKE2] = btSpikeIndex3;
+						else btSpikeIndex3 = 0;
+						
+						if(BTStatus & 8) {
+							//print_bt("Pacer spike detected at index: %d, %d, sample index: %d\r\n", btSpikeIndex, btSpikeIndex2, FrameIndex);
+							//print_bt("Pacer spike index 1: %d\r", btSpikeIndex);
+							//print_bt("Pacer Spike index 2: %d\r", btSpikeIndex2);
+							//print_bt("We have a pacer spike: "BYTETOBINARYPATTERN"\r", BYTETOBINARY(BTString[BT_PACESPIKE]));
+							BTStatus &= ~8; // Clear pacer bit 
+							btSpikeIndex = 0xFF; // Clear spike indecies
+							btSpikeIndex2 = 0xFF;
+							btSpikeIndex3 = 0xFF;
+							
+							//memset(pacerSpikes, 0xFF, 3);
+						}				
+							
+						BTString[BT_FRMINDEX] = FrameIndex >> 8;     // Lead Off Indicator Bits
+						BTString[BT_FRMINDEX+1] = FrameIndex;     // Lead Off Indicator Bits
+
+						if(connectionType != CONNECTION_APPLE) {
+							crc = 0;
+							for (jx = BT_PACESPIKE2; jx < BT_CRC; jx++)
+								crc = CRCCalc(crc, BTString[jx]);
+
+							BTString[BT_CRC] = crc >> 8;
+							BTString[BT_CRC+1] = crc;
+						} else {
+							//BTString[BT_CRC] = 0;
+							//BTString[BT_CRC+1] = 0;
+							//if(appleStringIndex < SMALL_BT_SIZE) {
+								for(jx = BT_PACESPIKE2; jx < BT_PACESPIKE2+SMALL_BT_SIZE; jx++) {
+									appleCrc += BTString[jx];
+								}
+							//}
+						}
+						
+				       //for(i = 0; i < APPLE_BT_STRING_SIZE; i++) {
+						//   AppleBTString[i] = 'T';
+					   //}
+					   if(successfulAppleConnection && iniAPMode) {
+						   //print_usb("Full Apple BT String Size = %d\r\n", APPLE_BT_STRING_SIZE);
+						   //for(int i = 0; i < BT_SIZE; i++) {
+						//	   AppleBTString[appleStringIndex++] = BTString[i];
+						//   }
+							if(appleStringIndex < APPLE_BT_STRING_SIZE) {
+							   memcpy(&AppleBTString[appleStringIndex], &BTString[BT_PACESPIKE2], SMALL_BT_SIZE);
+							   appleStringIndex+=SMALL_BT_SIZE;
+							}
+							if(appleStringIndex >= APPLE_BT_STRING_SIZE) {
+								sendECGPacketWithLength(APPLE_BT_STRING_SIZE);
+								//askIdentity();
+								
+								//DPLEDOff();
+								//Seg7HP('O');
+								
+								appleStringIndex = 0;
+								appleCrc = 0;
+							}																			   
+					   } else if(connectionType == CONNECTION_ANDROID) {
+					   		fwrite(BTString, BT_SIZE, 1, bt);
+					   }
+					   						   
+						//fwrite(BTString, BT_SIZE, 1, bt);
+						/*
+						if(successfulAppleConnection && iniAPMode && appleStringIndex >= APPLE_BT_STRING_SIZE) {
+							//print_usb("Full Apple BT String Size = %d\r\n", APPLE_BT_STRING_SIZE);
+							//print_usb("Apple BT String Size = %d\r\n", appleStringIndex);
+							//DPLEDOn();
+							//Seg7HP('A');
+							//sendECGPacket();
+							//memset(AppleBTString, 0, APPLE_BT_STRING_SIZE);
+							sendECGPacketWithLength(APPLE_BT_STRING_SIZE);
+							//askIdentity();
+							
+							//DPLEDOff();
+							//Seg7HP('O');
+							
+							appleStringIndex = 0;
+							appleCrc = 0;
+
+							//if(connectionType == CONNECTION_APPLE && acqState == FSM_WAITINGFORPACKET)
+							//	haveFinalPacket = 1;
+						}*/ /*else if(!successfulAppleConnection) {
+							Seg7HP('A');
+						} else if (!iniAPMode) {
+							Seg7HP('P');
+						} else {
+							Seg7HP('b');
+						}*/
+						//print_bt("TEST");
+						
+						//if(acqState == FSM_WAITINGFORPACKET) {
+						//	haveFinalPacket = 1;
+							//DPLEDOff();
+						//}
 
 						FrameIndex++;
-						}
 
-					}
-				}				
-#endif
-#ifdef COMPARE_VERSION
-				if(BTEnable) {
-					if(!BTReady && FlashPageNumber == 0) {
-						Seg7LP('B');
-		
-						// Initialize the test variables
-						secondsOfEcg = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
+						//DPLEDTog();
 
-						// truncate times to 100ms resolution
-						end = secondsOfEcg*10;
-						// convert to milliseconds
-						end*=100;
-						// set end to the last milliscond of the 100ms block
-						end+=99;
-
-						// now we've got valid end times, convert that into flash page numbers and indexes
-						endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-						endIndex =  end%ECG_MS_PER_PAGE;
-
-						crc = 0xffff;
-						FlashPageNumber=FLASH_ECG_START_PAGE;
-		
-						BTReady = 1;
-					}	
-					else if(BTReady) {
-						BTReady = 0;
-						// Dump a page
-						beforeSend = BTPortDescriptor.TxTotal;
 						
-						// dump ECG data from full pages between startPage and endPage
-						if(FlashPageNumber<endPage){
-			
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							crc = 0;			
-							for(i=0;i<ECG_SAMPLES_PER_PAGE;i++){
-								for(j=0;j<12;j++){
-									put_byte(Buf1.Data.ECG.Sample[i][j]);
-									waiting++;
-									crc = CRCCalc(crc, Buf1.Data.ECG.Sample[i][j]);
-								}
-							}
-							put_byte(crc >> 8);
-							put_byte(crc);
-							waiting+=2;
-						}
-						else {
-							FlashPageNumber=endPage;
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							for(i=0;i<=endIndex;i++){
-								for(j=0;j<12;j++){
-									put_byte(Buf1.Data.ECG.Sample[i][j]);
-									waiting++;
-								}
-							}
-						}			
-							
-					}												
-	
-					if(!BTReady && BTPortDescriptor.TxTotal - beforeSend >= waiting) {
-						// Spec sheet says max transmission delay is 20ms. Subject to change.
-						osWAIT(25);
-		
-						if(FlashPageNumber==endPage) {
-							// Make _absolutely sure_ the BT chip is done transmitting
-							osWAIT(200);
-			
-							BTEnable = 0;
-							BTReady = 0;
-						}
-						else {
-							BTReady = 1;	
-							FlashPageNumber++;
-							waiting = 0;
-						}					
-					}		
-				}
-#endif
-#ifdef LOGGING_VERSION
-				if(BTEnable) {
-					osWAIT(25);
-					
-					if(BTPortDescriptor.RxReady) {
-						
-						fprintf(bt, "Message: %s\n", BTPortDescriptor.RxBuf);				
-						memset(BTPortDescriptor.RxBuf, 0, 255);
-						BTPortDescriptor.RxReady=0;
 					}
 					
-				}					
-#endif
+					
+					BTBufPhase ^= 1;
+					
+
+						
+						
+
+						//osWAIT(8);
+						//BTReady = 1;
+						//}
+
+					}
+				}			
 			    osYIELD;	// let other stuff run
 		    }
 	    }
+	
 	else
         { // consume as little time as possible, we're not supposed to be running
 		while(1)
@@ -712,6 +982,7 @@ BEGIN_TASK(TaskBT)
 			osWAIT(250);
 		    }
 	    }
+	
 
 END_TASK
 
@@ -724,5 +995,5 @@ ISR(USARTE0_RXC_vect){
 ISR(USARTE0_DRE_vect){
 	USART_DataRegEmpty(&BTPortDescriptor);
 }
-
-#endif //BLUETOOTH
+#endif
+#endif

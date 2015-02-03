@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 // This file has been prepared for Doxygen automatic documentation generation.
 /*! \file *********************************************************************
  *
@@ -132,3 +134,5 @@ static uint8_t PROGMEM_DECLARE(SLEEPMGR_modes[SLEEPMGR_NUM_MODES]) = \
 
 #endif
 /* EOF */
+
+#endif

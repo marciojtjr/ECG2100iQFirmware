@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 /* This file has been prepared for Doxygen automatic documentation generation.*/
 /*! \file *********************************************************************
  *
@@ -169,4 +171,5 @@ void RTC_SetPrescaler( RTC_PRESCALER_t prescaler );
  *
  */
 
+#endif
 #endif

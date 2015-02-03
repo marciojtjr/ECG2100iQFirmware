@@ -1,8 +1,10 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
+#ifndef BOOTLOADER
 unsigned char LPChar;	// holds the current 7 segment character
 unsigned char Priority;	// holds the current 7 segment priority, high priority writes will override low priority writes
+#endif
 
 void Seg7A(char on){
 	PORTE.DIRSET = PIN0_bm;
@@ -27,6 +29,7 @@ void Seg7B(char on){
 }
 
 void Seg7C(char on){
+	
 	if(MCU.JTAGUID == 0xff){
 		PORTE.DIRSET = PIN2_bm;
 		PORTE.PIN2CTRL = PORT_OPC_BUSKEEPER_gc;
@@ -38,6 +41,7 @@ void Seg7C(char on){
 		}
 	}
 	else{
+		
 		PORTF.DIRSET = PIN4_bm;
 		PORTF.PIN4CTRL = PORT_OPC_BUSKEEPER_gc;
 		if(on){
@@ -116,7 +120,9 @@ void Seg7DP(char on){
 	}
 }
 
-unsigned char Seg7Table[128] PROGMEM = {
+#ifndef BOOTLOADER
+
+const unsigned char Seg7Table[128] PROGMEM = {
 //  .gfedcba
 					 0,	// (sp)   32 0x20 
 	0b00000001,	// !      33 0x21	// baseline bar for QC
@@ -294,3 +300,4 @@ void InitSeg7(void){
 	Seg7DP(0);		// turn off the decimal point
 }
 
+#endif

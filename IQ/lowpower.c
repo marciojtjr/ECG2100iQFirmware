@@ -1,5 +1,9 @@
+#ifndef BOOTLOADER
+
 #include "avr_compiler.h"
 #include "lowpower.h"
+
+#include "rtc_driver.h"
 
 //! Convenience macro for enabling pull-ups on specified pins on any port.
 #define __PORT_PULLUP(port, mask) { \
@@ -33,6 +37,7 @@
 	__PORT_PULLDOWN(PORTR, 0x03); \
 }
 
+/*
 void LOWPOWER_Init( void ){
 
 // Disable encryption, DMA and event system
@@ -61,6 +66,7 @@ void LOWPOWER_Init( void ){
 //	ENABLE_PULLUP();
 //	ENABLE_PULLDOWN();
 }
+*/
 
 void HIGHPOWER_Init( void ) {
 // Enable encryption, DMA and event system
@@ -80,3 +86,5 @@ void HIGHPOWER_Init( void ) {
 	PR.PRPA = 0;
 	PR.PRPB = 0;
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 /* This file has been prepared for Doxygen automatic documentation generation.*/
 /*! \file *********************************************************************
  *
@@ -197,3 +199,4 @@ void WDT_DisableWindowMode( void )
 	CCP = CCP_IOREG_gc;
 	WDT.WINCTRL = temp;
 }
+#endif

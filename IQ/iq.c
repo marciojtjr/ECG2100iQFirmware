@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include <avr/io.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -35,7 +37,12 @@
 #include "taskBT.h"
 
 #define SYS_FREQ 16000	//Hz
-#define RTC_PERIOD	60 // Configure RTC wakeup period to one minute, it clocks at 1 (1024Hz from 32KHz internal oscillator / 1024 prescaler)
+
+#define RTC_PERIOD 60
+
+unsigned char inBluetoothUpdateMode = 0;
+unsigned char continuousMode = 0;
+//unsigned short globalTimer = 0;
 
 void (*resetVec)( void ) = 0x0000; // Set up function pointer to the RESET vector.
 
@@ -66,7 +73,7 @@ void FastClock(void){
 	while ( CLKSYS_IsReady( OSC_PLLRDY_bm ) == 0 );	// wait for PLL to stabilize
 	CLKSYS_Main_ClockSource_Select( CLK_SCLKSEL_PLL_gc );	// start clocking the system from it
 	CLKSYS_Disable( OSC_RC2MEN_bm | OSC_RC32MEN_bm); // turn off oscillators we don't use
-	CLKSYS_Enable( OSC_RC32KEN_bm );	// we need the low power 32KHz clock for the RTC
+	CLKSYS_Enable( OSC_RC32KEN_bm );	// we need the low power 32KHz clock for the RTC 
 }
 
 void RC32MClock(void){
@@ -82,9 +89,6 @@ void RC32MClock(void){
 unsigned int ElapsedMinutes;	// keeps track of time since the ECG was recorded, in minutes.
 unsigned int buttonTimer = 0;
 
-//! Global variable to keep track of which state the program is in.
-uint8_t gState = 0;
-
 SYS_ERR SystemError; 	// holds error flags to indicate various errors
 FLAGS Flags;					// holds various flags
 
@@ -94,6 +98,7 @@ void SetDefaults(void){
  	EE_Wr(EE_B1,1);
  	EE_Wr(EE_B2,80);
  	EE_Wr(EE_B3,40);
+ 	//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
 }
 
 // Flash an error code in the LED for 5 seconds, then reset the CPU
@@ -106,10 +111,12 @@ void Error(unsigned char c){
 //main
 
 int main(void){
-
+	//volatile int stringSize = APPLE_BT_STRING_SIZE;
 	WDT_EnableAndSetTimeout( WDT_PER_2KCLK_gc );
+	
 	PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// fix glitch in bootstrap loaded that enabled pulldown on microphone input rather than USBDetect
 	FastClock();
+	HIGHPOWER_Init();
 	InitSeg7();	// blank the 7 segment display
 	DPLEDOff();
 	AnalogPowerOff();
@@ -121,7 +128,9 @@ int main(void){
 
 	CLK.RTCCTRL = CLK_RTCSRC_RCOSC_gc | CLK_RTCEN_bm;	// start the RTC (clocked at 1024Hz) so we can set registers
 	while(RTC_Busy());	// Wait until RTC is ready.
-	RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );	// Configure RTC wakeup period, clock it at 1Hz
+	
+	//RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV16_gc );	// Configure RTC wakeup period, clock it at 1Hz
+	RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 
 	//------------------------------------------------------------------------------------------
 	// Catch uninitialized EEPROM parameters
@@ -129,9 +138,9 @@ int main(void){
 	if(EE_Rd(EE_ABANDON_TIME)>600){
 		SetDefaults();
 	}
-	if(EE_Rd(EE_ENABLE_VOICE)>1) {
-		EE_Wr(EE_ENABLE_VOICE, 1);
-	}
+	//if(EE_Rd(EE_ENABLE_VOICE)>1) {
+	//	EE_Wr(EE_ENABLE_VOICE, 1);
+	//}
 
 	while(1){
 
@@ -168,8 +177,9 @@ BEGIN_TASK(TaskMain)
 	//-------------------------------------------------------------------------------------------
 	// First, we handle the power-up condition, where the button was pressed or we were plugged into USB while we were off
 	
+	
+	/*
 	ElapsedMinutes = 0;	// we are powering up, there's no way we can know what the elapsed time is, so zero it
-
 	if(EE_Rd( (EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full
 		// all we can do is display the "F" message until the button is released. This is also an error condition.
 		// We should never power up full because we never turn off once full. We stay in low power operation tracking elapsed time.
@@ -178,23 +188,29 @@ BEGIN_TASK(TaskMain)
 		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
 
 		Seg7LP('F');
+		//Seg7LP('0' + state);
 		acqState = FSM_START;
 		
 		//MainPowerOn();
 	}
 	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not. (Now, with Full mode it causes problems. Look into it)
-
+	*/
+	
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
-
+		osENABLE_TASK(TaskAcq);
+		
+/*
 		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0 || (EE_Rd(EE_VOICE_RECORD_LENGTH) == 0 && EE_Rd(EE_ENABLE_VOICE) == 0)) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
 			
 			buttonTimer = 0;
 			do {
 				Seg7LP('F');
+				//Seg7LP('0' + EE_Rd(EE_TEST));
 				if(++buttonTimer >= 5000) {
 					MainPowerOn();
-														
+					
 					if(TaskFlashCmd == TF_IDLE){
+						FlashPowerOn();
 						TaskFlashCmd = TF_ERASE_ALL;
 						do{
 							osWAIT(100);
@@ -212,6 +228,7 @@ BEGIN_TASK(TaskMain)
 						}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
 						ElapsedMinutes = 0;
 						Seg7HP(' ');
+						FlashPowerOff();
 						MainPowerOff();
 						break;
 					}
@@ -257,7 +274,7 @@ BEGIN_TASK(TaskMain)
 			osWAIT(250);
 			osENABLE_TASK(TaskAcq);	// now we're empty and ready to acquire
 			Flags.AcqActive = 1;
-		}
+		}*/
 	} // if(!USBPresent())
 
 	else{ // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
@@ -310,7 +327,7 @@ BEGIN_TASK(TaskMain)
 		}
 
 
-
+/*
 		if(ElapsedMinutes){	// if ElapsedMinutes was set by a successfull acquisition, we must keep advancing it
 
 			MainPowerOn();	// stay on to mark time
@@ -326,15 +343,30 @@ BEGIN_TASK(TaskMain)
 				FlashPowerOff();
 				InitUSBDetect();
 				InitButton();
+				osDISABLE_TASK(TaskUSB);
 			}
 
 			if( USBPresent() && !CLKSYS_IsReady(OSC_PLLRDY_bm) ){ // we're on USB power and not running at high speed, switch to high speed
 				acqState = FSM_DONE;
-				
+
+				osENABLE_TASK(TaskUSB);
 				FastClock();
 				FlashPowerOn();
+				HIGHPOWER_Init();
 				InitUSBUART();
 			}
+
+			
+			if(USBPresent() && !osIS_TASK_ENABLED(TaskUSB)) {
+				osENABLE_TASK(TaskUSB);
+
+				// Make REAL sure we're on fast clocks
+				//FastClock();
+				//FlashPowerOn();
+				//HIGHPOWER_Init();
+				InitUSBUART();
+			}
+			
 
 			// now that we're running at the right clock speed for the circumstances, we can take care of ElapsedMinutes
 			if(RTC.INTFLAGS & RTC_OVFIF_bm){	// if the RTC overflowed
@@ -344,18 +376,33 @@ BEGIN_TASK(TaskMain)
 				}
 			}
 		}	// if(ElapsedMinutes())
-
+*/
 		// Now we've got to handle the 7-segment display
 		// If we're powered by USB, we can be 'F'ull, 'C'harging or 'E'mpty
 		if(USBPresent()){
+			/*
 			if(EE_Rd( EE_VOICE_RECORD_LENGTH)!=0 || EE_Rd(EE_ECG_RECORD_LENGTH)!=0){
-				Seg7LP('F');
+#ifdef WORKING
+				if(!inBluetoothUpdateMode) 
+#endif
+					Seg7LP('F');
 			}
-			if(EE_Rd( EE_VOICE_RECORD_LENGTH)==0 && EE_Rd(EE_ECG_RECORD_LENGTH)==0 && BatteryIsCharging() ){
-				Seg7LP('C');
+			*/
+			if(BatteryIsCharging()){
+#ifdef WORKING
+				if(!inBluetoothUpdateMode) 
+#endif
+					Seg7LP('C');
 			}
-			if(EE_Rd( EE_VOICE_RECORD_LENGTH)==0 && EE_Rd(EE_ECG_RECORD_LENGTH)==0 && BatteryIsCharged() ){
-				Seg7LP('E');
+			if(BatteryIsCharged()){
+#ifdef WORKING
+				if(!inBluetoothUpdateMode) {
+#endif
+					Seg7LP('C');
+					DPLEDOn();
+#ifdef WORKING
+				}
+#endif
 			}
 		}
 		// if we're not powered by USB and TaskAcq is not running, then show 'F'ull or 'E'mpty or "L" while the button is pressed and nothing otherwise
@@ -364,122 +411,7 @@ BEGIN_TASK(TaskMain)
 			if(!ElapsedMinutes){
 				MainPowerOff();	// TaskAcq isn't running and ElapsedMinutes is zero (so even if we've recorded something, we can't maintain it)... so turn off when the button is released
 			}
-			if(ButtonPressed()){ // if the button is pressed and TaskAcq is running (and therefore not handling the button), we'll display E or L if we're able to record and F if not
-				if( EE_Rd(EE_VOICE_RECORD_LENGTH)==0 && EE_Rd(EE_ECG_RECORD_LENGTH)==0 ){ // Flash is ready to acquire, see if the battery voltage is high enough to get through a recording
-					Seg7LP('E');
-					acqState = FSM_EMPTY;
-				}
-				else{	// Flash is full, we can't record
-					Seg7LP('F');
-					
-					if(!CLKSYS_IsReady(OSC_PLLRDY_bm) && acqState != FSM_FULL_ON) {
-						FastClock();
-						FlashPowerOn();
-						HIGHPOWER_Init();
-						acqState = FSM_FULL_ON;
-					}
-					else if(CLKSYS_IsReady(OSC_PLLRDY_bm) && ElapsedMinutes && acqState == FSM_FULL_ON) {
-						AnalogPowerOn();
-						
-						osENABLE_TASK(TaskBT);
-						
-						readyForCommands = 1; // We know for sure the chip is ready
-						BTOn(); // Just call BTOn since the BT chip is for sure set up
-						
-						buttonTimer = 0;
-						while(ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
-							osWAIT(1);
-							if(++buttonTimer >= 5000) {
-								BTOff();
-								BTEnable = 0;
-														
-								MainPowerOn();
-														
-								if(TaskFlashCmd == TF_IDLE){
-									TaskFlashCmd = TF_ERASE_ALL;
-									do{
-										osWAIT(100);
-										Seg7HP(0x23);
-										osWAIT(100);
-										Seg7HP(0x24);
-										osWAIT(100);
-										Seg7HP(0x25);
-										osWAIT(100);
-										Seg7HP(0x26);
-										osWAIT(100);
-										Seg7HP(0x21);
-										osWAIT(100);
-										Seg7HP(0x22);
-									}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-									ElapsedMinutes = 0;
-									Seg7HP(' ');
-															
-									acqState = FSM_DONE;
-								}
-							}
-						}
-						
-						buttonTimer = 0;
-						while(!BTEnable && !ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
-							osWAIT(1);
-							if(++buttonTimer >= 30000)
-								break;
-						}
-
-						// We made a connection while in Full
-						if(BTEnable) {
-							while(!ButtonPressed() && acqState != FSM_DONE && !USBPresent()) {
-								osWAIT(1);
-							}
-						}
-						// Wait for button bounce
-						buttonTimer = 0;
-						while(ButtonPressed() && !USBPresent() && acqState != FSM_DONE) {
-							osWAIT(1);
-							if(++buttonTimer >= 5000) {
-								BTOff();
-								BTEnable = 0;
-														
-								MainPowerOn();			// just in case we lose USB
-														
-								if(TaskFlashCmd == TF_IDLE){
-									TaskFlashCmd = TF_ERASE_ALL;
-									do{
-										osWAIT(100);
-										Seg7HP(0x23);
-										osWAIT(100);
-										Seg7HP(0x24);
-										osWAIT(100);
-										Seg7HP(0x25);
-										osWAIT(100);
-										Seg7HP(0x26);
-										osWAIT(100);
-										Seg7HP(0x21);
-										osWAIT(100);
-										Seg7HP(0x22);
-									}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-									ElapsedMinutes = 0;
-									Seg7HP(' ');
-															
-									acqState = FSM_DONE;
-								}
-							}
-						}
-						
-						
-						osDISABLE_TASK(TaskBT);
-						
-						BTOff();
-						BTEnable = 0;
-						
-						transferingFullData = 0; // In case we were in the middle of a transmission
-						transferingDataType = FULL_TRANSFER_NONE;
-						
-						acqState = FSM_DONE;
-					}					
-				}
-			}
-			else{ // the button is released and we're still running, so blank the display (it draws a lot of power)
+			if(!ButtonPressed()){ // the button is released and we're still running, so blank the display (it draws a lot of power)
 				Seg7LP(' ');
 			}
 		}
@@ -492,8 +424,11 @@ ISR(TCC1_OVF_vect){
 //	DPLEDOn();
 	static char i;
 	AcqInterrupt();
-	if( (i++&0xf)==0){
+	if( (i++&0xf)==0){ 
+		//++globalTimer;
 		SysTick();
 	}
 //	DPLEDOff();
 }
+
+#endif

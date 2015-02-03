@@ -1,5 +1,5 @@
+#ifndef BOOTLOADER
 #include "adc_driver.h"
-
 
 // clear the interrupt flag and return the signed conversion result
 int16_t ADC_ResultCh_GetWord_Offset(ADC_CH_t * adc_ch, int8_t signedOffset){
@@ -51,3 +51,4 @@ uint8_t SP_ReadCalibrationByte( uint8_t index ){
  	NVM_CMD = NVM_CMD_NO_OPERATION_gc; // Clean up NVM Command register
 	return result;
 }
+#endif

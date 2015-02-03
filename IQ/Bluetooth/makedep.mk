@@ -2,6 +2,18 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+apple.c
+
+ffft.S
+
+main.c
+
+serial.c
+
+sp_driver.S
+
+taskPaceSimu.c
+
 rtos.c
 
 wdt_driver.c

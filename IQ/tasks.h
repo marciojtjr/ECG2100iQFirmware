@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #include <avr/io.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -18,3 +20,4 @@
 #include "eeprom.h"
 
 #include "rtos.h"
+#endif

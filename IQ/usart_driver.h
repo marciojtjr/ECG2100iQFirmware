@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 #ifndef USART_DRIVER_H
 #define USART_DRIVER_H
 
@@ -10,6 +12,14 @@
 
 extern int written;
 extern char readyForCommands;
+
+extern unsigned char iniAPMode ;
+extern unsigned char waitingForiAPPacket ;
+extern int remainingiAPBytes ;
+extern unsigned char needToDropPairing;
+extern unsigned char ignoreNextRFCOMM;
+extern unsigned char RFCOMMConnectionEstablished;
+extern unsigned char ignoreNextRxReady;
 
 #if ( TX_BUF_SIZE & TX_BUF_MASK )
 #error TX_BUF_SIZE is not a power of 2
@@ -56,5 +66,7 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 void USART_RXComplete(USART_desc_t *usart_desc);
 void USART_DataRegEmpty(USART_desc_t *usart_desc);
 void uart_putchar(USART_desc_t *usart_desc, uint8_t data);
+void resetUsartAppleVariables();
 
+#endif
 #endif

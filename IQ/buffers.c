@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include "buffers.h"
 
 //------------------------------------------------------------------------------------------
@@ -8,6 +9,8 @@
 // Although it's sufficient to keep track of only FULL/EMPTY, we also have intermediate states of
 // FILLING/WRITING to aid in debugging
 
+/*
 struct BUFFER Buf1;
 struct BUFFER Buf2;
-
+*/
+#endif

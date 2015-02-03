@@ -43,7 +43,9 @@ unsigned long EE_Rd(unsigned int offset){
 void EE_Wr(unsigned int offset, unsigned long data){
 
 	if(offset == EE_APP_CRC){
+#ifndef BOOTLOADER
 		Error(1);
+#endif
 	}
 
 	unsigned char addr;

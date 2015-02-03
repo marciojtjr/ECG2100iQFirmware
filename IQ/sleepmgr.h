@@ -1,3 +1,5 @@
+#ifndef BOOTLOADER
+
 // This file has been prepared for Doxygen automatic documentation generation.
 /*! \file *********************************************************************
  *
@@ -81,3 +83,5 @@ void SLEEPMGR_CancelSleep( void );
 
 #endif
 /* EOF */
+
+#endif
