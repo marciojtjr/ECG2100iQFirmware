@@ -71,6 +71,8 @@
 
 #ifdef BOOTLOADER
 
+#define PROGMEM_PAGE_SIZE SPM_PAGESIZE
+
 /* Define the size of the flash page if not defined in the header files. */
 #ifndef PROGMEM_PAGE_SIZE
 	#error  PROGMEM_PAGE_SIZE must be defined if not defined in header files.
