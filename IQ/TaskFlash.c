@@ -10,6 +10,7 @@
 #include "buffers.h"
 #include "eeprom.h"
 #include "taskUSB.h"
+#include "taskBT.h"
 #include "TaskWatchDog.h"
 
 // Flash Commands
@@ -31,17 +32,52 @@
 #define FSTS_BUSY						0x01	// 1 = busy writing (WIP/Write In Place)
 
 // Globals
-static SPI_Descriptor_t spiDescriptor;			// spi operations descriptor
-static char status;
+//static SPI_Descriptor_t spiDescriptor;			// spi operations descriptor
+//static volatile char status;
 
-unsigned char TaskFlashCmd = TF_IDLE;	// used by acquisition task to tell us what to do
-unsigned int FlashPageNumber;					// set by others to tell us which page to read/write
+//unsigned char TaskFlashCmd = TF_IDLE;	// used by acquisition task to tell us what to do
+//unsigned int FlashPageNumber;					// set by others to tell us which page to read/write
+
+/*
+uint8_t FlashReadBuffer[512];
+uint8_t FlashWriteBuffer[512];
+
+uint8_t OkayToWriteToWriteBuffer = 1;
+uint8_t OkayToReadFromReadBuffer = 0;
+
+unsigned int currentReadBufferPos = 0;
+unsigned int currentReadBufferSize = 0;
+
+static volatile unsigned int currentFlashReadPage = 0, currentFlashWritePage = 0;
+static unsigned int flashByte;
+*/
+
+//heatshrink_encoder encoder;
+
 //===========================================================================================
 // Power up the flash memory and make sure it's there
 BEGIN_TASK(TaskFlash)
 
-	static unsigned char sector, endSector;
-	//static unsigned int i;
+/*
+static int8_t encoderRet;
+static uint8_t encoderRetBytes[APPLE_BT_STRING_SIZE];
+static size_t encoderRetCount;
+// We're apprehending taskflash to do compression testing
+while(1) {
+	encoderRet = heatshrink_encoder_poll(&encoder, &encoderRetBytes[0], APPLE_BT_STRING_SIZE, &encoderRetCount);
+	//if(encoderRet == HSER_POLL_NOT_READY) DPLEDTog();
+	if(encoderRet != HSER_POLL_NOT_READY) { Seg7HP('r'); }
+	osWAIT(1);
+	//osYIELD;
+}
+*/
+
+/*
+	memset(FlashReadBuffer, 0, 512);
+	memset(FlashWriteBuffer, 0, 512);
+
+
+	//static unsigned char sector, endSector;
 
 	//DPLEDOn();
 	FlashPowerOn();
@@ -55,19 +91,17 @@ BEGIN_TASK(TaskFlash)
            true,										// use double speed
            SPI_PRESCALER_DIV4_gc);	// that's clk/2 or 16mbps
 
-/*
 	do{	// check memory ID until it's correct
 		osWAIT(1);
 		SPI_SS_Lo(&spiDescriptor);
 		SPI_TransceiveByte(&spiDescriptor,FCMD_READ_ID);
 		for(unsigned char i=0; i<20; i++) {
-			Buf1.Data.Byte[i]=SPI_TransceiveByte(&spiDescriptor, 0);
+			FlashReadBuffer[i]=SPI_TransceiveByte(&spiDescriptor, 0);
 		}
 		//!!! check for memory ID error here
 		SPI_SS_Hi(&spiDescriptor);
-	}while(Buf1.Data.Byte[0]!=0x20);
-	DPLEDOff();
-*/
+	}while(FlashReadBuffer[0]!=0x20);
+	//Seg7HP('F');
 
 	//===========================================================================================
 	// endlessly watch for commands from AcqTask (program) or USBTask (read, erase)
@@ -79,8 +113,9 @@ BEGIN_TASK(TaskFlash)
 
 		if(TaskFlashCmd != TF_IDLE){ // if there is anything to do, do it
 
+
 			//-----------------------------------------------------------------------------------------
-			// Bulk erase entire Flash
+			// Write the bytes in Buf1 or Buf2 to the page specified by FlashPageNumber
 			if(TaskFlashCmd == TF_ERASE_ALL){
 				// read status
 				SPI_SS_Lo(&spiDescriptor);
@@ -100,45 +135,16 @@ BEGIN_TASK(TaskFlash)
 
 				// we'll wait for completion at the bottom of the task
 			}
-
-			//-----------------------------------------------------------------------------------------
-			// Erase all sectors in either the Voice or ECG sections of Flash
-			else if(TaskFlashCmd == TF_ERASE_VOICE || TaskFlashCmd == TF_ERASE_ECG){
-				if(TaskFlashCmd == TF_ERASE_VOICE){
-					sector = FLASH_VOICE_START_SECTOR;
-					endSector = FLASH_VOICE_END_SECTOR;
-				}
-				else{
-					sector = FLASH_ECG_START_SECTOR;
-					endSector = FLASH_ECG_END_SECTOR;
-				}
-				for(;sector<=endSector; sector++){
-					// enable programming
-					SPI_SS_Lo(&spiDescriptor);
-					SPI_TransceiveByte(&spiDescriptor, FCMD_WRITE_ENABLE);
-					SPI_SS_Hi(&spiDescriptor);
-
-					// erase a sector
-					SPI_SS_Lo(&spiDescriptor);
-					SPI_TransceiveByte(&spiDescriptor, FCMD_SECTOR_ERASE);
-					SPI_TransceiveByte(&spiDescriptor, sector);
-					SPI_TransceiveByte(&spiDescriptor, 0);
-					SPI_TransceiveByte(&spiDescriptor, 0);
-					SPI_SS_Hi(&spiDescriptor);
-
-					do{	// check status of chip erase until it's done
-						osWAIT(100); // no hurry, sector erase takes 600ms typ
-						SPI_SS_Lo(&spiDescriptor);
-						SPI_TransceiveByte(&spiDescriptor, FCMD_READ_STATUS);
-						status = SPI_TransceiveByte(&spiDescriptor, 0) & FSTS_BUSY;
-						SPI_SS_Hi(&spiDescriptor);
-					}while(status==FSTS_BUSY);
-				}
+			else if(TaskFlashCmd == TF_WRITE_BUF) {
+				OkayToWriteToWriteBuffer = 0;
+				TaskFlashCmd = TF_WRITE_BUF_STAGE_1;
+			} else if (TaskFlashCmd == TF_READ_BUF) {
+				TaskFlashCmd = TF_READ_BUF_STAGE_1;
+				OkayToWriteToWriteBuffer = 0;
 			}
-/*
-			//-----------------------------------------------------------------------------------------
-			// Write the bytes in Buf1 or Buf2 to the page specified by FlashPageNumber
-			else if(TaskFlashCmd == TF_WRITE_BUF1 || TaskFlashCmd == TF_WRITE_BUF2){
+
+			if(TaskFlashCmd == TF_WRITE_BUF_STAGE_1 || TaskFlashCmd == TF_WRITE_BUF_STAGE_2) {
+
 				// enable programming
 				SPI_SS_Lo(&spiDescriptor);
 				SPI_TransceiveByte(&spiDescriptor, FCMD_WRITE_ENABLE);
@@ -146,47 +152,50 @@ BEGIN_TASK(TaskFlash)
 
 				SPI_SS_Lo(&spiDescriptor);	// select
 				SPI_TransceiveByte(&spiDescriptor, FCMD_PAGE_PROGRAM); // issue the write command and send the write address
-				SPI_TransceiveByte(&spiDescriptor, FlashPageNumber>>8);
-				SPI_TransceiveByte(&spiDescriptor, FlashPageNumber);
+				SPI_TransceiveByte(&spiDescriptor, currentFlashWritePage>>8);
+				SPI_TransceiveByte(&spiDescriptor, currentFlashWritePage);
 				SPI_TransceiveByte(&spiDescriptor, 0);
 
-				if(TaskFlashCmd == TF_WRITE_BUF1){
-					for(i=0;i<FLASH_PAGE_SIZE;i++){	// write the bytes
-						SPI_TransceiveByte(&spiDescriptor, Buf1.Data.Byte[i]);
+				if(TaskFlashCmd == TF_WRITE_BUF_STAGE_1){
+					for(flashByte=0;flashByte<FLASH_PAGE_SIZE;flashByte++){	// write the bytes
+						SPI_TransceiveByte(&spiDescriptor, FlashWriteBuffer[flashByte]);
 					}
 				}
 				else{
-					for(i=0;i<FLASH_PAGE_SIZE;i++){	// write the bytes
-						SPI_TransceiveByte(&spiDescriptor, Buf2.Data.Byte[i]);
+					for(flashByte=FLASH_PAGE_SIZE;flashByte<FLASH_PAGE_SIZE*2;flashByte++){	// write the bytes
+						SPI_TransceiveByte(&spiDescriptor, FlashWriteBuffer[flashByte]);
 					}
 				}
+
 				SPI_SS_Hi(&spiDescriptor); // deselect
+
 				// we'll wait for completion at the bottom of the task
 			}
 		
 			//-----------------------------------------------------------------------------------------
 			// Read a page (pointed to by FlashPageNumber) of bytes from Flash into either Buf1 or Buf2
-			else if(TaskFlashCmd == TF_READ_BUF1 || TaskFlashCmd == TF_READ_BUF2){
+			else if(TaskFlashCmd == TF_READ_BUF_STAGE_1 || TaskFlashCmd == TF_READ_BUF_STAGE_2){
 
 				SPI_SS_Lo(&spiDescriptor);	// select
 				SPI_TransceiveByte(&spiDescriptor, FCMD_READ_DATA); // issue the read command and send the read address
-				SPI_TransceiveByte(&spiDescriptor, FlashPageNumber>>8);
-				SPI_TransceiveByte(&spiDescriptor, FlashPageNumber);
+				SPI_TransceiveByte(&spiDescriptor, currentFlashReadPage>>8);
+				SPI_TransceiveByte(&spiDescriptor, currentFlashReadPage);
 				SPI_TransceiveByte(&spiDescriptor, 0);
 
-				if(TaskFlashCmd == TF_READ_BUF1){
-					for(i=0;i<FLASH_PAGE_SIZE;i++){	// read the bytes
-						Buf1.Data.Byte[i]=SPI_TransceiveByte(&spiDescriptor, 0);
+
+				if(TaskFlashCmd == TF_READ_BUF_STAGE_1){
+					for(flashByte=0;flashByte<FLASH_PAGE_SIZE;flashByte++){	// read the bytes
+						FlashReadBuffer[flashByte]=SPI_TransceiveByte(&spiDescriptor, 0);
 					}
 				}
 				else{
-					for(i=0;i<FLASH_PAGE_SIZE;i++){	// read the bytes
-						Buf2.Data.Byte[i]=SPI_TransceiveByte(&spiDescriptor, 0);
+					for(flashByte=FLASH_PAGE_SIZE;flashByte<FLASH_PAGE_SIZE*2;flashByte++){	// read the bytes
+						FlashReadBuffer[flashByte]=SPI_TransceiveByte(&spiDescriptor, 0);
 					}
 				}
+
 				SPI_SS_Hi(&spiDescriptor); // deselect
 			}
-*/
 			//-----------------------------------------------------------------------------------------
 			// Put Flash into deep powerdown
 			else if(TaskFlashCmd == TF_SLEEP){
@@ -206,7 +215,6 @@ BEGIN_TASK(TaskFlash)
 				SPI_TransceiveByte(&spiDescriptor, 0);	// ID is returned here
 				SPI_SS_Hi(&spiDescriptor); // deselect
 			}
-
 			//-----------------------------------------------------------------------------------------
 			// Throw an error for commands we don't know
 			else{
@@ -216,28 +224,61 @@ BEGIN_TASK(TaskFlash)
 			//-----------------------------------------------------------------------------------------
 			// Spin until Flash is not busy before we return to idle
 			do{	// check status of chip until it's not busy
+				//Seg7HP('S');
+				//Seg7HP('0');
 				SPI_SS_Lo(&spiDescriptor);
 				SPI_TransceiveByte(&spiDescriptor, FCMD_READ_STATUS);
 				status = SPI_TransceiveByte(&spiDescriptor, 0) & FSTS_BUSY;
 				SPI_SS_Hi(&spiDescriptor);
 				osYIELD;
+				//Seg7HP('1');
 			}while(status==FSTS_BUSY);
-//			}while(1);
+			//DPLEDTog();
+			//Seg7HP('S');
 			// flush the appropriate record lengths if we erased flash buffers
-			if(TaskFlashCmd == TF_ERASE_ALL){
-				EE_Wr(EE_VOICE_RECORD_LENGTH,0);
-				EE_Wr(EE_ECG_RECORD_LENGTH,0);
+			if(TaskFlashCmd == TF_WRITE_BUF_STAGE_1) {
+				++currentFlashWritePage;
+				TaskFlashCmd = TF_WRITE_BUF_STAGE_2;
+				//Seg7HP('0');
+			} else if(TaskFlashCmd == TF_WRITE_BUF_STAGE_2) {
+				//Seg7HP('r');
+				//Seg7HP('1');
+				OkayToWriteToWriteBuffer = 1;
+				++currentFlashWritePage;
+
+				if(currentFlashWritePage == FLASH_NUM_PAGES) {
+					currentFlashWritePage = 0;
+				}
+				TaskFlashCmd = TF_IDLE;
+			} else if(TaskFlashCmd == TF_READ_BUF_STAGE_1) {
+				Seg7HP('0');
+				++currentFlashReadPage;
+				TaskFlashCmd = TF_READ_BUF_STAGE_2;
+			} else if(TaskFlashCmd == TF_READ_BUF_STAGE_2) {
+				//Seg7HP('r');
+				Seg7HP('1');
+				currentReadBufferPos = 2;
+				OkayToWriteToWriteBuffer = 1;
+				currentReadBufferSize = ((((uint16_t)(FlashReadBuffer[0])) << 8) | (((uint16_t)(FlashReadBuffer[1])) & 0xff));
+				++currentFlashReadPage;
+
+				if(currentFlashReadPage == FLASH_NUM_PAGES) {
+					currentFlashReadPage = 0;
+				}
+
+				OkayToReadFromReadBuffer = 1;
+				TaskFlashCmd = TF_IDLE;
+			} else {
+				TaskFlashCmd = TF_IDLE;
 			}
-			else if(TaskFlashCmd == TF_ERASE_VOICE){
-				EE_Wr(EE_VOICE_RECORD_LENGTH,0);
-			}
-			else if(TaskFlashCmd == TF_ERASE_ECG){
-				EE_Wr(EE_ECG_RECORD_LENGTH,0);
-			}
-			TaskFlashCmd = TF_IDLE;
+
+		// If we're idle and need to read a page
+		} else if(!OkayToReadFromReadBuffer && currentFlashWritePage != currentFlashReadPage) {
+			TaskFlashCmd = TF_READ_BUF;
+			//Seg7HP('r');
 		}
 	}
-
+*/
 END_TASK
 
 #endif

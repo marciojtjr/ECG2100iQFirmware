@@ -67,7 +67,10 @@ void getApplePacket(char *buffer) {
 			recievedPacket.payload[i-6] = buffer[i];
 		}
 		recievedPacket.checksum = buffer[2+recievedPacket.length];
-	} else {
+	} 
+
+#ifdef WORKING
+	else {
 		/*
 		print_usb("We have a weird packet that starts with %x\r\n", buffer[0]);
 		Seg7HP('E');
@@ -86,6 +89,7 @@ void getApplePacket(char *buffer) {
 		printApplePacket(recievedPacket);
 		*/
 	}
+#endif
 	//memset(buffer, 0, 25);
 }
 
@@ -108,6 +112,9 @@ void checkRecievedPacketAndSendNext() {
 
 	if(recievedPacket.lingoID == GENERAL) {
 		switch(recievedPacket.commandID) {
+			case IPODACK:
+				break;
+
 			case OPEN_DATA_SESSION_FOR_PROTOCOL:
 			//Seg7HP('A');
 				sessionID[0] = recievedPacket.payload[0];
@@ -127,8 +134,6 @@ void checkRecievedPacketAndSendNext() {
 				needsToSend = 1;
 				
 				
-				break;
-			case IPODACK:
 				break;
 				
 			case IPOD_DATA_TRANSFER:
@@ -173,6 +178,7 @@ void checkRecievedPacketAndSendNext() {
 				break;
 		}
 		
+//#ifdef WORKING
 		if(recievedPacket.commandID == IPODACK) {
 			//DPLEDTog();
 			if(recievedPacket.payload[0] != 0x00) {
@@ -201,7 +207,9 @@ void checkRecievedPacketAndSendNext() {
 				//}
 			}
 			waitingForAck = 0;
-		}/*
+		}
+//#endif 
+		/*
 		if(recievedPacket.commandID == 0x43) {
 			haveCommandFromAppleDevice = 1;
 
@@ -221,8 +229,11 @@ void checkRecievedPacketAndSendNext() {
 		sendPacket();
 
 		if(sentPacket.payload[1] == CLOSE_DATA_SESSION) {
-			BTEnable = 0;
-			BTOff();
+			//print_usb("Death by CLOSE_DATA_SESSION\r\n");
+			//BTEnable = 0;
+			//BTOff();
+			connectionNeedsReset = 1;
+			
 			if(acqState == FSM_FULL) {
 				acqState = FSM_DONE;
 			}				
@@ -297,40 +308,44 @@ void startStreaming() {
 	sentPacket.commandID = ACCESSORY_DATA_TRANSFER;
 }
 
+/*
+void sinkAndRead(uint8_t *byte, size_t *sunk) {
+	int ret = heatshrink_encoder_sink(&encoder, byte, APPLE_BT_STRING_SIZE, sunk);
+	if(ret == HSER_SINK_OK) { Seg7HP('S');  }
+	//heatshrink_encoder_poll(&encoder, byte, 1, sunk);
+}
+*/
+
 void sendECGPacketWithLength(unsigned short modifiedLength) {
 	//canSendNextPacket = 0;
-	
-		sentPacket.start = START_2;
-		//sentPacket.length = 6+APPLE_BT_STRING_SIZE;
-		sentPacket.lingoID = 0;
-		sentPacket.commandID = ACCESSORY_DATA_TRANSFER;
-		sentPacket.transID = transID;
-		//sentPacket.payload = BTString;
 
-		addChecksumToSentPacketIsECG(1, modifiedLength);
+	sentPacket.start = START_2;
+	//sentPacket.length = 6+APPLE_BT_STRING_SIZE;
+	sentPacket.lingoID = 0;
+	sentPacket.commandID = ACCESSORY_DATA_TRANSFER;
+	sentPacket.transID = transID;
+	//sentPacket.payload = BTString;
 
-		uart_putchar(&BTPortDescriptor, START_1);
-		uart_putchar(&BTPortDescriptor, START_2);
-		uart_putchar(&BTPortDescriptor,0x00);
-		uart_putchar(&BTPortDescriptor, ((6+modifiedLength) >> 8));
-		uart_putchar(&BTPortDescriptor, ((6+modifiedLength) & 0xFF));
-		uart_putchar(&BTPortDescriptor, 0);
-		uart_putchar(&BTPortDescriptor, ACCESSORY_DATA_TRANSFER);
-		uart_putchar(&BTPortDescriptor, (transID >> 8));
-		uart_putchar(&BTPortDescriptor, (transID & 0xFF));
-		uart_putchar(&BTPortDescriptor, sessionID[0]);
-		uart_putchar(&BTPortDescriptor, sessionID[1]);
+	addChecksumToSentPacketIsECG(1, modifiedLength);
 
-		//for(i = 0; i < modifiedLength; i++) {
-		//	uart_putchar(&BTPortDescriptor, AppleBTString[i]);
-		//}
-		fwrite(AppleBTString, modifiedLength, 1, bt);
+	uart_putchar(&BTPortDescriptor, START_1);
+	uart_putchar(&BTPortDescriptor, START_2);
+	uart_putchar(&BTPortDescriptor, 0x00);
+	uart_putchar(&BTPortDescriptor, ((6+modifiedLength) >> 8));
+	uart_putchar(&BTPortDescriptor, ((6+modifiedLength) & 0xFF));
+	uart_putchar(&BTPortDescriptor, 0);
+	uart_putchar(&BTPortDescriptor, ACCESSORY_DATA_TRANSFER);
+	uart_putchar(&BTPortDescriptor, (transID >> 8));
+	uart_putchar(&BTPortDescriptor, (transID & 0xFF));
+	uart_putchar(&BTPortDescriptor, sessionID[0]);
+	uart_putchar(&BTPortDescriptor, sessionID[1]);
 
-		uart_putchar(&BTPortDescriptor, (unsigned char)(sentPacket.checksum & 0xFF));
+	fwrite(AppleBTString, modifiedLength, 1, bt);
+	//fwrite(AppleBTString, modifiedLength, 1, usb);
 
-		//print_usb("Packet, time %d\r\n", globalTimer);
-		//globalTimer = 0;
-		++transID;
+	uart_putchar(&BTPortDescriptor, (unsigned char)(sentPacket.checksum & 0xFF));
+
+	++transID;
 }
 void sendECGPacket() {
 	sendECGPacket(SMALL_BT_SIZE);

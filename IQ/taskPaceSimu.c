@@ -22,8 +22,8 @@
 #include "TaskWatchDog.h"
 
 #ifdef WORKING
+ /*
 BEGIN_TASK(TaskPaceSimu)
-	
 	
 	PORT_PACE_DETECT.DIR |= PACE_DETECT_L1;
 	PORT_PACE_DETECT.PIN3CTRL = 0;
@@ -46,7 +46,8 @@ BEGIN_TASK(TaskPaceSimu)
 		osWAIT(250);
 		osWAIT(250);
 	}
-	
+
 END_TASK
+*/
 #endif
 #endif

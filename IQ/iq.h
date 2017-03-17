@@ -5,7 +5,7 @@
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
 
 #ifdef BLUETOOTH
-#define VERSION "2.1.1"
+#define VERSION "2.1.6"
 #else
 #define VERSION 1.06
 #endif
@@ -13,7 +13,12 @@
 // -----------------------------------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------2.0 Production Changelist-----------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------------------------
-// 2.1.2 - Planned //UUID changed
+// 2.1.6 - Hardlock fix
+// 2.1.5 - Universal (iOS/Windows/Android) version
+// 2.1.4 - Exclusive Windows Compat (because we're insane)
+// 2.1.3 - Adjustment to rezero threshold due to failure during performance testing
+// 2.1.2 - Actual - resolution overflow fix
+// ***2.1.2 - Planned //UUID changed
 // 2.1.1 - Pace detect fix, release for final testing //Universal auto-pair, fix to pace detect issue, support for DO on iOS, some cleanup so we still have 50% ROM open
 // 2.10 - Auto-pairing/iOS specific release
 // 2.00 - Initial release of Bluetooth iQ

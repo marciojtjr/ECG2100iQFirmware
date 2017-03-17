@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
+/*
 signed int MuLawDecompressTable[256] PROGMEM = { 
 	-32124,-31100,-30076,-29052,-28028,-27004,-25980,-24956, 
 	-23932,-22908,-21884,-20860,-19836,-18812,-17788,-16764, 
@@ -35,3 +36,4 @@ signed int MuLawDecompressTable[256] PROGMEM = {
 	120,   112,   104,    96,    88,    80,    72,    64, 
 	56,    48,    40,    32,    24,    16,     8,     0 
 }; 
+*/

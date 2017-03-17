@@ -2,6 +2,7 @@
 
 #include "spi_driver.h"
 
+/*
 // Initialize SPI module as master
 // given a pointer to a descriptor, and some input arguments, fill the descriptor
 // This descriptor remember which SPI port we're using, what port the pins are on and where the data packet descriptor is
@@ -30,7 +31,7 @@ void SPI_Init(SPI_Descriptor_t *descriptor,	// descriptor struct pointer
 
 	descriptor->port->DIRSET = SPI_SS_bm | SPI_MOSI_bm | SPI_SCK_bm; 	// make SS, MOSI and SCK outputs
 	descriptor->port->OUTSET = SPI_SS_bm;															// deselect the device
-	descriptor->port->DIRCLR = SPI_MISO_bm;														// MOSI is input
+	descriptor->port->DIRCLR = SPI_MISO_bm;														// MISO is input
 
 	// load the SPI control register (SS must be an output to enter master mode
 	descriptor->module->CTRL   = clockDivision |           // SPI prescaler
@@ -55,4 +56,5 @@ uint8_t SPI_TransceiveByte(SPI_Descriptor_t *descriptor, uint8_t TXdata){
 	while(!(descriptor->module->STATUS & SPI_IF_bm)); 	// wait complete
 	return(descriptor->module->DATA);	// return received byte
 }
+*/
 #endif

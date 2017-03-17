@@ -56,15 +56,14 @@
 #include "sleepmgr.h"
 #include "config_sleepmgr.h"
 
-
-
 /*============================ PRIVATE VARIABLES AND CONSTANTS ===============*/
 
+/*
 // Use macro from "config_sleepmgr.h" to define sleep mode config values.
 const SLEEPMGR_DEFINE_MODES;
 //! Sleep mode lock counters.
 SLEEPMGR_lock_t SLEEPMGR_locks[SLEEPMGR_NUM_MODES];
-
+*/
 
 
 /*============================ IMPLEMENTATION (PUBLIC FUNCTIONS) =============*/
@@ -73,6 +72,8 @@ SLEEPMGR_lock_t SLEEPMGR_locks[SLEEPMGR_NUM_MODES];
  * This function initializes the sleep manager. The sleep manager must be
  * initialized before any other modules can use it.
  */
+
+ /*
 void SLEEPMGR_Init( void )
 {
 	// Set all mode locks to zero, except the last one, which is handled below.
@@ -84,7 +85,7 @@ void SLEEPMGR_Init( void )
 	// implementation in SLEEPMGR_Sleep() later.
 	SLEEPMGR_locks[SLEEPMGR_NUM_MODES - 1] = 1;
 }
-
+*/
 
 /*!
  * This function increases the lock count for one particular sleep mode. This
@@ -101,6 +102,8 @@ void SLEEPMGR_Init( void )
  *
  * \param  mode  The sleep mode to lock.
  */
+
+ /*
 void SLEEPMGR_Lock( SLEEPMGR_mode_t mode )
 {
 	// The following must be an atomic operation, to avoid race conditions.
@@ -114,7 +117,7 @@ void SLEEPMGR_Lock( SLEEPMGR_mode_t mode )
 	
 	LEAVE_CRITICAL_REGION();
 }
-
+*/
 
 /*!
  * This function decreases the lock count for one particular sleep mode. This
@@ -131,6 +134,8 @@ void SLEEPMGR_Lock( SLEEPMGR_mode_t mode )
  *
  * \param  mode  The sleep mode to unlock.
  */
+
+ /*
 void SLEEPMGR_Unlock( SLEEPMGR_mode_t mode )
 {	
 	// The following must be an atomic operation, to avoid race conditions.
@@ -144,13 +149,15 @@ void SLEEPMGR_Unlock( SLEEPMGR_mode_t mode )
 	
 	LEAVE_CRITICAL_REGION();
 }
-
+*/
 
 /*!
  * This function computes the deepest sleep mode possible and enters that.
  * If interrupt handlers want to cancel the sleep attempt, it can only be
  * canceled by called SLEEPMGR_CancelSleep().
  */
+
+ /*
 void SLEEPMGR_Sleep( void )
 {
 	// The following must be an atomic operation, to avoid race conditions.
@@ -185,6 +192,7 @@ void SLEEPMGR_Sleep( void )
 	// After waking up, we disable sleep.
 	SLEEPMGR_DISABLE_SLEEP();
 }
+*/
 
 
 /*!
@@ -195,12 +203,14 @@ void SLEEPMGR_Sleep( void )
  * Normally, this function will be called from within WORKQUEUE_AddWork() and
  * SOFTIRQ_Raise(), which in turn are called from device driver ISRs.
  */
+
+ /*
 void SLEEPMGR_CancelSleep( void )
 {
 	// Disable sleep, so that any SLEEP instruction will fail.
 	SLEEPMGR_DISABLE_SLEEP();
 }
-
+*/
 
 /* EOF */
 #endif

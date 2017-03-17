@@ -8,6 +8,7 @@
 #include "wdt_driver.h"
 #include "TaskUSB.h"
 #include "taskBT.h"
+#include "taskFlash.h"
 #include "rtos.h"
 #include "Seg7.h"
 #include "eeprom.h"
@@ -15,6 +16,12 @@
 #include <ctype.h>
 #include <string.h>
 //#include "apple.h"
+
+uint8_t smallRxBuf[SMALL_RX_BUF_SIZE];
+uint8_t smallTxBuf[SMALL_TX_BUF_SIZE];
+
+uint8_t largeRxBuf[LARGE_RX_BUF_SIZE];
+uint8_t largeTxBuf[LARGE_TX_BUF_SIZE];
 
 int written = 0;
 
@@ -34,7 +41,7 @@ const char * const rfcommTest PROGMEM = "RFCOMM";
 
 unsigned char iniAPMode = 0;
 unsigned char waitingForiAPPacket = 1;
-int remainingiAPBytes = -1;
+int16_t remainingiAPBytes = -1;
 
 unsigned char readyForiAPMode = 0;
 
@@ -68,7 +75,7 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 	usart_desc->TxGet = 0;
 	usart_desc->TxWaiting = 0;
 	usart_desc->TxDelivered = 0;
-	usart_desc->TxTotal = 0;
+	//usart_desc->TxTotal = 0;
 }
 
 //static int put_usb( char c, FILE *stream){
@@ -98,21 +105,11 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 	#ifdef BLUETOOTH
 
 	if(usart_desc == &BTPortDescriptor) {
+#ifdef WORKING
 		if(inBluetoothUpdateMode) {
 			put_usb_byte(c);
 		}
-
-		if(!readyForCommands) {
-			// Have we found the next consecutive character in "READY"?
-			if(c == readyTest[readyBufferPos]) {
-				// Keep going if we have
-				if(++readyBufferPos == 5)
-				readyForCommands = 1;
-			}
-			else
-			// If not, we need to restart
-			readyBufferPos = 0;
-		}
+#endif
 
 		if(iniAPMode) {
 			//Seg7HP('A');
@@ -137,11 +134,24 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 				//return;
 			}
 		}
-		else { 
+		else {
+			if(!readyForCommands) {
+				// Have we found the next consecutive character in "READY"?
+				if(c == readyTest[readyBufferPos]) {
+					// Keep going if we have
+					if(++readyBufferPos == 5)
+					readyForCommands = 1;
+				}
+				else {
+					// If not, we need to restart
+					readyBufferPos = 0;
+				}
+			}
+
 			if(c == iapTest[iapBufferPos] || (iapBufferPos == 4 && isdigit(iapTest[iapBufferPos]))) {
 				if(++iapBufferPos == 8) {
 					//inBluetoothUpdateMode = 0;
-					//print_usb("We are in IAP mode!");
+					//print_usb("We are in IAP mode!\r\n");
 					//inBluetoothUpdateMode = 0;
 					//iniAPMode = 1;
 					//Seg7HP('O');
@@ -152,58 +162,75 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 
 					connectionType = CONNECTION_APPLE;
 					//DPLEDOn();
-					//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_APPLE);
+					EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_APPLE);
 
 					//print_usb("iAP Connection\r\n");
 					//Seg7HP('O');
 				}
 			}
-			else
+			else {
 				iapBufferPos = 0;
-		}
+			}
 
-/*
-		if(waitingForFirstCommand) {
-			if(connectionType == CONNECTION_ANDROID) {
+			if(waitingForFirstCommand && !RFCOMMConnectionEstablished) {
+			//if(connectionType == CONNECTION_ANDROID) {
 				if(c == rfcommTest[rfcommBufferPos]) {
 					if(++rfcommBufferPos == 6) {
 						//connectionType = CONNECTION_ANDROID;
+
 						rfcommBufferPos = 0;
 						//print_usb("RFCOMM Connection\r\n");
-						//Seg7HP('A');
 						//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_ANDROID);
-						ignoreNextRxReady = 1;
+						//ignoreNextRxReady = 1;
 						//Seg7HP('C');
 						if(!ignoreNextRFCOMM) {
-					
+							//Seg7HP('A');
+							//print_usb(" We didn't ignore an RFCOMM, moving to Android mode.\r\n");
+							connectionType = CONNECTION_ANDROID;
+							EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_ANDROID);
 							RFCOMMConnectionEstablished = 1;
-							RFCOMMTimer = 0;
+
+							//BTEnable = 1; // Jump start the BTEnable process in case we get a command really quickly
+							//DPLEDOn();
+
+							//RFCOMMTimer = 0;
 						
 						} else {
 							ignoreNextRFCOMM = 0;
+							//print_usb(" We ignored an RFCOMM\r\n");
 						}	
 					}
 				
 				}else
 						rfcommBufferPos = 0;
+			//}
 			}
-		}
-*/	
 		
-					// Check to see if we now have a bad key
-					if(c == badKeyTest[badKeyTestPos]) {
-						if(++badKeyTestPos == 26) {
-							needToDropPairing = 1;
-							badKeyTestPos = 0;
-						}
-					} else badKeyTestPos = 0;	
+			// Check to see if we now have a bad key
+			if(!RFCOMMConnectionEstablished) {
+				if(c == badKeyTest[badKeyTestPos]) {
+					//put_usb_byte('0'+ (++badKeyTestPos));
+					if(++badKeyTestPos == 26) {
+						//print_usb("Dropping pairing!\r\n");
+					
+						needToDropPairing = 1;
+						badKeyTestPos = 0;
+					}
+					//} else badKeyTestPos = 0;
+				} else {
+					badKeyTestPos = 0;
+				}
+			}
+		} 	
 	}
+#ifdef WORKING
 	else {
 		if(inBluetoothUpdateMode) {
 			put_bt_byte(c);
 			//put_usb_byte(c);
 		}
 	}
+#endif
 	#endif
 	
 	if(usart_desc->RxReady == 0){ // only receive characters if the last receive buffer has been processed
@@ -217,9 +244,12 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 		//|| inBluetoothUpdateMode
 		)
 		#endif
+
+#ifdef WORKING
 		if(!inBluetoothUpdateMode) {
 			uart_putchar(usart_desc,'\r');
 		}
+#endif
 		
 		if(!iniAPMode) {
 			usart_desc->RxBuf[usart_desc->RxPut] = 0;
@@ -227,7 +257,8 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 		usart_desc->RxPut = 0;
 		
 		usart_desc->RxReady = 1;
-		/*
+
+/*
 		if(!ignoreNextRxReady) {
 			usart_desc->RxReady = 1;
 		}			
@@ -235,9 +266,9 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 			 ignoreNextRxReady = 0;	
 			 usart_desc->RxReady = 0;
 		}
-		*/			 
+*/		 
 		//usart_desc->RxReady = 1;	
-		
+
 		if(readyForiAPMode) {
 			iniAPMode = 1;
 
@@ -248,7 +279,8 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 			
 			// Flush this. No one cares
 			usart_desc->RxReady = 0;
-			memset((void*)usart_desc->RxBuf, 0, RX_BUF_SIZE);
+			//memset((void*)usart_desc->RxBuf, 0, RX_BUF_SIZE);
+			//print_usb("Flushing BTRxBuffer\r\n");
 		}
 		if(iniAPMode) {
 			remainingiAPBytes = -1;
@@ -268,16 +300,17 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 		//if(iniAPMode) {
 
 		//}
-		if(c=='\b'
-		&& !iniAPMode && !inBluetoothUpdateMode
-		){	// backspace
-		uart_putchar(usart_desc,' ');
-		uart_putchar(usart_desc,'\b');
-		if(usart_desc->RxPut)usart_desc->RxPut--;
-	}
-	else {
+//		if(c=='\b'
+//		&& !iniAPMode && !inBluetoothUpdateMode
+//		){	// backspace
+//		uart_putchar(usart_desc,' ');
+//		uart_putchar(usart_desc,'\b');
+//		if(usart_desc->RxPut)usart_desc->RxPut--;
+//	}
+//	else {
+
 		usart_desc->RxBuf[usart_desc->RxPut++]=c;
-	}
+//	}
 }
 	}
 	
@@ -299,12 +332,12 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 void uart_putchar(USART_desc_t *usart_desc, uint8_t data){
 	usart_desc->TxWaiting = 1;
 	
-	while( (( (usart_desc->TxPut)+1 ) & TX_BUF_MASK) == usart_desc->TxGet ); // wait for room
+	while( (( (usart_desc->TxPut)+1 ) & usart_desc->TxBufMask) == usart_desc->TxGet ); // wait for room
 
 	usart_desc->TxBuf[usart_desc->TxPut]= data;	// put the byte in the buffer
-	usart_desc->TxPut = (usart_desc->TxPut + 1) & TX_BUF_MASK;		// advance the put pointer
+	usart_desc->TxPut = (usart_desc->TxPut + 1) & usart_desc->TxBufMask;		// advance the put pointer
 	
-	usart_desc->TxDelivered = 0;
+	//usart_desc->TxDelivered = 0;
 	
 	usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | usart_desc->dreIntLevel;		// Enable DRE interrupt (might already be enabled)
 	usart_desc->TxWaiting = 0;
@@ -325,12 +358,46 @@ void USART_DataRegEmpty(USART_desc_t *usart_desc){
 
 	if (usart_desc->TxPut != usart_desc->TxGet){	// if there is something in the transmit buffer, send it
 		usart_desc->usart->DATA = usart_desc->TxBuf[usart_desc->TxGet];
-		usart_desc->TxTotal++;
-		usart_desc->TxGet = (usart_desc->TxGet + 1) & TX_BUF_MASK;	// advance the pointer, with wrap
+//		usart_desc->TxTotal++;
+		usart_desc->TxGet = (usart_desc->TxGet + 1) & usart_desc->TxBufMask;	// advance the pointer, with wrap
 	}
 	else{	// else turn off DRE interrupts
-		usart_desc->TxDelivered = 1;
+		//usart_desc->TxDelivered = 1;
 		usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
 	}
 }
+
+/*
+void USART_DataRegEmptyNotInterrupt(USART_desc_t *usart_desc){
+	//if(!BTRTS()) {
+		// Try disabling until we have more data to write
+		//usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
+	//	Seg7HP('F');
+	//	return;
+
+		//wdt_reset();
+	//}
+
+	if (usart_desc->TxPut != usart_desc->TxGet){	// if there is something in the transmit buffer, send it
+		usart_desc->usart->DATA = usart_desc->TxBuf[usart_desc->TxGet];
+//		usart_desc->TxTotal++;
+		usart_desc->TxGet = (usart_desc->TxGet + 1) & usart_desc->TxBufMask;	// advance the pointer, with wrap
+	} else {
+		// Check to see if we can rock through our read buffer
+		
+		if(OkayToReadFromReadBuffer) {
+			usart_desc->usart->DATA = FlashReadBuffer[currentReadBufferPos++];
+			if(currentReadBufferPos == currentReadBufferSize) {
+				// We're done, let's collect another
+				OkayToReadFromReadBuffer = 0;
+			}
+		}
+		
+	}
+	//else{	// else turn off DRE interrupts
+		//usart_desc->TxDelivered = 1;
+		//usart_desc->usart->CTRLA = (usart_desc->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc; // Disable DRE interrupts
+	//}
+}
+*/
 #endif

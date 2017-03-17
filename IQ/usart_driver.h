@@ -6,39 +6,61 @@
 #include "avr_compiler.h"
 
 // Transmit and Receive buffers
-#define RX_BUF_SIZE 255	// can be any size up to 255
-#define TX_BUF_SIZE 128	// must be a power of 2 no larger than 128
-#define TX_BUF_MASK ( TX_BUF_SIZE - 1 )
+#define SMALL_RX_BUF_SIZE 128
+#define SMALL_TX_BUF_SIZE 128
+
+#define LARGE_RX_BUF_SIZE 255
+#define LARGE_TX_BUF_SIZE 256
+
+#define SMALL_TX_BUF_MASK ( SMALL_TX_BUF_SIZE - 1)
+#define LARGE_TX_BUF_MASK ( LARGE_TX_BUF_SIZE - 1)
+
+//#define RX_BUF_SIZE 128	// can be any size up to 255
+//#define TX_BUF_SIZE 1024	// must be a power of 2 no larger than 128
+//#define TX_BUF_MASK ( TX_BUF_SIZE - 1 )
 
 extern int written;
 extern char readyForCommands;
 
-extern unsigned char iniAPMode ;
-extern unsigned char waitingForiAPPacket ;
-extern int remainingiAPBytes ;
-extern unsigned char needToDropPairing;
-extern unsigned char ignoreNextRFCOMM;
-extern unsigned char RFCOMMConnectionEstablished;
-extern unsigned char ignoreNextRxReady;
+extern uint8_t iniAPMode ;
+extern uint8_t waitingForiAPPacket ;
+extern int16_t remainingiAPBytes ;
+extern uint8_t needToDropPairing;
+extern uint8_t ignoreNextRFCOMM;
+extern uint8_t RFCOMMConnectionEstablished;
+extern uint8_t ignoreNextRxReady;
 
-#if ( TX_BUF_SIZE & TX_BUF_MASK )
-#error TX_BUF_SIZE is not a power of 2
-#endif
+//#if ( (SMALL_TX_BUF_SIZE & SMALL_TX_BUF_MASK) || (LARGE_TX_BUF_SIZE & LARGE_TX_BUF_MASK) )
+//#error TX_BUF_SIZE is not a power of 2
+//#endif
+
 
 // a structure to hold everything of importance for using the USART
-typedef struct USART_Descriptor{
+typedef struct USART_Small_Descriptor{
 	USART_t *usart;// pointer to USART module base address
 	USART_DREINTLVL_t dreIntLevel;// data register empty interrupt level
 	volatile uint8_t RxPut;
 	volatile uint8_t RxReady;	// 0 = program is not ready to receive, 0 = it is
 	volatile uint8_t TxPut;
 	volatile uint8_t TxGet;
-	volatile uint8_t RxBuf[RX_BUF_SIZE];
-	volatile uint8_t TxBuf[TX_BUF_SIZE];
+	volatile uint8_t *RxBuf;//RxBuf[RX_BUF_SIZE];
+	volatile uint8_t *TxBuf;//TxBuf[TX_BUF_SIZE];
+	//volatile uint8_t RxBuf[SMALL_RX_BUF_SIZE];
+	//volatile uint8_t TxBuf[SMALL_TX_BUF_SIZE];
 	volatile uint8_t TxWaiting;
 	volatile uint8_t TxDelivered;
-	volatile uint32_t TxTotal;
+
+	uint16_t TxBufSize;
+	uint16_t RxBufSize;
+	uint16_t TxBufMask;
+	//volatile uint32_t TxTotal;
 } USART_desc_t;
+
+extern uint8_t smallRxBuf[SMALL_RX_BUF_SIZE];
+extern uint8_t smallTxBuf[SMALL_TX_BUF_SIZE];
+
+extern uint8_t largeRxBuf[LARGE_RX_BUF_SIZE];
+extern uint8_t largeTxBuf[LARGE_TX_BUF_SIZE];
 
 //============================================
 // Macros
@@ -66,6 +88,20 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 void USART_RXComplete(USART_desc_t *usart_desc);
 void USART_DataRegEmpty(USART_desc_t *usart_desc);
 void uart_putchar(USART_desc_t *usart_desc, uint8_t data);
+
+
+/*
+void USART_Large_InterruptDriver_Initialize(USART_large_desc_t *usart_desc, USART_t *usart, USART_DREINTLVL_t dreIntLevel );
+void USART_Large_RXComplete(USART_large_desc_t *usart_desc);
+void USART_Large_DataRegEmpty(USART_large_desc_t *usart_desc);
+void uart_large_putchar(USART_large_desc_t *usart_desc, uint8_t data);
+*/
+
+//void USART_DataRegEmptyNotInterrupt(USART_desc_t *usart_desc);
+
+
+
+
 void resetUsartAppleVariables();
 
 #endif

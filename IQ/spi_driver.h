@@ -5,6 +5,7 @@
 
 #include "avr_compiler.h"
 
+/*
 // Hardware defines
 #define SPI_SS_bm    PIN4_bm
 #define SPI_MOSI_bm  PIN5_bm
@@ -35,6 +36,7 @@ void SPI_Init(SPI_Descriptor_t *descriptor,		// pointer to port descriptor
                     SPI_PRESCALER_t clockDivision);	// bit rate
 
 uint8_t SPI_TransceiveByte(SPI_Descriptor_t *spi, uint8_t TXdata);
+*/
 
 #endif
 #endif

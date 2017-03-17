@@ -361,7 +361,7 @@ void __enable_task(uint8_t tn, uint8_t i) {
   __set_rtr(tn, i);
 }
 void __disable_task(uint8_t tn, uint8_t i) {
-  myTasks[tn].status ^= ENABLED;
+  myTasks[tn].status &= ~ENABLED;
   __clear_rtr(tn);
 }
 

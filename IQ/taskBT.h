@@ -97,8 +97,6 @@ extern unsigned char waitingForFirstCommand;
 extern unsigned char connectionNeedsReset;
 extern int16_t keepAliveTimer;
 
-extern int RFCOMMTimer;
-
 extern unsigned char isThereAnActiveConnection;
 
 #endif

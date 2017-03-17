@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-
+/*
 //! Initialize sleep manager. Call this before any other manager function.	
 void SLEEPMGR_Init( void );
 //! Increase lock for a mode, i.e. you need at least this awareness.
@@ -74,7 +74,7 @@ void SLEEPMGR_Unlock( SLEEPMGR_mode_t mode );
 void SLEEPMGR_Sleep( void );
 //! Cancel pending sleep attempt, e.g. when work is added from a device driver.
 void SLEEPMGR_CancelSleep( void );
-
+*/
 
 #ifdef __cplusplus
 } /* extern "C" */

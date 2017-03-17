@@ -59,6 +59,7 @@ enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 // define and allocate globals for the USB task
 
 USART_desc_t USBPortDescriptor;	// a descriptor for the USART connected to the USB bridge chip
+
 static int put_usb( char c, FILE *stream){
 	uart_putchar(&USBPortDescriptor,c);
 	return(0); 
@@ -169,8 +170,14 @@ void Hello(int type){
 //==========================================================================================
 // USB Task
 BEGIN_TASK(TaskUSB)
+USBPortDescriptor.TxBuf = smallTxBuf;
+USBPortDescriptor.RxBuf = smallRxBuf;
 
-	osENABLE_TASK(TaskFlash);	// we'll need Flash access
+	USBPortDescriptor.TxBufSize = SMALL_TX_BUF_SIZE;
+	USBPortDescriptor.RxBufSize = SMALL_RX_BUF_SIZE;
+	USBPortDescriptor.TxBufMask = SMALL_TX_BUF_MASK;
+
+	//osENABLE_TASK(TaskFlash);	// we'll need Flash access
 
 	//------------------------------------------------------------------------------------------
 	// prepare the USB USART
@@ -179,10 +186,14 @@ BEGIN_TASK(TaskUSB)
 		USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
 		USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
 
-		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_LO_gc); // setup USART, DRE interrupt priority is LOW
-		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_LO_gc); // receive interrupt priority is LOW
+		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_HI_gc); // setup USART, DRE interrupt priority is LOW
+		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_HI_gc); // receive interrupt priority is LOW
 		USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-		USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
+
+		//USBPortDescriptor.usart->CTRLB |= USART_CLK2X_bm;
+
+		//USART_Baudrate_Set(USBPortDescriptor.usart, 34, 0); //921600 bps
+		USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4);
 		USART_Rx_Enable(USBPortDescriptor.usart);
 		USART_Tx_Enable(USBPortDescriptor.usart);
 		usbConfigured = 1;
@@ -538,6 +549,7 @@ BEGIN_TASK(TaskUSB)
 				//-------------------------------------
 				// Erase All Flash via bulk erase command
 				
+				/*
 				else if(strncmp(cmd,"ea",2)==0){
 					MainPowerOn();			// just in case we lose USB
 					EraseInProgress=1;	// keep auto power off from tripping if we lose USB
@@ -572,6 +584,7 @@ BEGIN_TASK(TaskUSB)
 						print_usb("Flash Busy");
 					}
 				}
+				*/
 				
 				/*
 				//-------------------------------------
@@ -967,12 +980,15 @@ BEGIN_TASK(TaskUSB)
 					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
 				}
 #ifdef WORKING
+				else if(!strncmp("fu", cmd, 2)) {
+					EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
+				}
 
 				else if(!strncmp("bt", cmd, 2)) {
 					print_usb("Entering Bluetooth passthrough mode...\r\n");
 					
-					osDISABLE_TASK(TaskBT);
-					BTOff();
+					//osDISABLE_TASK(TaskBT);
+					//BTOff();
 					
 					//iAP2Packet_t packet;
 					/*
@@ -993,9 +1009,9 @@ BEGIN_TASK(TaskUSB)
 					
 					inBluetoothUpdateMode = 1;
 
-					RESET_TASK(TaskBT);
+					//RESET_TASK(TaskBT);
 					osENABLE_TASK(TaskBT);
-					//BTOn();				
+					BTOn();				
 					
 					Seg7LP('B');
 					InitButton();
@@ -1012,7 +1028,7 @@ BEGIN_TASK(TaskUSB)
 					osWAIT(250);
 					osWAIT(250);
 					osWAIT(250);
-					//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+					//print_bt("SET CONTROL AUTOCALL\r");
 					//osWAIT(250);	
 					while(!ButtonPressed()) {	
 						if(PORTF.IN & PIN7_bm) {
@@ -1264,6 +1280,35 @@ BEGIN_TASK(TaskUSB)
 				//osWAIT(1); // wait for conversions to complete
 				//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 			}
+			else if(!strncmp("br", cmd, 2)) {
+					// Change baudrate
+					osDISABLE_TASK(TaskBT);
+					BTOff();
+					//USART_Rx_Disable(BTPortDescriptor.usart);
+					//USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N1
+					USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);
+					//USART_Rx_Enable(BTPortDescriptor.usart);
+					//USART_Tx_Enable(BTPortDescriptor.usart);
+					
+					BTOn();
+					
+					for(i = 0; i < 50; i++) {
+						print_bt("SET CONTROL BAUD 921600,8n1\r");
+						osWAIT(50);
+					}
+					
+					BTOff();
+					
+					//USART_Rx_Disable(BTPortDescriptor.usart);
+					//USART_Tx_Disable(BTPortDescriptor.usart);
+					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc,	false);	//8N1
+					USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+					//USART_Rx_Enable(BTPortDescriptor.usart);
+					//USART_Tx_Enable(BTPortDescriptor.usart);
+					
+					osENABLE_TASK(TaskBT);
+				}
 			// Command to start a new simple Bluetooth session for Apple testing
 			else if(!strncmp("ap", cmd, 2)) {
 				resetAppleVariables();

@@ -79,7 +79,6 @@ unsigned char BTReady;	// 1 = a leadfail bias model is ready for decimation, 0 =
 unsigned char BTBufPhase; // 0 = decimation of LFBiasModel[0] loads the BTBuf, 1 = decimation of LFBiasModel[1] adds to BTBuf, after which /8 produces an average of both models
 unsigned int BTBuf[8];	// holds all eight channels of data, decimated from 1KHz to 125Hz.
 // unsigned char BTString[29]; // room to store the Bluetooth sample output string.
-unsigned char BTString[BT_STRING_LENGTH]; // Bigger now.
 unsigned char BTStatus;
 unsigned char haveFinalPacket;
 #endif
@@ -300,9 +299,14 @@ void AcqInterrupt(){
 			//------------------------------------------------------------------------------------------
 			// process a Voice sample, if the buffers are locked, we can still keep the baseline filter running
 			if(AcqIrqState==ACQ_IRQ_ECG_DECIMATE){
-				#define UPPER_THRESH 62000
+				//#define UPPER_THRESH 62000
+				//#define LOWER_THRESH 3200
+				
+				#define UPPER_THRESH 65534
 				#define LOWER_THRESH 3200
 				
+				//#define UPPER_THRESH 100000
+				//#define LOWER_THRESH -1
 				//#define UPPER_THRESH 48000
 				//#define LOWER_THRESH 6500
 #ifndef BLUETOOTH
@@ -743,6 +747,7 @@ BEGIN_TASK(TaskAcq)
 #ifdef WORKING
 osENABLE_TASK(TaskUSB);
 #endif
+//osENABLE_TASK(TaskFlash);
 
 	static unsigned int ButtonTimer;
 	//static unsigned int ShutoffTimer;
@@ -762,7 +767,7 @@ osENABLE_TASK(TaskUSB);
 
 	MainPowerOn();		// keep ourselves on
 	//MainPowerOn();
-	FlashPowerOn();
+	//FlashPowerOn();
 	AnalogPowerOn();
 	GroundUnused();		// ground unused analog input
 
@@ -952,8 +957,9 @@ while(1){	// do something until we complete or abort the acquisition process any
 #endif
 		//Seg7LP(0x29+1);
 
-static unsigned int toggleTimer = 0;
-static unsigned char currentToggleSetting = CONNECTION_ANDROID;
+	   //TaskFlashCmd = TF_ERASE_ALL;	// erase everything
+//static unsigned int toggleTimer = 0;
+//static unsigned char currentToggleSetting = CONNECTION_ANDROID;
 
 	   lastCheckState = BTEnable;
 		//print_usb("Hitting main loop\r\n");
@@ -962,11 +968,12 @@ static unsigned char currentToggleSetting = CONNECTION_ANDROID;
 			//osWAIT(1);
 			//osYIELD;
 			if(keepAliveTimer != -1) {
-				keepAliveTimer++;
+				keepAliveTimer+=1;
 				if(keepAliveTimer >= 5000) {
 					//print_usb("Timeout from lack of keep alives.\r\n");
 					keepAliveTimer = -1;
 					connectionNeedsReset = 1;
+					//resetAllVariables();
 					//connectionType = CONNECTION_ANDROID;
 					//Seg7HP('r');
 				}
@@ -1018,18 +1025,24 @@ static unsigned char currentToggleSetting = CONNECTION_ANDROID;
 			if(connectionNeedsReset) {
 				//print_usb("Connection lost. Resetting...\r\n");
 				// Reset BT
-				DPLEDOff();
 				//Seg7LP('r');
+				DPLEDOff();
+
 				BTEnable = 0;
 				BTOff();
 				osDISABLE_TASK(TaskBT);
 				
+				//resetAllVariables();
+				
 				//RESET_TASK(TaskBT);
 				osWAIT(250);
 				osWAIT(250);
-				acqState = FSM_PREACQ;
 				
-				osENABLE_TASK(TaskBT);
+				acqState = FSM_PREACQ;
+
+				//print_usb("Flushing BTRxBuffer\r\n");
+				//memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+				//BTPortDescriptor.RxReady = 0;
 				readyForCommands = 0;
 				BTOn();
 				
@@ -1037,24 +1050,32 @@ static unsigned char currentToggleSetting = CONNECTION_ANDROID;
 				while(!readyForCommands) {
 					osWAIT(1);
 				}
-				print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+				//print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+				ignoreNextRFCOMM = 1;
+				print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+				//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
 				
+				osWAIT(50);
 				// Make settings change
-				/*
 				if(connectionType == CONNECTION_APPLE) {
 					print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
 					//Seg7HP('9');
 				}
 				//else if (lastConnection == CONNECTION_ANDROID) {
-				else if(connectionType == CONNECTION_ANDROID) {
-					ignoreNextRFCOMM = 1;
-					print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+				//else if(connectionType == CONNECTION_ANDROID) {
+					//ignoreNextRFCOMM = 1;
+					//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
 					//Seg7HP('A');
+				//	print_bt("SET CONTROL AUTOCALL\r");
+				//} 
+				else {
+					print_bt("SET CONTROL AUTOCALL\r");
 				}
-				*/
 				
 				connectionNeedsReset = 0;
 				waitingForFirstCommand = 1;
+				
+				osENABLE_TASK(TaskBT);
 				
 				InitADCs();
 				

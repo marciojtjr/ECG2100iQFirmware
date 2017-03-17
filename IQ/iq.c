@@ -26,7 +26,7 @@
 #include "seg7.h"
 
 #include "ccpwrite.h"
-#include "sleepmgr.h"
+//#include "sleepmgr.h"
 #include "lowpower.h"
 #include "rtc_driver.h"
 #include "eeprom.h"
@@ -37,6 +37,7 @@
 #include "taskBT.h"
 
 #define SYS_FREQ 16000	//Hz
+#define POLL_FREQ 128000
 
 #define RTC_PERIOD 60
 
@@ -146,9 +147,13 @@ int main(void){
 
 		//------------------------------------------------------------------------------------------
 		// Set up the main system timer and interrupt
-		TC_SetPeriod(&TCC1, F_CPU/SYS_FREQ-1);	// set the TC period
+		TC_SetPeriod(&TCC1,F_CPU/SYS_FREQ-1);	// set the TC period
 		TC1_ConfigClockSource(&TCC1, TC_CLKSEL_DIV1_gc );	// start timer by selecting a clock source 1x
 		TC1_SetOverflowIntLevel(&TCC1, TC_OVFINTLVL_LO_gc );	// low level interrupt on overflow
+
+		//TC_SetPeriod(&TCE1, F_CPU/POLL_FREQ-1);
+		//TC1_ConfigClockSource(&TCE1, TC_CLKSEL_DIV1_gc);
+		//TC1_SetOverflowIntLevel(&TCE1, TC_OVFINTLVL_HI_gc);
 
 		PMIC.CTRL |= PMIC_LOLVLEX_bm + PMIC_MEDLVLEX_bm + PMIC_HILVLEX_bm;
 
@@ -419,11 +424,26 @@ BEGIN_TASK(TaskMain)
 
 END_TASK
 
+/*
+ISR(TCE1_OVF_vect) {
+	// Our own "interrupt" for BT USART
+	if((BTPortDescriptor.usart->STATUS & USART_DREIF_bm) != 0 && BTRTS()) {
+		USART_DataRegEmptyNotInterrupt(&BTPortDescriptor);
+	}
+	if((BTPortDescriptor.usart->STATUS & USART_RXCIF_bm) != 0) {
+		USART_RXComplete(&BTPortDescriptor);
+		//BTPortDescriptor.usart->STATUS &= ~USART_RXCIF_bm;
+	}
+}
+*/
+
 // 16KHz main interrupt. Drives acquisition and SysTick
 ISR(TCC1_OVF_vect){
 //	DPLEDOn();
 	static char i;
 	AcqInterrupt();
+	
+	
 	if( (i++&0xf)==0){ 
 		//++globalTimer;
 		SysTick();

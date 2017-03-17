@@ -9,7 +9,7 @@
 // These may be issued from any other task by checking that TaskFlashCmd == TF_IDLE before
 // placing the appropriate command into that variable
 
-enum {TF_IDLE, TF_ERASE_ALL, TF_ERASE_VOICE, TF_ERASE_ECG, TF_WRITE_BUF1, TF_WRITE_BUF2, TF_READ_BUF1, TF_READ_BUF2, TF_SLEEP, TF_WAKE};
+enum {TF_IDLE, TF_WRITE_BUF, TF_WRITE_BUF_STAGE_1, TF_WRITE_BUF_STAGE_2, TF_READ_BUF, TF_READ_BUF_STAGE_1, TF_READ_BUF_STAGE_2, TF_ERASE_ALL};
 
 // Flash Page Layout
 // The flash is 4Mbytes, divided into 64 sectors (64KByte each), each divided into 256 pages of 256 bytes each
@@ -72,8 +72,21 @@ enum {TF_IDLE, TF_ERASE_ALL, TF_ERASE_VOICE, TF_ERASE_ECG, TF_WRITE_BUF1, TF_WRI
 #endif
 
 // globals for inter-task communication
-extern unsigned char TaskFlashCmd;		// holds the currently executing flash command
-extern unsigned int FlashPageNumber;	// holds the currently active flash page number
+//extern unsigned char TaskFlashCmd;		// holds the currently executing flash command
+//extern unsigned int FlashPageNumber;	// holds the currently active flash page number
+
+/*
+extern uint8_t FlashReadBuffer[512];
+extern uint8_t FlashWriteBuffer[512];
+
+extern uint8_t OkayToWriteToWriteBuffer;
+extern uint8_t OkayToReadFromReadBuffer;
+
+extern unsigned int currentReadBufferPos;
+extern unsigned int currentReadBufferSize;
+*/
+
+//extern heatshrink_encoder encoder;
 
 #endif // taskflash_h
 #endif

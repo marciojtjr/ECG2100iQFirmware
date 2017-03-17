@@ -51,15 +51,17 @@ unsigned long long appleCrc = 0;
 unsigned char connectionType = CONNECTION_ANDROID;
 unsigned char waitingForFirstCommand = 1;
 char AppleBTString[APPLE_BT_STRING_SIZE];
-int appleStringIndex = 0;
+unsigned char BTString[BT_SIZE]; // Bigger now.
+static int appleStringIndex = 0;
 unsigned char isThereAnActiveConnection = 0;
 
 //enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 
 //static unsigned char format = FORMAT_BINARY;
-int RFCOMMTimer = -1;
 
 static uint8_t outBufferPos;
+
+#define RESET_BT_AND_WAIT() { readyForCommands = 0; print_bt("RESET\r"); while(readyForCommands == 0) { osWAIT(1); } }
 
 //##########################################################################################
 // define and allocate globals for the bluetooth task
@@ -79,7 +81,9 @@ void resetAllVariables(void) {
 	waitingForFirstCommand = 1;
 	appleStringIndex = 0;
 	isThereAnActiveConnection = 0;
-	RFCOMMTimer = -1;
+	//RFCOMMTimer = -1;
+
+	RFCOMMConnectionEstablished = 0;
 	
 	memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
 	
@@ -88,13 +92,14 @@ void resetAllVariables(void) {
 }
 
 USART_desc_t BTPortDescriptor;	// a descriptor for the USART connected to the Bluetooth transceiver
+
 static int put_bt( char c, FILE *stream){
-	if(connectionType == CONNECTION_ANDROID) {
+	//if(connectionType == CONNECTION_ANDROID) {
 		//while(!BTRTS()) {
 		//	wdt_reset();
 			//DPLEDOff();
 		//}
-	}
+	//}
 	//DPLEDOn();
 	//if(BTRTS()) {
 	uart_putchar(&BTPortDescriptor, c);
@@ -103,20 +108,7 @@ static int put_bt( char c, FILE *stream){
 
 void put_byte(char c) {
 	//DPLEDTog();
-	if(connectionType == CONNECTION_ANDROID) {
-		//while(!BTRTS()) {
-		//	wdt_reset();
-			//DPLEDOff();
-		//}
-		//DPLEDOn();
-		//if(BTRTS()) {
-		uart_putchar(&BTPortDescriptor, c);
-		//	DPLEDOn();
-		//} else {
-		//	DPLEDOff();
-		//}
-		//DPLEDTog();
-	} else {
+	if(connectionType == CONNECTION_APPLE) {
 		AppleBTString[appleStringIndex++] = c;
 		if(appleStringIndex == APPLE_BT_STRING_SIZE) {
 			sendECGPacketWithLength(APPLE_BT_STRING_SIZE);
@@ -124,7 +116,22 @@ void put_byte(char c) {
 			//DPLEDTog();
 			
 			//osWAIT(50);
-		}			
+		}
+		//while(!BTRTS()) {
+		//	wdt_reset();
+			//DPLEDOff();
+		//}
+		//DPLEDOn();
+		//if(BTRTS()) {
+
+		//	DPLEDOn();
+		//} else {
+		//	DPLEDOff();
+		//}
+		//DPLEDTog();
+	} else {
+
+		uart_large_putchar(&BTPortDescriptor, c);			
 	}
 }
 
@@ -175,10 +182,19 @@ BEGIN_TASK(TaskBT)
 	#define BT_BAUD_RATE 921600
 #endif
 */
+	
+	BTPortDescriptor.RxBuf = largeRxBuf;
+	BTPortDescriptor.TxBuf = largeTxBuf;
+
+	BTPortDescriptor.TxBufSize = LARGE_TX_BUF_SIZE;
+	BTPortDescriptor.RxBufSize = LARGE_RX_BUF_SIZE;
+	BTPortDescriptor.TxBufMask = LARGE_TX_BUF_MASK;
 
 	bt = &bt_str;
 	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
 	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+
+	//BTPortDescriptor.usart->CTRLB |= USART_CLK2X_bm;
 
 	if(!btConfigured) {
 		USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc); // setup USART, DRE interrupt priority is LOW
@@ -187,12 +203,18 @@ BEGIN_TASK(TaskBT)
 		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
 		USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);
 #else
+		//USA_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);
 		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc,	false);	//8N1
-		USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
+		//USART_Baudrate_Set(BTPortDescriptor.usart, 34, 0); //921600 bps
+		USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4);
+		//USART_Baudrate_Set(USBPortDescriptor.usart, 30, -4);
+		//Seg7HP('b');
 #endif
 
 		btConfigured = 1;
 	}
+	
+	//BTPortDescriptor.usart->CTRLA = 0;
 	
 	//USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_EVEN_gc, false);	//8E1
 	//USART_Baudrate_Set(BTPortDescriptor.usart, 33, -1); //921600 bps
@@ -258,13 +280,19 @@ BEGIN_TASK(TaskBT)
 	static int16_t z0, z1;
 	static int16_t outBuffer[8][8];
 	
-	
 //#endif
 
 	//==========================================================================================
 	// Bluetooth command parser
 
 	if(!USBPresent()){
+		// Make sure our UART settings are correct
+#ifdef BAUDRATECHANGER
+		while(1) {
+			print_bt("SET CONTROL BAUD 921600,8n1\r");
+			osWAIT(250);
+		}	
+#endif	
 		//Seg7HP('b');
 		//while(1) {
 		//	osWAIT(50);
@@ -284,16 +312,17 @@ BEGIN_TASK(TaskBT)
 		while(readyForCommands == 0) {
 			osWAIT(1);
 		}
+
 		print_bt("SET CONTROL INIT SET CONTROL AUTOCALL\r");	
-		osWAIT(50);	
+		RESET_BT_AND_WAIT();
 		
 		// Set PIO5 as the CD pin
-		print_bt("SET CONTROL CD 20 1\r");
-		osWAIT(50);
-		
+		print_bt("SET CONTROL CD 20 0\r");
+		RESET_BT_AND_WAIT();
+
 		// Make sure our name is our serial number
 		print_bt("SET BT NAME SpauCliQ%02d%02d%04d\r",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
-		osWAIT(50);
+		RESET_BT_AND_WAIT();
 		//print_bt("SET BT NAME SpauCliQ69696969\r");
 		//print_bt("SET BT NAME SN:90000000101\r");
 		// Make status updates as fast as possible
@@ -301,73 +330,64 @@ BEGIN_TASK(TaskBT)
 		//print_bt("SET BT ROLE 0 f 7d00\r");
 
 		print_bt("SET BT PAIRCOUNT 1\r");
-		osWAIT(50);
-		//osWAIT(250);
+		RESET_BT_AND_WAIT();
+
 		print_bt("SET CONTROL CONFIG 0000 2000 2000 1980\r");
-		osWAIT(50);
-		//osWAIT(250);
-		
-		// Make sure our UART settings are correct
-#ifdef BAUDRATECHANGER
-		while(1) {
-			print_bt("SET CONTROL BAUD 921600,8n1\r");
-			osWAIT(1);
-		}	
-#endif	
+		RESET_BT_AND_WAIT();
+
 		//print_bt("SET PROFILE SPP\r");
-		osWAIT(50);
+		//osWAIT(50);
 		
-		readyForCommands = 0;
 		//print_bt("")
-		osWAIT(50);
+		//osWAIT(50);
 		// Add entry for iOS devices
 		//print_usb("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"BT2.0\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"none\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, MCU.JTAGUID);
-		print_bt("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"%d\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"none\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, (int)EE_Rd(EE_BOOT_VERSION));
+		print_bt("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"%d\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"com.spauldingclinical.SpauldingECG\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, (int)EE_Rd(EE_BOOT_VERSION));
 		osWAIT(250);
-		print_bt("RESET\r");
-		//print_bt("SDP ADD 00000000-deca-fade-deca-deafdecacaff Wireless iAP\r");
-		while(readyForCommands == 0) {
-			osWAIT(1);
-		}
+		RESET_BT_AND_WAIT();
 		
-		print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
-		//print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+		//print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+		ignoreNextRFCOMM = 1;
+		print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+		//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+		osWAIT(250);
 
-		//volatile int lastConnection = EE_Rd(EE_LAST_CONNECTION_TYPE);
+		volatile int lastConnection = EE_Rd(EE_LAST_CONNECTION_TYPE);
 
 		//connectionType = CONNECTION_APPLE;
 		//if(lastConnection == CONNECTION_APPLE) {
 			
-			/*
-		if(connectionType == CONNECTION_APPLE) {
+			
+		if(lastConnection == CONNECTION_APPLE) {
 			print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
 			//Seg7HP('9');
 		}
-		//else if (lastConnection == CONNECTION_ANDROID) {
-		else if(connectionType == CONNECTION_ANDROID) {
-			ignoreNextRFCOMM = 1;
-			print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
+		//else if(lastConnection == CONNECTION_ANDROID) {
+			//ignoreNextRFCOMM = 1;
+		//	print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
 			//Seg7HP('A');
-		}	
-		*/		
-		//} else {
-		//	print_bt("SET CONTROL AUTOCALL\r");
 		//}
+		else {
+			print_bt("SET CONTROL AUTOCALL\r");
+		}
 		
 		//print_bt("SET CONTROL AUTOCALL 1101 2000 IAP\r");
 		
-		memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+		//print_usb("Flushing BTRxBuffer\r\n");
+		//memset((void*)BTPortDescriptor.RxBuf, 0, LARGE_RX_BUF_SIZE);
 
 		//print_usb("TaskBT set up, going for the loop\r\n");
 
+		// We're all done
+		//Seg7HP('b');
 
 		while(1) {		
 			if(needToDropPairing) {
 				needToDropPairing = 0;
 				
 				//print_usb("Pairing lost. Resetting.\r\n");
-				connectionType = CONNECTION_ANDROID;
-				//Seg7HP('r');
+				connectionType = CONNECTION_UNKNOWN;
+				//Seg7HP('P');
 				//ignoreNextRFCOMM = 1;
 				//print_bt("SET CONTROL AUTOCALL 1101 1000 RFCOMM\r");
 				osWAIT(25);
@@ -381,9 +401,9 @@ BEGIN_TASK(TaskBT)
 				//connectionNeedsReset = 1;
 
 				//connectionType = CONNECTION_UNKNOWN;
-				//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
+				EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
 			}
-			if(!BTEnable && acqState != FSM_FULL) {
+			if(!BTEnable && !connectionNeedsReset) {
 				//Seg7HP('b');
 				// Wait until the CD pin goes high (which happens when we enter data mode)
 				if(PORTF.IN & PIN7_bm) {
@@ -393,38 +413,41 @@ BEGIN_TASK(TaskBT)
 					//print_usb("Pin goes high\r\n");
 					BTEnable = 1;
 					
+					waitingForFirstCommand = 1;
 					// Clear any status bits that have been set
 					BTStatus = 0;
 					
 				}
 
 				if(BTPortDescriptor.RxReady) {
-					memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
+					//memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
 					BTPortDescriptor.RxReady = 0;
 				}
 			}	
-			if(BTEnable) {	
+			//if(BTEnable) {
+			else if(BTEnable){	
 				// if pin goes low for more than 500ms, it's a disconnect	
 				
 				if((PORTF.IN & PIN7_bm)==0) {
+					//print_usb("Death by connection drop.\r\n");
 					//inBluetoothUpdateMode = 1;
 					//print_usb("Exiting data mode...\r\n");
 					//waitingForFirstCommand = 1;
-					
-					BTOff();
-					DPLEDOff();
+					//BTOff();
+					//DPLEDOff();
 					//resetAppleVariables();
 					//resetUsartAppleVariables();
-					resetAllVariables();
+					//resetAllVariables();
 					BTEnable = 0;
-					connectionNeedsReset = 1;
 					//Seg7HP('d');
-					waitingForFirstCommand = 1;
+					//waitingForFirstCommand = 1;
 					//if(acqState == FSM_FULL || acqState == FSM_FULL_ON) acqState = FSM_DONE;
+
+					connectionNeedsReset = 1;
 				}
 				
 				if(BTPortDescriptor.RxReady) {
-					
+					print_usb("We have a command! First two chars: %c%c\r\n", BTPortDescriptor.RxBuf[0], BTPortDescriptor.RxBuf[1]);
 					//if(ignoreNextRxReady) {
 					//	BTPortDescriptor.RxReady = 0;
 //ignoreNextRxReady = 0;
@@ -433,13 +456,17 @@ BEGIN_TASK(TaskBT)
 					//}
 					
 					// We have a command, drop the timer
+
+					/*
 					if(RFCOMMTimer != -1) {
 						RFCOMMTimer = -1;
 						//Seg7HP('r');
-					}						
+					}
+					*/						
 					
 					if(iniAPMode) {
 						//DPLEDTog();
+						//Seg7HP('A');
 						getApplePacket(BTPortDescriptor.RxBuf);
 						//memset(BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
 
@@ -461,13 +488,23 @@ BEGIN_TASK(TaskBT)
 							continue;
 						}
 					}
-					if(!strncmp("do", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+
+					if(!strncmp("ka", BTPortDescriptor.RxBuf, 2)) {
+						// If we get a keep alive command, reset the timer, connection is still active
+						keepAliveTimer = 0;
+						//Seg7HP('A');
+						//DPLEDTog();
+						//print_usb("Keep alive recieved.\r\n");
+					}	
+					
+					else if(!strncmp("do", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
 						if(connectionType == CONNECTION_APPLE) {
 							Hello(PRINT_BT_APPLE);
 						} else {
 							Hello(PRINT_BT);
 						}
 					}
+
 					/*
 					else if(!strncmp("dc", BTPortDescriptor.RxBuf, 2)) {
 						
@@ -502,15 +539,7 @@ BEGIN_TASK(TaskBT)
 								connectionNeedsReset = 1;
 								keepAliveTimer = -1;
 								*/
-					//}	
-					
-					else if(!strncmp("ka", BTPortDescriptor.RxBuf, 2)) {
-						// If we get a keep alive command, reset the timer, connection is still active
-						keepAliveTimer = 0;
-						//Seg7HP('A');
-						//DPLEDTog();
-						//print_usb("Keep alive recieved.\r\n");
-					}			
+					//}			
 					/*
 					else if(!strncmp("pa", BTPortDescriptor.RxBuf, 2)&& (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
 						currentBTIndex = BT_DATA0;
@@ -734,17 +763,17 @@ BEGIN_TASK(TaskBT)
 						keepAliveTimer = 0;
 						//continue;
 
-						//Seg7HP('b');
+						//Seg7HP('s');
 						//startStreaming();
 					}												
 					
-					memset((void*)BTPortDescriptor.RxBuf, 0 , RX_BUF_SIZE);
+					//memset((void*)BTPortDescriptor.RxBuf, 0 , RX_BUF_SIZE);
 					BTPortDescriptor.RxReady = 0;
 				}
 
 				if(BTReady && !waitingForFirstCommand) {// we have a lead fail model to decimate
 					BTReady=0;
-
+					//DPLEDTog();
 					// Bluetooth output will be at 125Hz, so we'll need to average eigth 1KHz samples, which we can do by adding up all the lead fail subsamples for two lead fail cycles
 
 					
@@ -756,16 +785,17 @@ BEGIN_TASK(TaskBT)
 						// Fill our buffer
 //#if SAMPLING_RATE == 500
 						if(connectionType == CONNECTION_APPLE) {
-							y0 = LFBiasModel[m][i][0]+LFBiasModel[m][i][1];
-							y1 = LFBiasModel[m][i][2]+LFBiasModel[m][i][3];
+							y0 = (int32_t)LFBiasModel[m][i][0]+(int32_t)LFBiasModel[m][i][1];
+							y1 = (int32_t)LFBiasModel[m][i][2]+(int32_t)LFBiasModel[m][i][3];
 							z0 = (yPrior[i]+y0)/4;
-							z1 = (y0+y1)/4;
+							z1 = (y0+y1)/4;						
 													
 							yPrior[i] = y1;
 													
 							outBuffer[i][outBufferPos] = z0;
 							outBuffer[i][outBufferPos+1] = z1;
-							
+							//outBuffer[i][outBufferPos] = LFBiasModel[m][i][0];
+							//outBuffer[i][outBufferPos] = LFBiasModel[m][i][3];
 						} else {
 //#else
 							
@@ -777,18 +807,18 @@ BEGIN_TASK(TaskBT)
 //#endif
 					}
 //#if SAMPLING_RATE == 500
-
 					if(connectionType == CONNECTION_APPLE) {
 						outBufferPos+=2;
-					}						
+						//outBufferPos++;
+					}
 //#else
 					else {
 						outBufferPos+=4;
-					}						
+					}
 //#endif
 					
 					if(outBufferPos == 8) {
-						
+					
 						// Set up the BT spike indexes
 						for(i = 0; i < 3; i ++) {
 							if(pacerSpikes[i] != 0xFF) {
@@ -810,19 +840,22 @@ BEGIN_TASK(TaskBT)
 									else if(btSpikeIndex2 == 0xFF)
 										btSpikeIndex2 = pacerSpikes[i];
 								}
-//#endif					
+								pacerSpikes[i] = 0xFF;
+//#endif						
 							}
 						}
 						
-						memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
+						//memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
 
 						samplesSinceLastPacket = 0;
 
 						// Blast
 						outBufferPos = 0;
+						btsp = &BTString[BT_DATA0];
+						
 
 						// Pack
-#if BITS == 12
+//#if BITS == 12
 						for(k = 0; k < 8; k++) {
 							for(lead = 0; lead < 8; lead += 2) {
 								btsp[0] = outBuffer[lead][k] >> 8;
@@ -832,7 +865,8 @@ BEGIN_TASK(TaskBT)
 							}
 						}
 						
-#else 
+//#else 
+/*
 						for(k = 0; k < 8; k++) {
 							for(lead = 0; lead < 8; lead++) {
 								//*btsp++ = (outBuffer[lead][k] >> 8);
@@ -841,8 +875,8 @@ BEGIN_TASK(TaskBT)
 								btsp+=2;
 							}
 						}
-#endif
-						btsp = &BTString[BT_DATA0];
+*/
+//#endif
 					
 						//BTString[BT_TYPE] = 1;     // Record type
 						BTString[BT_STATUS] = BTStatus;     // Status Flags
@@ -988,6 +1022,7 @@ END_TASK
 
 //------------------------------------------------------------------------------------------
 // Bluetooth USART Interrupts (low level)
+
 ISR(USARTE0_RXC_vect){
 	USART_RXComplete(&BTPortDescriptor);
 }
@@ -995,5 +1030,6 @@ ISR(USARTE0_RXC_vect){
 ISR(USARTE0_DRE_vect){
 	USART_DataRegEmpty(&BTPortDescriptor);
 }
+
 #endif
 #endif
