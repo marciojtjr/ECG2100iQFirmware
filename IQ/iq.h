@@ -5,7 +5,7 @@
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
 
 #ifdef BLUETOOTH
-#define VERSION "2.1.6"
+#define VERSION "2.1.7"
 #else
 #define VERSION 1.06
 #endif
@@ -13,6 +13,7 @@
 // -----------------------------------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------2.0 Production Changelist-----------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------------------------
+// 2.1.7 - Dynamic sampling rate, DPLED disconnect fix
 // 2.1.6 - Hardlock fix
 // 2.1.5 - Universal (iOS/Windows/Android) version
 // 2.1.4 - Exclusive Windows Compat (because we're insane)

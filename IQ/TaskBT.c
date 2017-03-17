@@ -55,6 +55,9 @@ unsigned char BTString[BT_SIZE]; // Bigger now.
 static int appleStringIndex = 0;
 unsigned char isThereAnActiveConnection = 0;
 
+// Are we downsampling to 500Hz?
+unsigned char downsample = 0;
+
 //enum { FORMAT_DECIMAL, FORMAT_BINARY }; // various file output formats
 
 //static unsigned char format = FORMAT_BINARY;
@@ -84,6 +87,9 @@ void resetAllVariables(void) {
 	//RFCOMMTimer = -1;
 
 	RFCOMMConnectionEstablished = 0;
+	
+	downsample = 0; // Default behavior should ALWAYS be 1000Hz,
+					// 500Hz only for special cases
 	
 	memset((void*)pacerSpikes, 0xFF, 3*sizeof(char));
 	
@@ -503,8 +509,13 @@ BEGIN_TASK(TaskBT)
 						} else {
 							Hello(PRINT_BT);
 						}
+					} else if(!strncmp("lo", BTPortDescriptor.RxBuf, 2)) {
+						downsample = 1;
+						outBufferPos = 0;
+					} else if(!strncmp("hi", BTPortDescriptor.RxBuf, 2)) {
+						downsample = 0;
+						outBufferPos = 0;
 					}
-
 					/*
 					else if(!strncmp("dc", BTPortDescriptor.RxBuf, 2)) {
 						
@@ -784,7 +795,7 @@ BEGIN_TASK(TaskBT)
 					
 						// Fill our buffer
 //#if SAMPLING_RATE == 500
-						if(connectionType == CONNECTION_APPLE) {
+						if(downsample) {
 							y0 = (int32_t)LFBiasModel[m][i][0]+(int32_t)LFBiasModel[m][i][1];
 							y1 = (int32_t)LFBiasModel[m][i][2]+(int32_t)LFBiasModel[m][i][3];
 							z0 = (yPrior[i]+y0)/4;
@@ -807,7 +818,7 @@ BEGIN_TASK(TaskBT)
 //#endif
 					}
 //#if SAMPLING_RATE == 500
-					if(connectionType == CONNECTION_APPLE) {
+					if(downsample) {
 						outBufferPos+=2;
 						//outBufferPos++;
 					}
@@ -824,7 +835,7 @@ BEGIN_TASK(TaskBT)
 							if(pacerSpikes[i] != 0xFF) {
 								BTStatus |= 8;
 //#if SAMPLING_RATE == 500
-								if(connectionType == CONNECTION_APPLE) {
+								if(downsample) {
 									if(btSpikeIndex == 0xFF)
 										btSpikeIndex = (pacerSpikes[i]/2.0f);
 									else if(btSpikeIndex2 == 0xFF)

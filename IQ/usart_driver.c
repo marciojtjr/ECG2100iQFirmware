@@ -161,6 +161,7 @@ void USART_RXComplete(USART_desc_t *usart_desc){
 					iapBufferPos = 0;
 
 					connectionType = CONNECTION_APPLE;
+					downsample = 1;
 					//DPLEDOn();
 					EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_APPLE);
 

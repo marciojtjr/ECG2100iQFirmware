@@ -99,5 +99,7 @@ extern int16_t keepAliveTimer;
 
 extern unsigned char isThereAnActiveConnection;
 
+extern unsigned char downsample;
+
 #endif
 #endif
