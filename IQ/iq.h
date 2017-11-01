@@ -5,7 +5,7 @@
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
 
 #ifdef BLUETOOTH
-#define VERSION "2.1.7"
+#define VERSION "2.1.8"
 #else
 #define VERSION 1.06
 #endif
