@@ -387,6 +387,85 @@ BEGIN_TASK(TaskBT)
 		// We're all done
 		//Seg7HP('b');
 
+#ifdef EMISSIONSTEST
+static unsigned char sendTestCmd = 1;
+static unsigned char channelOne = 0;
+static unsigned char pressed = 0;
+
+// clear the leds
+	Seg7A(0);
+	Seg7B(0);
+	Seg7C(0);
+	Seg7D(0);
+	Seg7E(0);
+	Seg7F(0);
+	Seg7G(1);
+
+	DPLEDOn();
+	InitButton();
+
+
+while(1) {
+	print_usb("1 TestCmd=0x%x channelOne=0x%x pressed=0x%x\r\n", sendTestCmd, channelOne, pressed);
+	
+	if (sendTestCmd) {
+		print_usb("   TestCmd\r\n");
+
+		if (channelOne) {
+			print_usb("      Transmitting on channel 1\r\n");
+			print_bt("TEST TXDATA1 2402 0xFF3F\r"); // channel one - second attempt
+			//print_bt("TEST TXSTART 2441 0xFF3F 0\r"); // channel one - first attempt for UL
+			Seg7G(0); // middle segment is off for channel one
+			channelOne = 0; // toggle for next cmd
+		}
+		else {
+			print_usb("      Transmitting on channel 2\r\n");
+			print_bt("TEST TXDATA1 2480 0xFF3F\r"); // channel two - second attempt
+			//print_bt("TEST TXSTART 2441 0xFF3F 256\r"); // channel two - first attempt for UL
+			Seg7G(1); // middle segment is on for channel two
+			channelOne = 1; // toggle for next cmd
+		}
+		sendTestCmd = 0;
+		DPLEDTog();
+		pressed = 0;
+	}
+	print_usb("2 TestCmd=0x%x channelOne=0x%x pressed=0x%x\r\n", sendTestCmd, channelOne, pressed);
+
+	Seg7A(1);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7B(1);
+	Seg7A(0);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7C(1);
+	Seg7B(0);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7D(1);
+	Seg7C(0);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7E(1);
+	Seg7D(0);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7F(1);
+	Seg7E(0);
+	pressed = pressed | ((ButtonPressed() != 0) ? 1 : 0);
+	osWAIT(100);
+	Seg7F(0);
+
+	print_usb("3 TestCmd=0x%x channelOne=0x%x pressed=0x%x\r\n", sendTestCmd, channelOne, pressed);
+
+	if (pressed) {
+		print_usb("*** button pressed ***\r\n");
+		sendTestCmd = 1; // so we send the command again
+	}
+
+}
+#endif // EMISSIONSTEST
+
 		while(1) {		
 			if(needToDropPairing) {
 				needToDropPairing = 0;
@@ -440,7 +519,7 @@ BEGIN_TASK(TaskBT)
 					//print_usb("Exiting data mode...\r\n");
 					//waitingForFirstCommand = 1;
 					//BTOff();
-					//DPLEDOff();
+					DPLEDOff();
 					//resetAppleVariables();
 					//resetUsartAppleVariables();
 					//resetAllVariables();
@@ -449,7 +528,7 @@ BEGIN_TASK(TaskBT)
 					//waitingForFirstCommand = 1;
 					//if(acqState == FSM_FULL || acqState == FSM_FULL_ON) acqState = FSM_DONE;
 
-					connectionNeedsReset = 1;
+					connectionNeedsReset = 0;  // fix lockup issue (see ECR 79)
 				}
 				
 				if(BTPortDescriptor.RxReady) {
