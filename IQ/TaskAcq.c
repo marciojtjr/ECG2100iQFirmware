@@ -964,6 +964,22 @@ while(1){	// do something until we complete or abort the acquisition process any
 	   lastCheckState = BTEnable;
 		//print_usb("Hitting main loop\r\n");
 		do {	// pre-acquire while the button is not pressed	
+			
+			if(RTC.INTFLAGS & RTC_OVFIF_bm){	// if the RTC overflowed
+				RTC.INTFLAGS = RTC_OVFIF_bm;		// clear the flag
+				if(ElapsedMinutes<0xffff){
+					ElapsedMinutes++;							// and increment ElapsedMinutes
+				}
+				// If we're past the configured timeout minutes, turn off
+				if(ElapsedMinutes >= EE_Rd(EE_TIMEOUT_MINUTES) && (BTEnable == 0 || waitingForFirstCommand == 1)) {
+					break;
+				}
+			}
+			
+			if(deviceNeedsToTurnOff)
+				break;
+			
+			//Seg7HP('0' + ElapsedMinutes);
 		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
 			//osWAIT(1);
 			//osYIELD;
@@ -1027,6 +1043,10 @@ while(1){	// do something until we complete or abort the acquisition process any
 				// Reset BT
 				//Seg7LP('r');
 				DPLEDOff();
+				
+				ElapsedMinutes = 0;
+				// Reset RTC
+				RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 
 				BTEnable = 0;
 				BTOff();

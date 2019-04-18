@@ -31,7 +31,8 @@ enum {
 	EE_IN_BOOT,									// Marker set by bootstrap loader. If we get a watchdog reset and this marker is non-zero, we clear it and go to the application if it's valid.
 	EE_ENABLE_VOICE,
 	EE_ENABLE_CONTINUOUS,
-	EE_LAST_CONNECTION_TYPE
+	EE_LAST_CONNECTION_TYPE,
+	EE_TIMEOUT_MINUTES
 };
 
 #endif

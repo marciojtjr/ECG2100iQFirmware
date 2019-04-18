@@ -95,6 +95,7 @@ extern FILE bt_str;
 extern unsigned char connectionType;
 extern unsigned char waitingForFirstCommand;
 extern unsigned char connectionNeedsReset;
+extern unsigned char deviceNeedsToTurnOff;
 extern int16_t keepAliveTimer;
 
 extern unsigned char isThereAnActiveConnection;

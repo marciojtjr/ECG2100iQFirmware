@@ -45,6 +45,7 @@ char BTStateString[BT_STATE_SIZE];
 unsigned char btConfigured = 0;
 static unsigned int FrameIndex = 0;
 unsigned char connectionNeedsReset = 0;
+unsigned char deviceNeedsToTurnOff = 0;
 int16_t keepAliveTimer = -1;
 unsigned long long appleCrc = 0;
 
@@ -495,6 +496,7 @@ while(1) {
 					//pinTimer = 0;
 					keepAliveTimer = -1;
 					DPLEDOn();
+					
 					//print_usb("Pin goes high\r\n");
 					BTEnable = 1;
 					
@@ -520,6 +522,9 @@ while(1) {
 					//waitingForFirstCommand = 1;
 					//BTOff();
 					DPLEDOff();
+					ElapsedMinutes = 0;
+					// Reset RTC
+					RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 					//resetAppleVariables();
 					//resetUsartAppleVariables();
 					//resetAllVariables();
@@ -594,6 +599,18 @@ while(1) {
 					} else if(!strncmp("hi", BTPortDescriptor.RxBuf, 2)) {
 						downsample = 0;
 						outBufferPos = 0;
+					} else if(!strncmp("to", BTPortDescriptor.RxBuf, 2)) {
+						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+
+						//Seg7HP('0' + (start / 100));
+						//osWAIT(500);
+						//Seg7HP('0' + ((start % 100) / 10));
+						//osWAIT(500);
+						//Seg7HP('0' + (start % 10));
+
+						EE_Wr(EE_TIMEOUT_MINUTES, start);
+					} else if(!strncmp("po", BTPortDescriptor.RxBuf, 2)) {
+						deviceNeedsToTurnOff = 1;
 					}
 					/*
 					else if(!strncmp("dc", BTPortDescriptor.RxBuf, 2)) {

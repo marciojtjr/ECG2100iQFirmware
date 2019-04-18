@@ -39,8 +39,6 @@
 #define SYS_FREQ 16000	//Hz
 #define POLL_FREQ 128000
 
-#define RTC_PERIOD 60
-
 unsigned char inBluetoothUpdateMode = 0;
 unsigned char continuousMode = 0;
 //unsigned short globalTimer = 0;
@@ -99,6 +97,7 @@ void SetDefaults(void){
  	EE_Wr(EE_B1,1);
  	EE_Wr(EE_B2,80);
  	EE_Wr(EE_B3,40);
+	EE_Wr(EE_TIMEOUT_MINUTES, 15);
  	//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
 }
 
