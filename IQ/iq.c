@@ -138,6 +138,15 @@ int main(void){
 	if(EE_Rd(EE_ABANDON_TIME)>600){
 		SetDefaults();
 	}
+	
+	// ECR #116:
+	//    As the timeout minutes were added as a firmware update,
+	//    we need to set its default separately as the ABANDON_TIME
+	//    has already been set to a sane value
+	if(EE_Rd(EE_TIMEOUT_MINUTES) > 600) {
+		EE_Wr(EE_TIMEOUT_MINUTES, 15);
+	}
+	
 	//if(EE_Rd(EE_ENABLE_VOICE)>1) {
 	//	EE_Wr(EE_ENABLE_VOICE, 1);
 	//}
