@@ -256,7 +256,7 @@ BEGIN_TASK(TaskBT)
 	BTStateString[5] = 0xAA; // Status preamble byte 6
 	
 	static unsigned int i;
-	//static unsigned char j;
+	static unsigned char j;
 	static unsigned long start;//, end;
 	//static float data1,data2;
 	//static int dataInt;
@@ -609,6 +609,20 @@ while(1) {
 						//Seg7HP('0' + (start % 10));
 
 						EE_Wr(EE_TIMEOUT_MINUTES, start);
+						
+						if(connectionType == CONNECTION_APPLE) {
+							sprintf(AppleBTString, "%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
+							j = strlen(AppleBTString);
+
+							appleCrc = 0;
+							for(i = 0; i < j; i++) {
+								appleCrc += AppleBTString[i];
+							}
+
+							sendECGPacketWithLength(j);
+						} else {
+							print_bt("%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
+						}
 					} else if(!strncmp("po", BTPortDescriptor.RxBuf, 2)) {
 						deviceNeedsToTurnOff = 1;
 					}

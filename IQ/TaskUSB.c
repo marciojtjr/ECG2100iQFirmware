@@ -979,6 +979,14 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					short battMV = round(VBatt*100);
 					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
 				}
+				else if(!strncmp("to", cmd, 2)) {
+					if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
+						argC=sscanf_P( (const char *)USBPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+						EE_Wr(EE_TIMEOUT_MINUTES,start);
+					}
+					
+					print_usb("Timeout minutes = %d", EE_Rd(EE_TIMEOUT_MINUTES));
+				}
 #ifdef WORKING
 				else if(!strncmp("fu", cmd, 2)) {
 					EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
