@@ -2,10 +2,10 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>6.2</ProjectVersion>
+    <ProjectVersion>7.0</ProjectVersion>
     <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
     <ProjectGuid>{f14fccca-d4d5-4bdd-80c7-00d84aeb468a}</ProjectGuid>
-    <Name>IQ</Name>
+    <Name>TestBluetooth</Name>
     <avrdevice>atxmega64a3</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <AvrProjectType>Importer</AvrProjectType>

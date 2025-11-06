@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>6.2</ProjectVersion>
+    <ProjectVersion>7.0</ProjectVersion>
     <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
     <ProjectGuid>01e6ed85-3528-4754-89ef-1d2c81cf09bc</ProjectGuid>
     <Name>IQ</Name>
@@ -324,10 +324,10 @@
       </AvrGcc>
     </ToolchainSettings>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Continuous Bluetooth' ">
+  <PropertyGroup Condition=" '$(Configuration)' == 'ContinuousBluetooth' ">
     <OutputFileName>iq_continuous_bt</OutputFileName>
     <OutputFileExtension>.elf</OutputFileExtension>
-    <OutputPath>bin\Continuous Bluetooth\</OutputPath>
+    <OutputPath>bin\ContinuousBluetooth\</OutputPath>
     <ToolchainSettings>
       <AvrGcc xmlns="">
         <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
@@ -398,7 +398,7 @@
     <Compile Include="sp_driver.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sp_driver.S">
+    <Compile Include="sp_driver.s">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="taskPaceSimu.c">

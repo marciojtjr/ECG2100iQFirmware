@@ -6,11 +6,11 @@
 #include "usart_driver.h"
 #include "iq.h"
 #include "wdt_driver.h"
-#include "TaskUSB.h"
+#include "taskUSB.h"
 #include "taskBT.h"
 #include "taskFlash.h"
 #include "rtos.h"
-#include "Seg7.h"
+#include "seg7.h"
 #include "eeprom.h"
 #include <util/delay.h>
 #include <ctype.h>

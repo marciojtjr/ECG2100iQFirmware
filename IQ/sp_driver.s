@@ -67,7 +67,7 @@
 ;* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;******************************************************************************
 
-#include <avr\io.h>
+#include <avr/io.h>
 
 #ifdef BOOTLOADER
 
