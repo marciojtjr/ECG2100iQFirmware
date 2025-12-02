@@ -23,6 +23,11 @@ uint8_t smallTxBuf[SMALL_TX_BUF_SIZE];
 uint8_t largeRxBuf[LARGE_RX_BUF_SIZE];
 uint8_t largeTxBuf[LARGE_TX_BUF_SIZE];
 
+// BT Debug buffer for ISR-to-main communication
+volatile uint8_t btDebugBuf[BT_DEBUG_BUF_SIZE];
+volatile uint8_t btDebugHead = 0;
+volatile uint8_t btDebugTail = 0;
+
 int written = 0;
 
 unsigned char ignoreNextRFCOMM = 0;
@@ -100,11 +105,17 @@ void USART_InterruptDriver_Initialize(USART_desc_t *usart_desc, USART_t *usart, 
 void USART_RXComplete(USART_desc_t *usart_desc){
 
 	uint8_t c = usart_desc->usart->DATA;	// get the byte
-	
+
 	// If we're recieving on BT, check to see if we've recieved "READY" yet
 	#ifdef BLUETOOTH
 
 	if(usart_desc == &BTPortDescriptor) {
+		// Store received character in debug buffer for main loop printing
+		uint8_t nextHead = (btDebugHead + 1) & (BT_DEBUG_BUF_SIZE - 1);
+		if(nextHead != btDebugTail) {  // Only store if buffer not full
+			btDebugBuf[btDebugHead] = c;
+			btDebugHead = nextHead;
+		}
 #ifdef WORKING
 		if(inBluetoothUpdateMode) {
 			put_usb_byte(c);

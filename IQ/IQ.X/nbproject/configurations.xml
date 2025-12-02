@@ -4,6 +4,10 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="BGAPI" displayName="BGAPI" projectFiles="true">
+        <itemPath>../BGAPI/bgapi_commands.h</itemPath>
+        <itemPath>../BGAPI/bgapi_parser.h</itemPath>
+      </logicalFolder>
       <itemPath>../apple.h</itemPath>
       <itemPath>../defines.h</itemPath>
       <itemPath>../fft.h</itemPath>
@@ -50,6 +54,10 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="BGAPI" displayName="BGAPI" projectFiles="true">
+        <itemPath>../BGAPI/bgapi_commands.c</itemPath>
+        <itemPath>../BGAPI/bgapi_parser.c</itemPath>
+      </logicalFolder>
       <itemPath>../apple.c</itemPath>
       <itemPath>../ffft.S</itemPath>
       <itemPath>../main.c</itemPath>
@@ -81,6 +89,9 @@
       <itemPath>../crc.c</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>../BGAPI</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="Bluetooth" type="2">
@@ -827,7 +838,7 @@
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
-        <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"

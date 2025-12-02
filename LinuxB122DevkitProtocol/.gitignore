@@ -1,0 +1,20 @@
+# Compiled binaries
+bt122_monitor
+*.o
+*.out
+
+# IDE files - keep .vscode for debugging
+.idea/
+*.swp
+*.swo
+*~
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Core dumps
+core
+core.*

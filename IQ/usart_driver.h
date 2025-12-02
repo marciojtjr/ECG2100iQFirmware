@@ -5,12 +5,12 @@
 
 #include "avr_compiler.h"
 
-// Transmit and Receive buffers
-#define SMALL_RX_BUF_SIZE 128
-#define SMALL_TX_BUF_SIZE 128
+// Transmit and Receive buffers (reduced to save RAM)
+#define SMALL_RX_BUF_SIZE 64
+#define SMALL_TX_BUF_SIZE 64
 
-#define LARGE_RX_BUF_SIZE 255
-#define LARGE_TX_BUF_SIZE 256
+#define LARGE_RX_BUF_SIZE 128
+#define LARGE_TX_BUF_SIZE 128
 
 #define SMALL_TX_BUF_MASK ( SMALL_TX_BUF_SIZE - 1)
 #define LARGE_TX_BUF_MASK ( LARGE_TX_BUF_SIZE - 1)
@@ -61,6 +61,12 @@ extern uint8_t smallTxBuf[SMALL_TX_BUF_SIZE];
 
 extern uint8_t largeRxBuf[LARGE_RX_BUF_SIZE];
 extern uint8_t largeTxBuf[LARGE_TX_BUF_SIZE];
+
+// BT Debug buffer for ISR-to-main communication
+#define BT_DEBUG_BUF_SIZE 128  // Reduced from 256 to save RAM
+extern volatile uint8_t btDebugBuf[BT_DEBUG_BUF_SIZE];
+extern volatile uint8_t btDebugHead;
+extern volatile uint8_t btDebugTail;
 
 //============================================
 // Macros

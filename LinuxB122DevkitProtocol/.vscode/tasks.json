@@ -1,0 +1,52 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "make",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build release version"
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug"],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Build debug version with symbols"
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean"],
+            "problemMatcher": [],
+            "detail": "Clean build artifacts"
+        },
+        {
+            "label": "rebuild",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean", "all"],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Clean and rebuild"
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./bt122_monitor",
+            "args": [],
+            "dependsOn": ["build"],
+            "problemMatcher": [],
+            "detail": "Build and run the program"
+        }
+    ]
+}
