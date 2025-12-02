@@ -11,7 +11,7 @@
                 "isDefault": true
             },
             "problemMatcher": ["$gcc"],
-            "detail": "Build release version"
+            "detail": "Build release version (Linux)"
         },
         {
             "label": "build-debug",
@@ -20,7 +20,113 @@
             "args": ["debug"],
             "group": "build",
             "problemMatcher": ["$gcc"],
-            "detail": "Build debug version with symbols"
+            "detail": "Build debug version with symbols (Linux)"
+        },
+        {
+            "label": "build-windows",
+            "type": "shell",
+            "command": "cmd.exe",
+            "args": ["/c", "build_windows.bat"],
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "detail": "Build release version for Windows (auto-detect MSVC)"
+        },
+        {
+            "label": "build-debug-windows",
+            "type": "shell",
+            "command": "cmd.exe",
+            "args": ["/c", "build_windows.bat", "debug"],
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "detail": "Build debug version for Windows (auto-detect MSVC)"
+        },
+        {
+            "label": "build-debug-windows-2019",
+            "type": "shell",
+            "command": "cl",
+            "args": [
+                "/nologo",
+                "/Zi",
+                "/Od",
+                "/DDEBUG",
+                "/Fe:bt122_monitor.exe",
+                "main.c",
+                "bgapi_parser.c",
+                "bgapi_commands.c"
+            ],
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "detail": "Build debug version for Windows (MSVC 2019)",
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/k", "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat\""]
+                }
+            }
+        },
+        {
+            "label": "build-debug-windows-2022",
+            "type": "shell",
+            "command": "cl",
+            "args": [
+                "/nologo",
+                "/Zi",
+                "/Od",
+                "/DDEBUG",
+                "/Fe:bt122_monitor.exe",
+                "main.c",
+                "bgapi_parser.c",
+                "bgapi_commands.c"
+            ],
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "detail": "Build debug version for Windows (MSVC 2022)",
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/k", "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""]
+                }
+            }
+        },
+        {
+            "label": "build-windows-mingw",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-Wall",
+                "-Wextra",
+                "-O2",
+                "-std=c99",
+                "-o",
+                "bt122_monitor.exe",
+                "main.c",
+                "bgapi_parser.c",
+                "bgapi_commands.c"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Build release version for Windows (MinGW/GCC)"
+        },
+        {
+            "label": "build-debug-windows-mingw",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-Wall",
+                "-Wextra",
+                "-g",
+                "-O0",
+                "-std=c99",
+                "-DDEBUG",
+                "-o",
+                "bt122_monitor.exe",
+                "main.c",
+                "bgapi_parser.c",
+                "bgapi_commands.c"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Build debug version with symbols for Windows (MinGW/GCC)"
         },
         {
             "label": "clean",
@@ -28,7 +134,11 @@
             "command": "make",
             "args": ["clean"],
             "problemMatcher": [],
-            "detail": "Clean build artifacts"
+            "detail": "Clean build artifacts (Linux)",
+            "windows": {
+                "command": "cmd",
+                "args": ["/c", "del", "/Q", "bt122_monitor.exe", "*.o", "2>nul", "||", "echo", "Clean complete"]
+            }
         },
         {
             "label": "rebuild",
@@ -37,7 +147,16 @@
             "args": ["clean", "all"],
             "group": "build",
             "problemMatcher": ["$gcc"],
-            "detail": "Clean and rebuild"
+            "detail": "Clean and rebuild (Linux)"
+        },
+        {
+            "label": "rebuild-windows",
+            "type": "shell",
+            "dependsOrder": "sequence",
+            "dependsOn": ["clean", "build-windows"],
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Clean and rebuild for Windows"
         },
         {
             "label": "run",
@@ -46,7 +165,16 @@
             "args": [],
             "dependsOn": ["build"],
             "problemMatcher": [],
-            "detail": "Build and run the program"
+            "detail": "Build and run the program (Linux)"
+        },
+        {
+            "label": "run-windows",
+            "type": "shell",
+            "command": ".\\bt122_monitor.exe",
+            "args": [],
+            "dependsOn": ["build-windows"],
+            "problemMatcher": [],
+            "detail": "Build and run the program (Windows)"
         }
     ]
 }

@@ -10,18 +10,28 @@
 
 // BGAPI Class IDs
 #define BGAPI_CLASS_SYSTEM       0x01
-#define BGAPI_CLASS_PERSISTENT   0x02
-#define BGAPI_CLASS_GAP          0x03
-#define BGAPI_CLASS_CONNECTION   0x04
+#define BGAPI_CLASS_BT_GAP       0x02
+#define BGAPI_CLASS_CONNECTION   0x03
+#define BGAPI_CLASS_BT_RFCOMM    0x04
 #define BGAPI_CLASS_ATTCLIENT    0x05
-#define BGAPI_CLASS_SM           0x06
+#define BGAPI_CLASS_LE_GAP       0x06
+#define BGAPI_CLASS_BT_CONNECTION 0x07
+#define BGAPI_CLASS_ENDPOINT     0x0B
 #define BGAPI_CLASS_GATT         0x0B
+#define BGAPI_CLASS_PERSISTENT   0x0D
+#define BGAPI_CLASS_SM           0x0F
 
 // System Events
-#define BGAPI_EVENT_SYSTEM_BOOT  0x00
-#define BGAPI_EVENT_SYSTEM_READY 0x01
+#define BGAPI_EVENT_SYSTEM_BOOT         0x00
+#define BGAPI_EVENT_SYSTEM_INITIALIZED  0x01
 
-// Connection Events
+// BT Connection Events  
+#define BGAPI_EVENT_BT_CONNECTION_OPENED     0x00
+
+// Endpoint Events
+#define BGAPI_EVENT_ENDPOINT_STATUS     0x02
+
+// Legacy Connection Events (for compatibility)
 #define BGAPI_EVENT_CONNECTION_STATUS       0x00
 #define BGAPI_EVENT_CONNECTION_VERSION_IND  0x01
 #define BGAPI_EVENT_CONNECTION_FEATURE_IND  0x02
