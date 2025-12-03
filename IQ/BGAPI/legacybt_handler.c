@@ -3,68 +3,49 @@
 #include "bgapi_parser.h"
 #include "../usart_driver.h"
 #include "../taskUSB.h"
+#include "../taskBT.h"
 #include "../rtos.h"
+#include "../eeprom.h"
+#include "../iq.h"
 #include <string.h>
+
+#define RESET_BT_AND_WAIT() { readyForCommands = 0; print_bt("RESET\r"); while(readyForCommands == 0) { osWAIT(1); } }
 
 // Initialize BT122 module and wait for it to be ready
 // Returns 0 on success, -1 on timeout
-int legacybt_handler_init(const char *device_name, int timeout_ms) {
-    int elapsed = 0;
-    bgapi_packet_t packet;
-    bgapi_command_t cmd;
-    int result;
+int legacybt_handler_init(const char *device_name, int timeout_ms) {    
+    debug_message("[BT] Bluetooth chip ready, initializing...\r\n");
+    print_bt("SET CONTROL INIT SET CONTROL AUTOCALL\r");
+    RESET_BT_AND_WAIT();
 
-    print_usb("[BT122] Waiting for SYSTEM_INITIALIZED event...\r\n");
-    // Wait for SYSTEM_INITIALIZED event and configure BT122
-    while (elapsed < timeout_ms) {
-        while(btDebugTail != btDebugHead) {
-            unsigned char data = btDebugBuf[btDebugTail];
-            btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+    // Set PIO5 as the CD pin
+    print_bt("SET CONTROL CD 20 0\r");
+    RESET_BT_AND_WAIT();
 
-            result = process_bgapi_data(&data, 1, &packet);
+    // Make sure our name is our serial number
+    print_bt("SET BT NAME %s\r", device_name);
+    RESET_BT_AND_WAIT();
+    print_bt("SET BT PAIRCOUNT 1\r");
+    RESET_BT_AND_WAIT();
 
-            if (result == 1) {
-                if(packet.message_type == BGAPI_MSG_TYPE_EVENT
-                    && packet.class_id == BGAPI_CLASS_SYSTEM
-                    && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
+    print_bt("SET CONTROL CONFIG 0000 2000 2000 1980\r");
+    RESET_BT_AND_WAIT();
+    print_bt("SET PROFILE IAP PROD:\"ECG\" MF:\"Spaulding\" MDL:\"%d\" SN:\"%02d%02d%04d\" PROTO:\"com.bluegiga.iwrap\" SEED:\"4Y5WV3BJAJ\" APP:\"com.spauldingclinical.SpauldingECG\" FW:%s HW:%d.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r", MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), VERSION, (int)EE_Rd(EE_BOOT_VERSION));
+    osWAIT(250);
+    RESET_BT_AND_WAIT();
+    ignoreNextRFCOMM = 1;
+    print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+    osWAIT(250);
 
-                    print_usb("[BT122] BOOT COMPLETED\r\n");
+    volatile int lastConnection = EE_Rd(EE_LAST_CONNECTION_TYPE);
 
-                    // Set device name
-                    bgapi_cmd_system_set_local_name(&cmd, (const uint8_t *)device_name, strlen(device_name));
-                    result = bgapi_send_command_and_wait(&cmd, 1000);
-                    print_usb("[BT122] Set device name: %d\r\n", result);
-
-                    // Set class of device
-                    bgapi_cmd_system_set_class_of_device(&cmd, 0x202);
-                    result = bgapi_send_command_and_wait(&cmd, 1000);
-                    print_usb("[BT122] Set class of device: %d\r\n", result);
-
-                    // Set GAP mode (connectable, discoverable)
-                    bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
-                    result = bgapi_send_command_and_wait(&cmd, 1000);
-                    print_usb("[BT122] Set GAP mode: %d\r\n", result);
-
-                    // Set bondable mode
-                    bgapi_cmd_sm_set_bondable_mode(&cmd, 1);
-                    result = bgapi_send_command_and_wait(&cmd, 1000);
-                    print_usb("[BT122] Set bondable mode: %d\r\n", result);
-
-                    // Start RFCOMM server
-                    bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
-                    result = bgapi_send_command_and_wait(&cmd, 1000);
-                    print_usb("[BT122] Start RFCOMM server: %d\r\n", result);
-
-                    print_usb("[BT122] Initialization completed successfully\r\n");
-                    return 0;  // Success
-                }
-            }
-        }
-
-        osWAIT(10);
-        elapsed += 10;
+    if(lastConnection == CONNECTION_APPLE) {
+        debug_message("[BT] Last connection: APPLE - setting IAP autocall\r\n");
+        print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
     }
-
-    print_usb("[BT122] Initialization timeout\r\n");
-    return -1;  // Timeout
+    else {
+        debug_message("[BT] Last connection: UNKNOWN/ANDROID - clearing autocall\r\n");
+        print_bt("SET CONTROL AUTOCALL\r");
+    }
+    return 0;  // Timeout
 }
