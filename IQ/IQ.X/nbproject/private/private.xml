@@ -3,15 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskAcq.c</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskUSB.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/taskPaceSimu.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/BGAPI/bgapi_parser.c</file>
             <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskBT.c</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/rtos.h</file>
             <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/usart_driver.h</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/taskUSB.h</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/iq.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskFlash.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/BGAPI/bgapi_commands.h</file>
             <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/usart_driver.c</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/taskBT.h</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/BGAPI/bgapi_parser.h</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/BGAPI/bgapi_commands.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/wdt_driver.c</file>
         </group>
     </open-files>
 </project-private>

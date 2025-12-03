@@ -2,24 +2,17 @@
 #include "bgapi_parser.h"
 #include <string.h>
 #include <stdio.h>
-
-#ifdef _WIN32
-    #include <windows.h>
-    #include <io.h>
-    #define usleep(x) Sleep((x)/1000)
-#else
-    #include <unistd.h>
-    #include <errno.h>
-#endif
+#include "../taskUSB.h"
+#include "../usart_driver.h"
+#include "../rtos.h"
 
 // Response tracking variables
 static volatile int waiting_for_response = 0;
 static volatile int response_received = 0;
 static volatile int last_response_error = 0;
 
-// Forward declarations
-void process_bgapi_data(const unsigned char *buffer, int length);
-void handle_bgapi_event(const bgapi_packet_t *packet);
+// BGAPI parser state
+static bgapi_parser_state_t parser_state;
 
 // Helper to build BGAPI command header
 static void build_command_header(bgapi_command_t *cmd, uint8_t class_id, uint8_t command_id, uint8_t payload_len) {
@@ -30,27 +23,12 @@ static void build_command_header(bgapi_command_t *cmd, uint8_t class_id, uint8_t
     cmd->length = 4 + payload_len;            // Total length
 }
 
-// Send command
-#ifdef _WIN32
-int bgapi_send_command(HANDLE handle, const bgapi_command_t *cmd) {
-    DWORD bytes_written;
-    if (!WriteFile(handle, cmd->buffer, cmd->length, &bytes_written, NULL)) {
-        return -1;
-    }
-    if (bytes_written != cmd->length) {
-        return -1;
-    }
+// Send command via bt FILE stream
+int bgapi_send_command(const bgapi_command_t *cmd) {
+    extern FILE *bt;  // Defined in TaskBT
+    fwrite(cmd->buffer, 1, cmd->length, bt);
     return 0;
 }
-#else
-int bgapi_send_command(int fd, const bgapi_command_t *cmd) {
-    int bytes_written = write(fd, cmd->buffer, cmd->length);
-    if (bytes_written != cmd->length) {
-        return -1;
-    }
-    return 0;
-}
-#endif
 
 // System Commands
 
@@ -194,15 +172,15 @@ void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key) {
 
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd) {
-    printf("\n>>> Sending BGAPI Command (%d bytes):\n", cmd->length);
-    printf("    ");
+    print_usb("\n>>> Sending BGAPI Command (%d bytes):\n", cmd->length);
+    print_usb("    ");
     for (int i = 0; i < cmd->length; i++) {
-        printf("%02X ", cmd->buffer[i]);
+        print_usb("%02X ", cmd->buffer[i]);
         if ((i + 1) % 16 == 0 && (i + 1) < cmd->length) {
-            printf("\n    ");
+            print_usb("\n    ");
         }
     }
-    printf("\n");
+    print_usb("\n");
 }
 
 // Response tracking functions
@@ -237,148 +215,128 @@ void bgapi_handle_response(const bgapi_packet_t *packet) {
             last_response_error = error_code;
             
             // Print the response details for debugging
-            printf(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
+            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            printf(">>> Raw payload: ");
+            print_usb(">>> Raw payload: ");
             for (int i = 0; i < packet->payload_length && i < 8; i++) {
-                printf("%02X ", packet->payload[i]);
+                print_usb("%02X ", packet->payload[i]);
             }
-            printf("\n");
+            print_usb("\n");
             
             if (error_code != 0) {
-                printf("⚠️  Command returned error code: 0x%04X\n", error_code);
+                print_usb("Command returned error code: 0x%04X\n", error_code);
             } else {
-                printf("✅ Command successful (result: 0x%04X)\n", error_code);
+                print_usb("Command successful (result: 0x%04X)\n", error_code);
             }
         } else if (packet->payload_length == 1) {
             last_response_error = packet->payload[0];
-            printf(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
+            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            printf(">>> Raw payload: %02X\n", packet->payload[0]);
+            print_usb(">>> Raw payload: %02X\n", packet->payload[0]);
             
             if (packet->payload[0] != 0) {
-                printf("⚠️  Command returned error code: 0x%02X\n", packet->payload[0]);
+                print_usb("⚠️  Command returned error code: 0x%02X\n", packet->payload[0]);
             } else {
-                printf("✅ Command successful (result: 0x%02X)\n", packet->payload[0]);
+                print_usb("✅ Command successful (result: 0x%02X)\n", packet->payload[0]);
             }
         } else {
             last_response_error = 0;
-            printf(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d (no payload)\n", 
+            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d (no payload)\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            printf("✅ Command successful (no error code)\n");
+            print_usb("Command successful (no error code)\n");
         }
     }
 }
 
-#ifdef _WIN32
-int bgapi_read_and_process_until_response(HANDLE handle, int timeout_ms) {
-    unsigned char buffer[256];
-    int bytes_read;
-    int elapsed = 0;
-    extern bgapi_parser_state_t parser_state; // Defined in main.c
-    
-    while (elapsed < timeout_ms && !response_received) {
-        DWORD dwBytesRead;
-        if (ReadFile(handle, buffer, sizeof(buffer) - 1, &dwBytesRead, NULL)) {
-            bytes_read = (int)dwBytesRead;
+// Initialize BGAPI subsystem
+void bgapi_init(void) {
+    bgapi_parser_init(&parser_state);
+    bgapi_reset_response_tracking();
+}
+
+// Process incoming BGAPI data through parser
+// Returns 1 if packet found, 0 if need more data, -1 on error
+int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *out_packet) {
+    static int remaining_offset = 0;
+
+    // Feed data to parser
+    int offset = 0;
+    while (offset < length) {
+        int result = bgapi_parser_feed(&parser_state, buffer + offset, length - offset, out_packet);
+
+        if (result > 0) {
+            // Found a complete packet
+            bgapi_print_packet(out_packet);
+
+            // Handle response packets (sets response_received flag)
+            if (out_packet->message_type == BGAPI_MSG_TYPE_RESPONSE) {
+                bgapi_handle_response(out_packet);
+            }
+
+            // Handle events and send responses
+            //handle_bgapi_event(out_packet);
+
+            // Move offset past the parsed packet
+            offset += out_packet->total_length - remaining_offset;
+            remaining_offset = 0;
+
+            return 1;  // Packet found and returned
         } else {
-            bytes_read = -1;
+            // No complete packet yet, need more data
+            remaining_offset = parser_state.buffer_pos;
+            break;
         }
+    }
 
-        if (bytes_read > 0) {
-            // Process BGAPI packets - we need to call the parser from main
-            process_bgapi_data(buffer, bytes_read);
-            
-            if (response_received) {
-                return last_response_error;
-            }
-        } else if (bytes_read < 0) {
-            DWORD error = GetLastError();
-            if (error != ERROR_TIMEOUT) {
-                printf("Error reading from serial port: %lu\n", error);
-                return -1;
-            }
-        }
-        
-        usleep(10000); // 10ms
-        elapsed += 10;
-    }
-    
-    if (!response_received) {
-        printf("⚠️  TIMEOUT waiting for response!\n");
-        return -1;
-    }
-    
-    return last_response_error;
+    return 0;  // Need more data
 }
 
-int bgapi_send_command_and_wait(HANDLE handle, bgapi_command_t *cmd, int timeout_ms) {
+// Send command and wait for response (AVR firmware version)
+// Sends the command and waits for response, actively processing incoming data
+int bgapi_send_command_and_wait(bgapi_command_t *cmd, int timeout_ms) {
+    // Circular buffer for interrupt-safe BT data access
+    extern volatile uint8_t btDebugBuf[];
+    extern volatile uint8_t btDebugHead;
+    extern volatile uint8_t btDebugTail;
+
     bgapi_print_command(cmd);
-    
+
     // Reset response tracking
     response_received = 0;
     waiting_for_response = 1;
     last_response_error = 0;
-    
-    // Send the command
-    bgapi_send_command(handle, cmd);
 
-    // Read and process data until we get the response
-    int result = bgapi_read_and_process_until_response(handle, timeout_ms);
-    
-    waiting_for_response = 0;
-    return result;
-}
-#else
-int bgapi_read_and_process_until_response(int fd, int timeout_ms) {
-    unsigned char buffer[256];
-    int bytes_read;
+    // Send the command
+    bgapi_send_command(cmd);
+
+    // Wait for response with timeout, actively processing incoming data
     int elapsed = 0;
-    
-    while (elapsed < timeout_ms && !response_received) {
-        bytes_read = read(fd, buffer, sizeof(buffer) - 1);
+    bgapi_packet_t packet;
 
-        if (bytes_read > 0) {
-            // Process BGAPI packets
-            process_bgapi_data(buffer, bytes_read);
-            
-            if (response_received) {
+    while (!response_received && elapsed < timeout_ms) {
+        // Process data from interrupt-safe circular buffer
+        while(btDebugTail != btDebugHead) {
+            unsigned char data = btDebugBuf[btDebugTail];
+            btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+
+            int result = process_bgapi_data(&data, 1, &packet);
+
+            if (result > 0 && response_received) {
+                waiting_for_response = 0;
                 return last_response_error;
             }
-        } else if (bytes_read < 0) {
-            if (errno != EAGAIN && errno != EINTR) {
-                perror("Error reading from serial port");
-                return -1;
-            }
         }
-        
-        usleep(10000); // 10ms
+
+        osWAIT(10);  // Yield to other RTOS tasks for 10ms
         elapsed += 10;
     }
-    
+
+    waiting_for_response = 0;
+
     if (!response_received) {
-        printf("⚠️  TIMEOUT waiting for response!\n");
-        return -1;
+        print_usb("BGAPI timeout waiting for response\n");
+        return -1;  // Timeout
     }
-    
+
     return last_response_error;
 }
-
-int bgapi_send_command_and_wait(int fd, bgapi_command_t *cmd, int timeout_ms) {
-    bgapi_print_command(cmd);
-    
-    // Reset response tracking
-    response_received = 0;
-    waiting_for_response = 1;
-    last_response_error = 0;
-    
-    // Send the command
-    bgapi_send_command(fd, cmd);
-
-    // Read and process data until we get the response
-    int result = bgapi_read_and_process_until_response(fd, timeout_ms);
-    
-    waiting_for_response = 0;
-    return result;
-}
-#endif

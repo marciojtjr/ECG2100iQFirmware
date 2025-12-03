@@ -69,7 +69,6 @@ unsigned char downsample = 0;
 //static unsigned char format = FORMAT_BINARY;
 
 static uint8_t outBufferPos;
-static bgapi_parser_state_t parser_state;
 
 #define RESET_BT_AND_WAIT() { readyForCommands = 0; print_bt("RESET\r"); while(readyForCommands == 0) { osWAIT(1); } }
 
@@ -290,39 +289,6 @@ void ConfigureBTUSART(unsigned long baudrate, unsigned char enable_rts)
 	}
 }
 
-// BGAPI parser disabled to save RAM
-// Returns 1 if packet found, 0 if need more data, -1 on error
-int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *out_packet) {
-    static int remaining_offset = 0;
-
-    // Feed data to parser
-    int offset = 0;
-    while (offset < length) {
-        int result = bgapi_parser_feed(&parser_state, buffer + offset, length - offset, out_packet);
-
-        if (result > 0) {
-            // Found a complete packet
-            bgapi_print_packet(out_packet);
-
-            // Handle events and send responses
-            //handle_bgapi_event(out_packet);
-
-            // Move offset past the parsed packet
-            offset += out_packet->total_length - remaining_offset;
-            remaining_offset = 0;
-
-            return 1;  // Packet found and returned
-        } else {
-            // No complete packet yet, need more data
-            remaining_offset = parser_state.buffer_pos;
-            break;
-        }
-    }
-
-    return 0;  // Need more data
-}
-
-
 //==========================================================================================
 // Bluetooth Task
 
@@ -355,7 +321,7 @@ BEGIN_TASK(TaskBT)
 	static unsigned long start;
 	static unsigned char argC;
 	static char cmd[3];
-	static int currentBTIndex = BT_DATA0;
+	// static int currentBTIndex = BT_DATA0;  // Unused - removed to save 2 bytes RAM
 	static char device_name[20];  // Buffer for device name (e.g., "SpauCliQ010203")
 
 	static unsigned char *btsp = &BTString[BT_DATA0];
@@ -369,8 +335,8 @@ BEGIN_TASK(TaskBT)
 	static int16_t z0, z1;
 	static int16_t outBuffer[8][8];
 
-    // BGAPI parser disabled to save RAM
-    bgapi_parser_init(&parser_state);
+    // Initialize BGAPI subsystem
+    bgapi_init();
 
 	// Format device name from serial number
 	unsigned long serial_num = EE_Rd(EE_SERIAL_NUM);
@@ -404,19 +370,32 @@ BEGIN_TASK(TaskBT)
 				bgapi_packet_t packet;
                 bgapi_command_t cmd;
 				int result = process_bgapi_data(&data, 1, &packet);
-                print_usb("process_bgapi_data=%d initPhase=%d\r\n", result, initPhase);
+                //print_usb("process_bgapi_data=%d initPhase=%d\r\n", result, initPhase);
 				if (result == 1) {
-                    if(packet.message_type == BGAPI_MSG_TYPE_EVENT 
-                        && packet.class_id == BGAPI_CLASS_SYSTEM 
-                        && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {                    
-                        print_usb("bgapi_cmd_system_get_info \r\n");
-                        //bgapi_cmd_system_get_info(&cmd);
-                        //bgapi_send_command(&cmd);
-                        //bgapi_cmd_set_device_name(&cmd, device_name);
-                        //bgapi_send_command(&cmd);
-                        //initPhase = 1;
-                        //print_usb("initPhase=%d\r\n", initPhase);
-                        //continue;
+                    if(packet.message_type == BGAPI_MSG_TYPE_EVENT
+                        && packet.class_id == BGAPI_CLASS_SYSTEM
+                        && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
+                        print_usb("==============BOOT COMPLETED \r\n");
+                        bgapi_cmd_system_set_local_name(&cmd, (const uint8_t *)device_name, strlen(device_name));
+                        result = bgapi_send_command_and_wait(&cmd, 1000);
+                        print_usb("==============bgapi_cmd_set_device_name COMPLETED %d\r\n", result);
+                        
+                        bgapi_cmd_system_set_class_of_device(&cmd, 0x202);
+                        result = bgapi_send_command_and_wait(&cmd, 1000);
+                        print_usb("==============bgapi_cmd_system_set_class_of_device COMPLETED %d\r\n", result);
+                        
+                        bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
+                        result = bgapi_send_command_and_wait(&cmd, 1000);
+                        print_usb("==============bgapi_cmd_bt_gap_set_mode COMPLETED %d\r\n", result);
+                        
+                        bgapi_cmd_sm_set_bondable_mode(&cmd, 1);
+                        result = bgapi_send_command_and_wait(&cmd, 1000);
+                        print_usb("==============bgapi_cmd_sm_set_bondable_mode COMPLETED %d\r\n", result);
+                        
+                        bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
+                        result = bgapi_send_command_and_wait(&cmd, 1000);
+                        print_usb("==============bgapi_cmd_bt_rfcomm_start_server COMPLETED %d\r\n", result);
+                        
                     }
                     /*switch(initPhase) {
                         case 5:

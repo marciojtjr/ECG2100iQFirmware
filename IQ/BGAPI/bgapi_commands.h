@@ -46,22 +46,11 @@ void bgapi_cmd_ps_save(bgapi_command_t *cmd, uint16_t key, const uint8_t *value,
 void bgapi_cmd_ps_load(bgapi_command_t *cmd, uint16_t key);
 void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key);
 
-// Helper function to send command
-#ifdef _WIN32
-    #include <windows.h>
-    int bgapi_send_command(HANDLE handle, const bgapi_command_t *cmd);
-#else
-    int bgapi_send_command(int fd, const bgapi_command_t *cmd);
-#endif
+// Helper function to send command via bt FILE stream
+int bgapi_send_command(const bgapi_command_t *cmd);
 
-// Command sending with response waiting
-#ifdef _WIN32
-    int bgapi_send_command_and_wait(HANDLE handle, bgapi_command_t *cmd, int timeout_ms);
-    int bgapi_read_and_process_until_response(HANDLE handle, int timeout_ms);
-#else
-    int bgapi_send_command_and_wait(int fd, bgapi_command_t *cmd, int timeout_ms);
-    int bgapi_read_and_process_until_response(int fd, int timeout_ms);
-#endif
+// Command sending with response waiting (asynchronous in AVR firmware)
+int bgapi_send_command_and_wait(bgapi_command_t *cmd, int timeout_ms);
 
 // Response tracking functions
 void bgapi_reset_response_tracking(void);
@@ -71,5 +60,11 @@ void bgapi_handle_response(const bgapi_packet_t *packet);
 
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd);
+
+// Initialize BGAPI subsystem
+void bgapi_init(void);
+
+// Process incoming BGAPI data through parser
+int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *out_packet);
 
 #endif // BGAPI_COMMANDS_H

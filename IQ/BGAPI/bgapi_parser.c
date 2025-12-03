@@ -1,6 +1,7 @@
 #include "bgapi_parser.h"
 #include <stdio.h>
 #include <string.h>
+#include "../taskUSB.h"
 
 void bgapi_parser_init(bgapi_parser_state_t *state) {
     memset(state, 0, sizeof(bgapi_parser_state_t));
@@ -176,101 +177,18 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
 }
 
 void bgapi_print_packet(const bgapi_packet_t *packet) {
-    printf("\n");
-    printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║ BGAPI Packet                                                 ║\n");
-    printf("╠══════════════════════════════════════════════════════════════╣\n");
-    printf("║ Type:     %-49s ║\n", bgapi_get_message_type_string(packet->message_type));
-    printf("║ Class:    0x%02X %-44s ║\n", packet->class_id, bgapi_get_class_name(packet->class_id));
-    printf("║ Event/Cmd: 0x%02X %-43s ║\n", packet->command_id, bgapi_get_event_name(packet->class_id, packet->command_id));
-    printf("║ Length:   %3d bytes                                          ║\n", packet->payload_length);
-    printf("╠══════════════════════════════════════════════════════════════╣\n");
+    // Minimal BGAPI packet debug - saves ~2KB RAM vs full version
+    print_usb("BT[T:%02X C:%02X E:%02X L:%d",
+           packet->message_type, packet->class_id,
+           packet->command_id, packet->payload_length);
 
-    // Decode specific events and responses
-    if (packet->message_type == BGAPI_MSG_TYPE_RESPONSE) {
-        printf("║ >>> This is a RESPONSE to a command                         ║\n");
-        if (packet->payload_length >= 2) {
-            uint16_t error_code = packet->payload[0] | (packet->payload[1] << 8);
-            if (error_code != 0) {
-                printf("║ >>> Error Code: 0x%04X                                       ║\n", error_code);
-            } else {
-                printf("║ >>> Command successful (no error)                           ║\n");
-            }
-        } else if (packet->payload_length == 1 && packet->payload[0] != 0) {
-            printf("║ >>> Error Code: 0x%02X                                         ║\n", packet->payload[0]);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_SYSTEM && packet->command_id == BGAPI_EVENT_SYSTEM_BOOT) {
-        if (packet->payload_length >= 12) {
-            uint16_t major = packet->payload[0] | (packet->payload[1] << 8);
-            uint16_t minor = packet->payload[2] | (packet->payload[3] << 8);
-            uint16_t patch = packet->payload[4] | (packet->payload[5] << 8);
-            uint16_t build = packet->payload[6] | (packet->payload[7] << 8);
-            uint16_t ll_version = packet->payload[8] | (packet->payload[9] << 8);
-            uint8_t protocol_version = packet->payload[10];
-            uint8_t hw = packet->payload[11];
-
-            printf("║ Firmware: v%d.%d.%d build %d                                 ║\n", major, minor, patch, build);
-            printf("║ Link Layer: v%d                                              ║\n", ll_version);
-            printf("║ Protocol: v%d, Hardware: 0x%02X                              ║\n", protocol_version, hw);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_CONNECTION && packet->command_id == 0x04) {
-        // Disconnected event
-        if (packet->payload_length >= 3) {
-            uint8_t connection = packet->payload[0];
-            uint16_t reason = packet->payload[1] | (packet->payload[2] << 8);
-            printf("║ Connection: %d, Reason: 0x%04X                               ║\n", connection, reason);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_CONNECTION && packet->command_id == 0x00) {
-        // Connection status
-        if (packet->payload_length >= 8) {
-            uint8_t connection = packet->payload[0];
-            uint8_t flags = packet->payload[1];
-            printf("║ Connection: %d, Flags: 0x%02X                                ║\n", connection, flags);
-            printf("║ Address: %02X:%02X:%02X:%02X:%02X:%02X                           ║\n",
-                   packet->payload[7], packet->payload[6], packet->payload[5],
-                   packet->payload[4], packet->payload[3], packet->payload[2]);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_GATT && packet->command_id == 0x00) {
-        // GATT attribute value
-        if (packet->payload_length >= 2) {
-            uint8_t connection = packet->payload[0];
-            uint16_t handle = packet->payload[1] | (packet->payload[2] << 8);
-            printf("║ Connection: %d, Attribute Handle: 0x%04X                    ║\n", connection, handle);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_GATT && packet->command_id == 0x01) {
-        // GATT procedure completed
-        if (packet->payload_length >= 3) {
-            uint8_t connection = packet->payload[0];
-            uint16_t result = packet->payload[1] | (packet->payload[2] << 8);
-            printf("║ Connection: %d, Result: 0x%04X                              ║\n", connection, result);
-        }
-    } else if (packet->class_id == BGAPI_CLASS_GATT && packet->command_id == 0x02) {
-        // GATT attribute status
-        if (packet->payload_length >= 3) {
-            uint16_t handle = packet->payload[0] | (packet->payload[1] << 8);
-            uint8_t flags = packet->payload[2];
-            printf("║ Attribute Handle: 0x%04X, Flags: 0x%02X                     ║\n", handle, flags);
-        }
-    }
-
-    // Print raw payload
+    // Only print first 8 bytes of payload to save space
     if (packet->payload_length > 0) {
-        printf("╠══════════════════════════════════════════════════════════════╣\n");
-        printf("║ Payload (hex):                                               ║\n");
-
-        for (int i = 0; i < packet->payload_length; i += 16) {
-            printf("║ ");
-            for (int j = 0; j < 16 && (i + j) < packet->payload_length; j++) {
-                printf("%02X ", packet->payload[i + j]);
-            }
-            // Pad to align
-            for (int j = packet->payload_length - i; j < 16; j++) {
-                printf("   ");
-            }
-            printf("║\n");
+        print_usb(" D:");
+        for (int i = 0; i < packet->payload_length && i < 8; i++) {
+            print_usb("%02X", packet->payload[i]);
         }
+        if (packet->payload_length > 8) printf("...");
     }
-
-    printf("╚══════════════════════════════════════════════════════════════╝\n");
-    printf("\n");
+    print_usb("]\n");
 }
