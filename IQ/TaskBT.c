@@ -345,7 +345,7 @@ BEGIN_TASK(TaskBT)
 	        (int)(serial_num%10000));
 
 	// Bluetooth command parser
-	print_usb("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
+	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
 	if(true || !USBPresent()){
 		// Make sure our UART settings are correct
 		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
@@ -356,7 +356,7 @@ BEGIN_TASK(TaskBT)
 		//}			
 		//acqState = FSM_PREACQ;
 		BTOn();
-		print_usb("[BT] Bluetooth waiting for ready...\r\n");
+		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;
         while (firstByte == 0) {
             while(btDebugTail != btDebugHead && firstByte == 0) {
@@ -366,19 +366,16 @@ BEGIN_TASK(TaskBT)
         }
         bool isBT122 = firstByte == 160;
         if (isBT122) {
+			// Initialize BGAPI subsystem
             BT122_handler_init(device_name, 30000);
         } else {
             legacybt_handler_init(device_name, 30000);
-        }
-        
-        while(1) {
-            osWAIT(25);            
-        }
-        
+        }       
+       
 		while(1) {
 			if(needToDropPairing) {
 				needToDropPairing = 0;
-				print_usb("[BT] Pairing dropped - resetting connection\r\n");
+				debug_message("[BT] Pairing dropped - resetting connection\r\n");
 				connectionType = CONNECTION_UNKNOWN;
 				osWAIT(25);
 				print_bt("SET BT PAIR *\r");
@@ -414,7 +411,27 @@ BEGIN_TASK(TaskBT)
 					connectionNeedsReset = 0;  // fix lockup issue (see ECR 79)
 				}				
 				if(BTPortDescriptor.RxReady) {
-					print_usb("[BT] Command received: %c%c\r\n", BTPortDescriptor.RxBuf[0], BTPortDescriptor.RxBuf[1]);
+					char extracted_command[3];  // 2 bytes + null terminator
+					strncpy(extracted_command, BTPortDescriptor.RxBuf, 2);
+					extracted_command[2] = '\0';
+					
+					print_usb("[BT] Command received: %c%c\r\n", extracted_command[0], extracted_command[1]);
+					if (isBT122) {
+						bgapi_packet_t packet;
+						while(btDebugTail != btDebugHead) {
+							unsigned char data = btDebugBuf[btDebugTail];
+							btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+							result = process_bgapi_data(&data, 1, &packet);
+							if (result == 1) {
+								bgapi_print_packet(&packet);
+								extracted_command[0] = packet.payload[0];
+								extracted_command[1] = packet.payload[1];
+							} else {
+								continue;
+							}
+						}
+					}
+					
 					if(iniAPMode) {
 						print_usb("[BT] iAP mode - processing Apple packet\r\n");
 						getApplePacket(BTPortDescriptor.RxBuf);
@@ -428,27 +445,27 @@ BEGIN_TASK(TaskBT)
 							continue;
 						}
 					}
-					if(!strncmp("ka", BTPortDescriptor.RxBuf, 2)) {
+					if(!strncmp("ka", extracted_command, 2)) {
 						// If we get a keep alive command, reset the timer, connection is still active
 						keepAliveTimer = 0;
 						print_usb("[BT] Keep alive received\r\n");
 					}					
-					else if(!strncmp("do", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+					else if(!strncmp("do", extracted_command, 2) && (waitingForFirstCommand)) {
 						print_usb("[BT] 'do' command - sending Hello\r\n");
 						if(connectionType == CONNECTION_APPLE) {
 							Hello(PRINT_BT_APPLE);
 						} else {
 							Hello(PRINT_BT);
 						}
-					} else if(!strncmp("lo", BTPortDescriptor.RxBuf, 2)) {
+					} else if(!strncmp("lo", extracted_command, 2)) {
 						print_usb("[BT] Downsample enabled (500Hz mode)\r\n");
 						downsample = 1;
 						outBufferPos = 0;
-					} else if(!strncmp("hi", BTPortDescriptor.RxBuf, 2)) {
+					} else if(!strncmp("hi", extracted_command, 2)) {
 						print_usb("[BT] Downsample disabled (1000Hz mode)\r\n");
 						downsample = 0;
 						outBufferPos = 0;
-					} else if(!strncmp("to", BTPortDescriptor.RxBuf, 2)) {
+					} else if(!strncmp("to", extracted_command, 2)) {
 						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
 						print_usb("[BT] Timeout set to %ld minutes\r\n", start);
 						EE_Wr(EE_TIMEOUT_MINUTES, start);
@@ -464,11 +481,11 @@ BEGIN_TASK(TaskBT)
 						} else {
 							print_bt("%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
 						}
-					} else if(!strncmp("po", BTPortDescriptor.RxBuf, 2)) {
+					} else if(!strncmp("po", extracted_command, 2)) {
 						print_usb("[BT] Power off requested\r\n");
 						deviceNeedsToTurnOff = 1;
 					}
-					else if(!strncmp("sn", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+					else if(!strncmp("sn", extracted_command, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
 						if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
 							argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
 							EE_Wr(EE_SERIAL_NUM,start);
@@ -477,7 +494,7 @@ BEGIN_TASK(TaskBT)
 						print_bt("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 						print_usb("[BT] Serial number query: SN:9-%02d-%02d-%04d-101\r\n",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 					}
-					else if(!strncmp("?s", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+					else if(!strncmp("?s", extracted_command, 2) && (waitingForFirstCommand)) {
 						// Write out our current state
 						short battMV = round(VBatt*100);
 						BTStateString[6] = acqState;
@@ -501,7 +518,7 @@ BEGIN_TASK(TaskBT)
 							sendPacket();
 						}
 					}
-					else if(!strncmp("ss", BTPortDescriptor.RxBuf, 2) && waitingForFirstCommand) {
+					else if(!strncmp("ss", extracted_command, 2) && waitingForFirstCommand) {
 						print_usb("[BT] Start streaming command received\r\n");
 						waitingForFirstCommand = 0;
 						keepAliveTimer = 0;

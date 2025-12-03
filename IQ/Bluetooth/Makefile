@@ -41,6 +41,8 @@ C_SRCS +=  \
 ../apple.c \
 ../BGAPI/bgapi_commands.c \
 ../BGAPI/bgapi_parser.c \
+../BGAPI/BT122_handler.c \
+../BGAPI/legacybt_handler.c \
 ../main.c \
 ../serial.c \
 ../taskPaceSimu.c \
@@ -81,6 +83,8 @@ OBJS +=  \
 apple.o \
 BGAPI/bgapi_commands.o \
 BGAPI/bgapi_parser.o \
+BGAPI/BT122_handler.o \
+BGAPI/legacybt_handler.o \
 ffft.o \
 main.o \
 serial.o \
@@ -114,6 +118,8 @@ OBJS_AS_ARGS +=  \
 apple.o \
 BGAPI/bgapi_commands.o \
 BGAPI/bgapi_parser.o \
+BGAPI/BT122_handler.o \
+BGAPI/legacybt_handler.o \
 ffft.o \
 main.o \
 serial.o \
@@ -147,6 +153,8 @@ C_DEPS +=  \
 apple.d \
 BGAPI/bgapi_commands.d \
 BGAPI/bgapi_parser.d \
+BGAPI/BT122_handler.d \
+BGAPI/legacybt_handler.d \
 ffft.d \
 main.d \
 serial.d \
@@ -180,6 +188,8 @@ C_DEPS_AS_ARGS +=  \
 apple.d \
 BGAPI/bgapi_commands.d \
 BGAPI/bgapi_parser.d \
+BGAPI/BT122_handler.d \
+BGAPI/legacybt_handler.d \
 ffft.d \
 main.d \
 serial.d \
@@ -238,6 +248,20 @@ BGAPI/bgapi_commands.o: ../BGAPI/bgapi_commands.c
 	
 
 BGAPI/bgapi_parser.o: ../BGAPI/bgapi_parser.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+BGAPI/BT122_handler.o: ../BGAPI/BT122_handler.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+BGAPI/legacybt_handler.o: ../BGAPI/legacybt_handler.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

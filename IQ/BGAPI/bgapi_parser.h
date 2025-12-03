@@ -30,6 +30,7 @@
 
 // Endpoint Events
 #define BGAPI_EVENT_ENDPOINT_STATUS     0x02
+#define BGAPI_EVENT_ENDPOINT_DATA       0x06
 
 // Legacy Connection Events (for compatibility)
 #define BGAPI_EVENT_CONNECTION_STATUS       0x00

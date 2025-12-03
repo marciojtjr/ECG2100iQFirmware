@@ -8,6 +8,10 @@ BGAPI\bgapi_commands.c
 
 BGAPI\bgapi_parser.c
 
+BGAPI\BT122_handler.c
+
+BGAPI\legacybt_handler.c
+
 ffft.S
 
 main.c

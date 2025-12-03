@@ -447,6 +447,18 @@
     <Compile Include="BGAPI\bgapi_parser.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="BGAPI\BT122_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="BGAPI\BT122_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="BGAPI\legacybt_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="BGAPI\legacybt_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="defines.h">
       <SubType>compile</SubType>
     </Compile>

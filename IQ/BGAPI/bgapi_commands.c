@@ -80,11 +80,25 @@ void bgapi_cmd_bt_rfcomm_stop_server(bgapi_command_t *cmd, uint8_t sdp_id) {
     cmd->buffer[4] = sdp_id;
 }
 
+// BT SDP Commands
+
+void bgapi_cmd_bt_sdp_load_service(bgapi_command_t *cmd, uint16_t ps_key) {
+    build_command_header(cmd, 0x05, 0x00, 2);
+    cmd->buffer[4] = ps_key & 0xFF;
+    cmd->buffer[5] = (ps_key >> 8) & 0xFF;
+}
+
 // Security Manager Commands
 
 void bgapi_cmd_sm_set_bondable_mode(bgapi_command_t *cmd, uint8_t bondable) {
     build_command_header(cmd, 0x0f, 0x00, 1);
     cmd->buffer[4] = bondable;
+}
+
+void bgapi_cmd_sm_configure(bgapi_command_t *cmd, uint8_t flags, uint8_t io_capabilities) {
+    build_command_header(cmd, 0x0f, 0x01, 2);
+    cmd->buffer[4] = flags;
+    cmd->buffer[5] = io_capabilities;
 }
 
 // Endpoint Commands
@@ -170,79 +184,6 @@ void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key) {
     cmd->buffer[5] = (key >> 8) & 0xFF;
 }
 
-// Helper: Add SDP service record for RFCOMM
-// Equivalent to: SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM
-// UUID format: 16 bytes (e.g., {0x72,0x24,0x34,0x68,...})
-int bgapi_sdp_add_rfcomm_service(const uint8_t *uuid128, const char *service_name, uint8_t sdp_id, uint8_t rfcomm_channel) {
-    bgapi_command_t cmd;
-    int result;
-    uint8_t sdp_record[128];
-    uint8_t pos = 0;
-
-    print_usb("[SDP] Adding service: sdp_id=%d channel=%d name=%s\n", sdp_id, rfcomm_channel, service_name);
-
-    // Build SDP record in binary format with proper attribute IDs
-
-    // Attribute 0x0001: Service Class ID List (contains SPP + custom UUID)
-    sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
-    sdp_record[pos++] = 0x00;  // Attribute ID 0x0001
-    sdp_record[pos++] = 0x01;
-    sdp_record[pos++] = 0x35;  // Data element sequence
-    sdp_record[pos++] = 0x14;  // Length: 20 bytes (UUID128 + UUID16)
-    sdp_record[pos++] = 0x1C;  // UUID128 type
-    memcpy(&sdp_record[pos], uuid128, 16);  // Custom UUID
-    pos += 16;
-    sdp_record[pos++] = 0x19;  // UUID16 type
-    sdp_record[pos++] = 0x11;  // Serial Port Profile UUID (0x1101)
-    sdp_record[pos++] = 0x01;
-
-    // Attribute 0x0004: Protocol Descriptor List (L2CAP + RFCOMM)
-    sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
-    sdp_record[pos++] = 0x00;  // Attribute ID 0x0004
-    sdp_record[pos++] = 0x04;
-    sdp_record[pos++] = 0x35;  // Data element sequence
-    sdp_record[pos++] = 0x0C;  // Length
-    sdp_record[pos++] = 0x35;  // Nested sequence - L2CAP
-    sdp_record[pos++] = 0x03;
-    sdp_record[pos++] = 0x19;  // UUID16 type
-    sdp_record[pos++] = 0x01;  // L2CAP UUID (0x0100)
-    sdp_record[pos++] = 0x00;
-    sdp_record[pos++] = 0x35;  // Nested sequence - RFCOMM
-    sdp_record[pos++] = 0x05;
-    sdp_record[pos++] = 0x19;  // UUID16 type
-    sdp_record[pos++] = 0x00;  // RFCOMM UUID (0x0003)
-    sdp_record[pos++] = 0x03;
-    sdp_record[pos++] = 0x08;  // UINT8 type
-    sdp_record[pos++] = rfcomm_channel;
-
-    // Attribute 0x0100: Service Name
-    uint8_t name_len = strlen(service_name);
-    if (name_len > 0 && name_len < 32) {
-        sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
-        sdp_record[pos++] = 0x01;  // Attribute ID 0x0100
-        sdp_record[pos++] = 0x00;
-        sdp_record[pos++] = 0x25;  // Text string type
-        sdp_record[pos++] = name_len;
-        memcpy(&sdp_record[pos], service_name, name_len);
-        pos += name_len;
-    }
-
-    print_usb("[SDP] Record size: %d bytes\n", pos);
-
-    // Store SDP record in PS key (0x8000 + sdp_id)
-    uint16_t ps_key = 0x8000 + sdp_id;
-    bgapi_cmd_ps_save(&cmd, ps_key, sdp_record, pos);
-    result = bgapi_send_command_and_wait(&cmd, 1000);
-
-    if (result == 0) {
-        print_usb("[SDP] Service record added successfully\n");
-    } else {
-        print_usb("[SDP] Failed to add service record: error %d\n", result);
-    }
-
-    return result;
-}
-
 // Helper: Parse UUID string to byte array
 // Input: "72243468-25ee-4025-8fe7-1edd2cf13cd2" (with or without dashes)
 // Output: uuid_bytes[16] = {0x72,0x24,0x34,0x68,...}
@@ -315,7 +256,7 @@ int bgapi_get_last_response_error(void) {
 
 // Response handling - called by the main event handler
 void bgapi_handle_response(const bgapi_packet_t *packet) {
-    if (packet->message_type == BGAPI_MSG_TYPE_RESPONSE) {
+    if (packet->message_type == BGAPI_MSG_TYPE_RESPONSE && waiting_for_response) {
         response_received = 1;
         
         // Most BGAPI responses start with a result/error code
@@ -389,7 +330,12 @@ int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *
             }
 
             // Handle events and send responses
-            //handle_bgapi_event(out_packet);
+            if (out_packet->message_type == BGAPI_MSG_TYPE_EVENT) {
+                if (out_packet->class_id == BGAPI_CLASS_ENDPOINT && 
+                    out_packet->command_id == BGAPI_EVENT_ENDPOINT_DATA) {
+                    bgapi_handle_endpoint_data(out_packet);
+                }
+            }
 
             // Move offset past the parsed packet
             offset += out_packet->total_length - remaining_offset;
@@ -406,47 +352,52 @@ int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *
     return 0;  // Need more data
 }
 
-// Send command and wait for response (AVR firmware version)
-// Sends the command and waits for response, actively processing incoming data
-int bgapi_send_command_and_wait(bgapi_command_t *cmd, int timeout_ms) {
-    // Circular buffer for interrupt-safe BT data access
-    extern volatile uint8_t btDebugBuf[];
-    extern volatile uint8_t btDebugHead;
-    extern volatile uint8_t btDebugTail;
+// Handle endpoint data events
+// Packet format: endpoint (1 byte) + data_len (1 byte) + data (data_len bytes)
+// Example: 0xa0050b0106033f730d -> endpoint=6, data_len=3, data=3f730d
+void bgapi_handle_endpoint_data(const bgapi_packet_t *packet) {
+    if (packet->payload_length < 2) {
+        print_usb("[ENDPOINT] Invalid endpoint data event - payload too short\n");
+        return;
+    }
 
-    bgapi_print_command(cmd);
+    uint8_t endpoint = packet->payload[0];
+    uint8_t data_len = packet->payload[1];
+    
+    if (packet->payload_length < (2 + data_len)) {
+        print_usb("[ENDPOINT] Invalid endpoint data event - data length mismatch\n");
+        return;
+    }
 
-    // Reset response tracking
-    response_received = 0;
-    waiting_for_response = 1;
-    last_response_error = 0;
+    print_usb("[ENDPOINT] Data received on endpoint %d (%d bytes): ", endpoint, data_len);
+    for (int i = 0; i < data_len; i++) {
+        print_usb("%02x", packet->payload[2 + i]);
+    }
+    print_usb("\n");
 
-    // Send the command
-    bgapi_send_command(cmd);
-
-    // Wait for response with timeout, actively processing incoming data
-    int elapsed = 0;
-    bgapi_packet_t packet;
-
-    while (!response_received && elapsed < timeout_ms) {
-        // Process data from interrupt-safe circular buffer
-        while(btDebugTail != btDebugHead) {
-            unsigned char data = btDebugBuf[btDebugTail];
-            btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
-            int result = process_bgapi_data(&data, 1, &packet);
-            if (result > 0 && response_received) {
-                waiting_for_response = 0;
-                return last_response_error;
+    // Handle the received data based on endpoint
+    switch (endpoint) {
+        case 6:
+            // Handle endpoint 6 data - this appears to be RFCOMM data
+            print_usb("[RFCOMM] Received %d bytes: ", data_len);
+            for (int i = 0; i < data_len; i++) {
+                uint8_t byte = packet->payload[2 + i];
+                if (byte >= 0x20 && byte <= 0x7E) {
+                    print_usb("%c", byte);  // Printable ASCII
+                } else {
+                    print_usb("[0x%02X]", byte);  // Non-printable as hex
+                }
             }
-        }
+            print_usb("\n");
+            
+            // Echo the data back (optional)
+            bgapi_command_t cmd;
+            bgapi_cmd_endpoint_send(&cmd, endpoint, &packet->payload[2], data_len);
+            bgapi_send_command(&cmd);
+            break;
+            
+        default:
+            print_usb("[ENDPOINT] Unknown endpoint %d\n", endpoint);
+            break;
     }
-
-    waiting_for_response = 0;
-
-    if (!response_received) {
-        print_usb("BGAPI timeout waiting for response\n");
-        return -1;  // Timeout
-    }
-
-    return last_response_error;
 }

@@ -145,6 +145,7 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
         switch (event_id) {
             case 0x00: return "send";
             case 0x02: return "status";
+            case 0x06: return "data";
             default:   return "unknown";
         }
     } else if (class_id == BGAPI_CLASS_GATT) {
