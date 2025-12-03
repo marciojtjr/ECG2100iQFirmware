@@ -371,6 +371,10 @@ BEGIN_TASK(TaskBT)
             legacybt_handler_init(device_name, 30000);
         }
         
+        while(1) {
+            osWAIT(25);            
+        }
+        
 		while(1) {
 			if(needToDropPairing) {
 				needToDropPairing = 0;

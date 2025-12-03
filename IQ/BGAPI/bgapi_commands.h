@@ -41,10 +41,20 @@ void bgapi_cmd_gap_connect_direct(bgapi_command_t *cmd, const uint8_t *address, 
 void bgapi_cmd_connection_disconnect(bgapi_command_t *cmd, uint8_t connection);
 void bgapi_cmd_connection_get_status(bgapi_command_t *cmd, uint8_t connection);
 
-// Persistent Store Commands  
+// Persistent Store Commands
 void bgapi_cmd_ps_save(bgapi_command_t *cmd, uint16_t key, const uint8_t *value, uint8_t value_len);
 void bgapi_cmd_ps_load(bgapi_command_t *cmd, uint16_t key);
 void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key);
+
+// Helper: Add SDP service record (equivalent to: SDP ADD <uuid> <name>)
+// Returns 0 on success, error code otherwise
+int bgapi_sdp_add_rfcomm_service(const uint8_t *uuid128, const char *service_name, uint8_t sdp_id, uint8_t rfcomm_channel);
+
+// Helper: Parse UUID string to byte array
+// Input: "72243468-25ee-4025-8fe7-1edd2cf13cd2"
+// Output: {0x72,0x24,0x34,0x68,...}
+// Returns 0 on success, -1 on parse error
+int bgapi_parse_uuid(const char *uuid_string, uint8_t *uuid_bytes);
 
 // Helper function to send command via bt FILE stream
 int bgapi_send_command(const bgapi_command_t *cmd);

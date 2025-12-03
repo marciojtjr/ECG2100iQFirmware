@@ -51,7 +51,16 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
                     result = bgapi_send_command_and_wait(&cmd, 1000);
                     debug_message("[BT122] Set bondable mode: %d\r\n", result);
 
-                    // Start RFCOMM server
+                    // Add SDP service record - can use string format!
+                    uint8_t service_uuid[16];
+                    if (bgapi_parse_uuid("72243468-25ee-4025-8fe7-1edd2cf13cd2", service_uuid) == 0) {
+                        result = bgapi_sdp_add_rfcomm_service(service_uuid, "SpauldingECGRFCOMM", 2, 1);
+                        debug_message("[BT122] Add SDP service: %d\r\n", result);
+                    } else {
+                        debug_message("[BT122] UUID parse error\r\n");
+                    }
+
+                    // Start RFCOMM server (must be after SDP record is added)
                     bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
                     result = bgapi_send_command_and_wait(&cmd, 1000);
                     debug_message("[BT122] Start RFCOMM server: %d\r\n", result);

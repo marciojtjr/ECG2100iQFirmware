@@ -170,6 +170,121 @@ void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key) {
     cmd->buffer[5] = (key >> 8) & 0xFF;
 }
 
+// Helper: Add SDP service record for RFCOMM
+// Equivalent to: SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM
+// UUID format: 16 bytes (e.g., {0x72,0x24,0x34,0x68,...})
+int bgapi_sdp_add_rfcomm_service(const uint8_t *uuid128, const char *service_name, uint8_t sdp_id, uint8_t rfcomm_channel) {
+    bgapi_command_t cmd;
+    int result;
+    uint8_t sdp_record[128];
+    uint8_t pos = 0;
+
+    print_usb("[SDP] Adding service: sdp_id=%d channel=%d name=%s\n", sdp_id, rfcomm_channel, service_name);
+
+    // Build SDP record in binary format with proper attribute IDs
+
+    // Attribute 0x0001: Service Class ID List (contains SPP + custom UUID)
+    sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
+    sdp_record[pos++] = 0x00;  // Attribute ID 0x0001
+    sdp_record[pos++] = 0x01;
+    sdp_record[pos++] = 0x35;  // Data element sequence
+    sdp_record[pos++] = 0x14;  // Length: 20 bytes (UUID128 + UUID16)
+    sdp_record[pos++] = 0x1C;  // UUID128 type
+    memcpy(&sdp_record[pos], uuid128, 16);  // Custom UUID
+    pos += 16;
+    sdp_record[pos++] = 0x19;  // UUID16 type
+    sdp_record[pos++] = 0x11;  // Serial Port Profile UUID (0x1101)
+    sdp_record[pos++] = 0x01;
+
+    // Attribute 0x0004: Protocol Descriptor List (L2CAP + RFCOMM)
+    sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
+    sdp_record[pos++] = 0x00;  // Attribute ID 0x0004
+    sdp_record[pos++] = 0x04;
+    sdp_record[pos++] = 0x35;  // Data element sequence
+    sdp_record[pos++] = 0x0C;  // Length
+    sdp_record[pos++] = 0x35;  // Nested sequence - L2CAP
+    sdp_record[pos++] = 0x03;
+    sdp_record[pos++] = 0x19;  // UUID16 type
+    sdp_record[pos++] = 0x01;  // L2CAP UUID (0x0100)
+    sdp_record[pos++] = 0x00;
+    sdp_record[pos++] = 0x35;  // Nested sequence - RFCOMM
+    sdp_record[pos++] = 0x05;
+    sdp_record[pos++] = 0x19;  // UUID16 type
+    sdp_record[pos++] = 0x00;  // RFCOMM UUID (0x0003)
+    sdp_record[pos++] = 0x03;
+    sdp_record[pos++] = 0x08;  // UINT8 type
+    sdp_record[pos++] = rfcomm_channel;
+
+    // Attribute 0x0100: Service Name
+    uint8_t name_len = strlen(service_name);
+    if (name_len > 0 && name_len < 32) {
+        sdp_record[pos++] = 0x09;  // UINT16 type (attribute ID)
+        sdp_record[pos++] = 0x01;  // Attribute ID 0x0100
+        sdp_record[pos++] = 0x00;
+        sdp_record[pos++] = 0x25;  // Text string type
+        sdp_record[pos++] = name_len;
+        memcpy(&sdp_record[pos], service_name, name_len);
+        pos += name_len;
+    }
+
+    print_usb("[SDP] Record size: %d bytes\n", pos);
+
+    // Store SDP record in PS key (0x8000 + sdp_id)
+    uint16_t ps_key = 0x8000 + sdp_id;
+    bgapi_cmd_ps_save(&cmd, ps_key, sdp_record, pos);
+    result = bgapi_send_command_and_wait(&cmd, 1000);
+
+    if (result == 0) {
+        print_usb("[SDP] Service record added successfully\n");
+    } else {
+        print_usb("[SDP] Failed to add service record: error %d\n", result);
+    }
+
+    return result;
+}
+
+// Helper: Parse UUID string to byte array
+// Input: "72243468-25ee-4025-8fe7-1edd2cf13cd2" (with or without dashes)
+// Output: uuid_bytes[16] = {0x72,0x24,0x34,0x68,...}
+// Returns 0 on success, -1 on error
+int bgapi_parse_uuid(const char *uuid_string, uint8_t *uuid_bytes) {
+    int byte_index = 0;
+    int i = 0;
+
+    while (uuid_string[i] != '\0' && byte_index < 16) {
+        char c = uuid_string[i];
+
+        // Skip dashes
+        if (c == '-') {
+            i++;
+            continue;
+        }
+
+        // Parse hex digit
+        uint8_t high, low;
+
+        // High nibble
+        if (c >= '0' && c <= '9') high = c - '0';
+        else if (c >= 'a' && c <= 'f') high = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'F') high = c - 'A' + 10;
+        else return -1;  // Invalid character
+
+        i++;
+        c = uuid_string[i];
+
+        // Low nibble
+        if (c >= '0' && c <= '9') low = c - '0';
+        else if (c >= 'a' && c <= 'f') low = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'F') low = c - 'A' + 10;
+        else return -1;  // Invalid character
+
+        uuid_bytes[byte_index++] = (high << 4) | low;
+        i++;
+    }
+
+    return (byte_index == 16) ? 0 : -1;
+}
+
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd) {
     print_usb("\n>>> Sending BGAPI Command (%d bytes):\n", cmd->length);
@@ -318,17 +433,12 @@ int bgapi_send_command_and_wait(bgapi_command_t *cmd, int timeout_ms) {
         while(btDebugTail != btDebugHead) {
             unsigned char data = btDebugBuf[btDebugTail];
             btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
-
             int result = process_bgapi_data(&data, 1, &packet);
-
             if (result > 0 && response_received) {
                 waiting_for_response = 0;
                 return last_response_error;
             }
         }
-
-        osWAIT(10);  // Yield to other RTOS tasks for 10ms
-        elapsed += 10;
     }
 
     waiting_for_response = 0;
