@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug BT122 Monitor",
+            "name": "Debug BT122 Monitor (Linux)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bt122_monitor",
@@ -24,10 +24,69 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build-debug"
+            "preLaunchTask": "build-debug",
+            "condition": "os.platform() == 'linux'"
         },
         {
-            "name": "Debug BT122 Monitor (with sudo)",
+            "name": "Debug BT122 Monitor (Windows MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bt122_monitor.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            "preLaunchTask": "build-debug-windows"
+        },
+        {
+            "name": "Debug BT122 Monitor (Windows GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bt122_monitor.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "preLaunchTask": "build-debug-windows-mingw",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Debug BT122 Monitor (Windows MinGW)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bt122_monitor.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug-windows-mingw"
+        },
+        {
+            "name": "Debug BT122 Monitor (Linux with sudo)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bt122_monitor",
@@ -48,7 +107,7 @@
             "sudo": true
         },
         {
-            "name": "Debug BT122 Monitor (custom port)",
+            "name": "Debug BT122 Monitor (Linux custom port)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bt122_monitor",
@@ -66,6 +125,39 @@
                 }
             ],
             "preLaunchTask": "build-debug"
+        },
+        {
+            "name": "Debug BT122 Monitor (Windows MSVC custom port)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bt122_monitor.exe",
+            "args": ["COM6"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            "preLaunchTask": "build-debug-windows"
+        },
+        {
+            "name": "Debug BT122 Monitor (Windows MinGW custom port)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bt122_monitor.exe",
+            "args": ["COM6"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug-windows-mingw"
         }
     ]
 }

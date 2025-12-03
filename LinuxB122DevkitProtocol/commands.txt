@@ -1,0 +1,68 @@
+dumo_cmd_system_set_local_name	  name: 42 54 31 32 32
+BGAPI binary: 0x20060108054254313232
+dumo_rsp_system_set_local_name	  result:0x0000 'No Error'
+BGAPI binary: 0x200201080000
+
+dumo_cmd_system_set_class_of_device	  cod:     514 (0x00000202)
+BGAPI binary: 0x2004010602020000
+dumo_rsp_system_set_class_of_device	  result:0x0000 'No Error'
+BGAPI binary: 0x200201060000
+
+dumo_cmd_bt_gap_set_mode	  connectable:       1 (0x01)  discoverable:       1 (0x01)  limited:       0 (0x00)
+BGAPI binary: 0x20030203010100
+dumo_rsp_bt_gap_set_mode	  result:0x0000 'No Error'
+BGAPI binary: 0x200202030000
+
+dumo_cmd_bt_rfcomm_start_server	  sdp_id:       2 (0x02)  streaming_destination:       0 (0x00)
+BGAPI binary: 0x200204010200
+dumo_rsp_bt_rfcomm_start_server	  result:0x0000 'No Error'
+BGAPI binary: 0x200204010000
+
+
+dumo_cmd_bt_rfcomm_stop_server	  sdp_id:       2 (0x02)
+BGAPI binary: 0x2001040302
+dumo_rsp_bt_rfcomm_stop_server	  result:0x0000 'No Error'
+BGAPI binary: 0x200204030000
+
+dumo_cmd_sm_set_bondable_mode	  bondable:       1 (0x01)
+BGAPI binary: 0x20010f0001
+dumo_rsp_sm_set_bondable_mode	  result:0x0000 'No Error'
+BGAPI binary: 0x20020f000000
+
+
+dumo_evt_bt_connection_opened	  address:24:95:2f:b8:de:ec  central:       0 (0x00)  connection:       4 (0x04)  bonding:     255 (0xff)
+BGAPI binary: 0xa0090700ecdeb82f95240004ff
+
+dumo_cmd_endpoint_send	  endpoint:       0 (0x00)  data: 31 32 33
+BGAPI binary: 0x20050b000003313233
+dumo_rsp_endpoint_send	  result:0x0000 'No Error'  endpoint:       0 (0x00)
+BGAPI binary: 0xa0050b010003313233
+dumo_rsp_endpoint_send	  result:0x0000 'No Error'  endpoint:       0 (0x00)
+BGAPI binary: 0x20030b00000000
+
+
+dumo_evt_system_boot	  major:       1 (0x0001)  minor:       0 (0x0000)  patch:       0 (0x0000)  build:      11 (0x000b)  bootloader:       1 (0x0001)  hw:       0 (0x0000)
+BGAPI binary: 0xa00c01000100000000000b0001000000
+
+dumo_evt_system_initialized	  address:c4:64:e3:99:09:11
+BGAPI binary: 0xa0060101110999e364c4
+
+dumo_evt_endpoint_status	  endpoint:       0 (0x00)  type:       1 (0x00000001)  destination_endpoint:      -1 (0xffffffff)  flags:      11 (0x0b)
+BGAPI binary: 0xa0070b020001000000ff0b
+
+dumo_evt_bt_connection_opened	  address:24:95:2f:b8:de:ec  central:       0 (0x00)  connection:       4 (0x04)  bonding:     255 (0xff)
+BGAPI binary: 0xa0090700ecdeb82f95240004ff
+
+dumo_cmd_system_reset(0)
+BGAPI binary: 0x2001010100
+
+
+implement flow in BT122Test_simple:
+1. Open port use implemented functions
+2. Send reset command
+3. wait for dumo_evt_system_initialized
+4. dumo_cmd_system_set_local_name Spaulding and wait for response
+5. dumo_cmd_system_set_class_of_device	  cod:     514 (0x00000202) and wait for response
+6. dumo_cmd_bt_gap_set_mode	  connectable:       1 (0x01)  discoverable:       1 (0x01)  limited:       0 (0x00) and wait for response
+7. dumo_cmd_sm_set_bondable_mode	  bondable:       1 (0x01) and wait for response
+8. dumo_cmd_bt_rfcomm_start_server and wait for response

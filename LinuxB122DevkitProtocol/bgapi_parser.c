@@ -89,12 +89,15 @@ const char* bgapi_get_message_type_string(uint8_t type) {
 const char* bgapi_get_class_name(uint8_t class_id) {
     switch (class_id) {
         case BGAPI_CLASS_SYSTEM:      return "System";
-        case BGAPI_CLASS_PERSISTENT:  return "Persistent Store";
-        case BGAPI_CLASS_GAP:         return "GAP";
+        case BGAPI_CLASS_BT_GAP:      return "BT GAP";
         case BGAPI_CLASS_CONNECTION:  return "Connection";
+        case BGAPI_CLASS_BT_RFCOMM:   return "BT RFCOMM";
         case BGAPI_CLASS_ATTCLIENT:   return "ATT Client";
+        case BGAPI_CLASS_LE_GAP:      return "LE GAP";
+        case BGAPI_CLASS_BT_CONNECTION: return "BT Connection";
+        case BGAPI_CLASS_ENDPOINT:    return "Endpoint";
+        case BGAPI_CLASS_PERSISTENT:  return "Persistent Store";
         case BGAPI_CLASS_SM:          return "Security Manager";
-        case BGAPI_CLASS_GATT:        return "GATT";
         default:                       return "Unknown";
     }
 }
@@ -103,10 +106,18 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
     if (class_id == BGAPI_CLASS_SYSTEM) {
         switch (event_id) {
             case 0x00: return "boot";
-            case 0x01: return "ready";
+            case 0x01: return "initialized";
             case 0x02: return "debug";
             case 0x03: return "endpoint_watermark_rx";
             case 0x04: return "endpoint_watermark_tx";
+            case 0x05: return "set_local_name";
+            case 0x06: return "set_class_of_device";
+            case 0x08: return "get_info";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_BT_GAP) {
+        switch (event_id) {
+            case 0x03: return "set_mode";
             default:   return "unknown";
         }
     } else if (class_id == BGAPI_CLASS_CONNECTION) {
@@ -118,10 +129,21 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
             case 0x04: return "disconnected";
             default:   return "unknown";
         }
-    } else if (class_id == BGAPI_CLASS_GAP) {
+    } else if (class_id == BGAPI_CLASS_BT_CONNECTION) {
         switch (event_id) {
-            case 0x00: return "scan_response";
-            case 0x01: return "mode_changed";
+            case 0x00: return "opened";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_BT_RFCOMM) {
+        switch (event_id) {
+            case 0x01: return "start_server";
+            case 0x03: return "stop_server";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_ENDPOINT) {
+        switch (event_id) {
+            case 0x00: return "send";
+            case 0x02: return "status";
             default:   return "unknown";
         }
     } else if (class_id == BGAPI_CLASS_GATT) {
@@ -129,6 +151,24 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
             case 0x00: return "attribute_value";
             case 0x01: return "procedure_completed";
             case 0x02: return "attribute_status";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_SM) {
+        switch (event_id) {
+            case 0x00: return "set_bondable_mode";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_LE_GAP) {
+        switch (event_id) {
+            case 0x00: return "scan_response";
+            case 0x01: return "mode_changed";
+            default:   return "unknown";
+        }
+    } else if (class_id == BGAPI_CLASS_PERSISTENT) {
+        switch (event_id) {
+            case 0x00: return "load";
+            case 0x01: return "save";
+            case 0x02: return "erase";
             default:   return "unknown";
         }
     }
@@ -149,8 +189,15 @@ void bgapi_print_packet(const bgapi_packet_t *packet) {
     // Decode specific events and responses
     if (packet->message_type == BGAPI_MSG_TYPE_RESPONSE) {
         printf("║ >>> This is a RESPONSE to a command                         ║\n");
-        if (packet->payload_length > 0 && packet->payload[0] != 0) {
-            printf("║ >>> Error Code: 0x%04X                                       ║\n", packet->payload[0]);
+        if (packet->payload_length >= 2) {
+            uint16_t error_code = packet->payload[0] | (packet->payload[1] << 8);
+            if (error_code != 0) {
+                printf("║ >>> Error Code: 0x%04X                                       ║\n", error_code);
+            } else {
+                printf("║ >>> Command successful (no error)                           ║\n");
+            }
+        } else if (packet->payload_length == 1 && packet->payload[0] != 0) {
+            printf("║ >>> Error Code: 0x%02X                                         ║\n", packet->payload[0]);
         }
     } else if (packet->class_id == BGAPI_CLASS_SYSTEM && packet->command_id == BGAPI_EVENT_SYSTEM_BOOT) {
         if (packet->payload_length >= 12) {

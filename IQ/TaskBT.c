@@ -408,10 +408,10 @@ BEGIN_TASK(TaskBT)
 				if (result == 1) {
                     if(packet.message_type == BGAPI_MSG_TYPE_EVENT 
                         && packet.class_id == BGAPI_CLASS_SYSTEM 
-                        && packet.command_id == BGAPI_EVENT_SYSTEM_READY) {                    
+                        && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {                    
                         print_usb("bgapi_cmd_system_get_info \r\n");
-                        bgapi_cmd_system_get_info(&cmd);
-                        bgapi_send_command(&cmd);
+                        //bgapi_cmd_system_get_info(&cmd);
+                        //bgapi_send_command(&cmd);
                         //bgapi_cmd_set_device_name(&cmd, device_name);
                         //bgapi_send_command(&cmd);
                         //initPhase = 1;

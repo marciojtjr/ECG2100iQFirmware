@@ -1,14 +1,28 @@
-#define _DEFAULT_SOURCE
-#define _BSD_SOURCE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <signal.h>
+#ifdef _WIN32
+    #define _CRT_SECURE_NO_WARNINGS
+    #include <windows.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <signal.h>
+    #include <conio.h>
+    #include <io.h>
+    #include <process.h>
+    #define usleep(x) Sleep((x)/1000)
+    #define SIGTERM SIGBREAK
+#else
+    #define _DEFAULT_SOURCE
+    #define _BSD_SOURCE
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <errno.h>
+    #include <termios.h>
+    #include <signal.h>
+    #include <pthread.h>
+#endif
 
 // Define CRTSCTS if not available (hardware flow control)
 //#ifndef CRTSCTS
@@ -18,15 +32,24 @@
 #include "bgapi_parser.h"
 #include "bgapi_commands.h"
 
-#define SERIAL_PORT "/dev/ttyUSB1"
-#define BAUD_RATE B115200
-#define BUFFER_SIZE 256
+#ifdef _WIN32
+    #define SERIAL_PORT "COM6"
+    #define BUFFER_SIZE 256
+    static volatile int running = 1;
+    static bgapi_parser_state_t parser_state;
+    static HANDLE serial_handle = INVALID_HANDLE_VALUE;
+#else
+    #define SERIAL_PORT "/dev/ttyUSB1"
+    #define BAUD_RATE B115200
+    #define BUFFER_SIZE 256
+    static volatile int running = 1;
+    static bgapi_parser_state_t parser_state;
+    static int serial_fd = -1;
+#endif
 
-static volatile int running = 1;
-static bgapi_parser_state_t parser_state;
-static int serial_fd = -1;
-static volatile int waiting_for_response = 0;
-static volatile int response_received = 0;
+// Forward declarations
+void process_bgapi_data(const unsigned char *buffer, int length);
+void handle_bgapi_event(const bgapi_packet_t *packet);
 
 void signal_handler(int signum) {
     (void)signum;
@@ -34,6 +57,52 @@ void signal_handler(int signum) {
     printf("\nShutting down...\n");
 }
 
+#ifdef _WIN32
+int configure_serial_port(HANDLE handle) {
+    DCB dcb;
+    COMMTIMEOUTS timeouts;
+
+    // Get current DCB settings
+    if (!GetCommState(handle, &dcb)) {
+        printf("Error getting DCB settings\n");
+        return -1;
+    }
+
+    // Configure DCB
+    dcb.BaudRate = CBR_115200;
+    dcb.ByteSize = 8;
+    dcb.Parity = NOPARITY;
+    dcb.StopBits = ONESTOPBIT;
+    dcb.fRtsControl = RTS_CONTROL_HANDSHAKE;  // Hardware flow control
+    dcb.fOutxCtsFlow = TRUE;                  // Hardware flow control
+    dcb.fDtrControl = DTR_CONTROL_ENABLE;
+    dcb.fOutX = FALSE;                        // No software flow control
+    dcb.fInX = FALSE;                         // No software flow control
+
+    // Set DCB
+    if (!SetCommState(handle, &dcb)) {
+        printf("Error setting DCB settings\n");
+        return -1;
+    }
+
+    // Configure timeouts
+    timeouts.ReadIntervalTimeout = 1;
+    timeouts.ReadTotalTimeoutConstant = 100;
+    timeouts.ReadTotalTimeoutMultiplier = 1;
+    timeouts.WriteTotalTimeoutConstant = 100;
+    timeouts.WriteTotalTimeoutMultiplier = 1;
+
+    if (!SetCommTimeouts(handle, &timeouts)) {
+        printf("Error setting timeouts\n");
+        return -1;
+    }
+
+    // Purge any existing data
+    PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR);
+
+    return 0;
+}
+#else
 int configure_serial_port(int fd) {
     struct termios tty;
 
@@ -84,6 +153,7 @@ int configure_serial_port(int fd) {
 
     return 0;
 }
+#endif
 
 void print_hex_and_ascii(const unsigned char *buffer, int length) {
     printf("Received %d bytes:\n", length);
@@ -110,56 +180,14 @@ void print_hex_and_ascii(const unsigned char *buffer, int length) {
     printf("\n");
 }
 
-int wait_for_bgapi_response(int timeout_ms) {
-    int elapsed = 0;
-    response_received = 0;
-    waiting_for_response = 1;
 
-    while (elapsed < timeout_ms && !response_received) {
-        usleep(10000);  // 10ms
-        elapsed += 10;
-    }
-
-    waiting_for_response = 0;
-
-    if (!response_received) {
-        printf("⚠️  TIMEOUT waiting for response!\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-int send_bgapi_command_and_wait(bgapi_command_t *cmd, int timeout_ms) {
-    bgapi_print_command(cmd);
-    bgapi_send_command(serial_fd, cmd);
-    return wait_for_bgapi_response(timeout_ms);
-}
-
-void bt122_set_device_name(const char *name) {
-    bgapi_command_t cmd;
-    uint8_t name_data[20];
-    int name_len = strlen(name);
-    if (name_len > 20) name_len = 20;
-    memcpy(name_data, name, name_len);
-
-    printf(">>> Setting Device Name: %s\n", name);
-    // Write device name to PS store (key 0x8000 for local name)
-    bgapi_cmd_ps_save(&cmd, 0x8000, name_data, name_len);
-    send_bgapi_command_and_wait(&cmd, 1000);
-}
 
 void handle_bgapi_event(const bgapi_packet_t *packet) {
     bgapi_command_t cmd;
 
     // Check if this is a response to our command
     if (packet->message_type == BGAPI_MSG_TYPE_RESPONSE) {
-        response_received = 1;
-        if (packet->payload_length > 0 && packet->payload[0] != 0) {
-            printf("⚠️  Command returned error code: 0x%04X\n", packet->payload[0]);
-        } else {
-            printf("✅ Command successful\n");
-        }
+        bgapi_handle_response(packet);
         return;
     }
 
@@ -170,11 +198,11 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
         printf("║ *** BT122 Module Booted! ***                                 ║\n");
         printf("╚══════════════════════════════════════════════════════════════╝\n");
         printf("\n");
-        // Module just booted, initialization will happen after "ready" event
+        // Module just booted, wait for initialized event
     }
 
-    // Handle System Ready Event
-    else if (packet->class_id == BGAPI_CLASS_SYSTEM && packet->command_id == 0x01) {
+    // Handle System Initialized Event (BT122)  
+    else if (packet->class_id == BGAPI_CLASS_SYSTEM && packet->command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
         printf("\n");
         printf("╔══════════════════════════════════════════════════════════════╗\n");
         printf("║ *** BT122 Module Ready! Starting Initialization... ***       ║\n");
@@ -190,28 +218,71 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
         printf("╚══════════════════════════════════════════════════════════════╝\n");
         printf("\n");
 
-        // BT122 (BLE) initialization sequence with proper command-response handling
+        // BT122 initialization sequence as per commands.txt
 
-        // 1. Get system info
-        printf(">>> Step 1: Get System Info\n");
-        bgapi_cmd_system_get_info(&cmd);
-        if (send_bgapi_command_and_wait(&cmd, 1000) < 0) {
-            printf("❌ Failed to get system info\n");
-            return;
+        // 1. Set local name  
+        printf(">>> Step 1: Set Local Name to 'Spaulding'\n");
+        bgapi_cmd_system_set_local_name(&cmd, (const uint8_t*)"Spaulding", 9);
+#ifdef _WIN32
+        int result = bgapi_send_command_and_wait(serial_handle, &cmd, 2000);
+#else
+        int result = bgapi_send_command_and_wait(serial_fd, &cmd, 2000);
+#endif
+        if (result != 0) {
+            printf("❌ Failed to set local name (error: 0x%04X)\n", result);
+            // Continue anyway, this might not be critical
         }
-        usleep(100000);
 
-        // 2. Set device name (equivalent to "SET BT NAME SpauCliQ...")
-        printf("\n>>> Step 2: Set Device Name\n");
-        bt122_set_device_name("SpauCliQ_BLE");
-        usleep(100000);
+        // 2. Set class of device (0x202 = Audio/Video device)
+        printf("\n>>> Step 2: Set Class of Device\n");
+        bgapi_cmd_system_set_class_of_device(&cmd, 0x202);
+#ifdef _WIN32
+        result = bgapi_send_command_and_wait(serial_handle, &cmd, 2000);
+#else
+        result = bgapi_send_command_and_wait(serial_fd, &cmd, 2000);
+#endif
+        if (result != 0) {
+            printf("❌ Failed to set class of device (error: 0x%04X)\n", result);
+            // Continue anyway
+        }
 
-        // 3. Configure GAP parameters
-        printf("\n>>> Step 3: Configure GAP (discoverable & connectable)\n");
-        bgapi_cmd_gap_set_mode(&cmd, 0x02, 0x02);
-        if (send_bgapi_command_and_wait(&cmd, 1000) < 0) {
-            printf("❌ Failed to set GAP mode\n");
-            return;
+        // 3. Configure BT GAP mode (connectable=1, discoverable=1, limited=0)
+        printf("\n>>> Step 3: Configure BT GAP Mode\n");
+        bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
+#ifdef _WIN32
+        result = bgapi_send_command_and_wait(serial_handle, &cmd, 2000);
+#else
+        result = bgapi_send_command_and_wait(serial_fd, &cmd, 2000);
+#endif
+        if (result != 0) {
+            printf("❌ Failed to set BT GAP mode (error: 0x%04X)\n", result);
+            // Continue anyway
+        }
+
+        // 4. Set bondable mode
+        printf("\n>>> Step 4: Set Bondable Mode\n");
+        bgapi_cmd_sm_set_bondable_mode(&cmd, 1);
+#ifdef _WIN32
+        result = bgapi_send_command_and_wait(serial_handle, &cmd, 2000);
+#else
+        result = bgapi_send_command_and_wait(serial_fd, &cmd, 2000);
+#endif
+        if (result != 0) {
+            printf("❌ Failed to set bondable mode (error: 0x%04X)\n", result);
+            // Continue anyway
+        }
+
+        // 5. Start RFCOMM server
+        printf("\n>>> Step 5: Start RFCOMM Server\n");
+        bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);  // sdp_id=2, streaming_destination=0
+#ifdef _WIN32
+        result = bgapi_send_command_and_wait(serial_handle, &cmd, 2000);
+#else
+        result = bgapi_send_command_and_wait(serial_fd, &cmd, 2000);
+#endif
+        if (result != 0) {
+            printf("❌ Failed to start RFCOMM server (error: 0x%04X)\n", result);
+            // Continue anyway
         }
 
         printf("\n");
@@ -228,20 +299,51 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
         printf("\n");
     }
 
-    // Handle Connection Status
+    // Handle BT Connection Opened (BT122)
+    else if (packet->class_id == BGAPI_CLASS_BT_CONNECTION && packet->command_id == BGAPI_EVENT_BT_CONNECTION_OPENED) {
+        printf("\n*** BT Classic Connection Opened! ***\n");
+        if (packet->payload_length >= 9) {
+            printf("Device Address: ");
+            for (int i = 0; i < 6; i++) {
+                printf("%02X", packet->payload[i]);
+                if (i < 5) printf(":");
+            }
+            printf("\n");
+            printf("Central: %d\n", packet->payload[6]);
+            printf("Connection: %d\n", packet->payload[7]); 
+            printf("Bonding: %d\n", packet->payload[8]);
+        }
+        printf("\n");
+    }
+
+    // Handle Endpoint Status
+    else if (packet->class_id == BGAPI_CLASS_ENDPOINT && packet->command_id == BGAPI_EVENT_ENDPOINT_STATUS) {
+        printf("\n*** Endpoint Status Update ***\n");
+        if (packet->payload_length >= 7) {
+            printf("Endpoint: %d\n", packet->payload[0]);
+            printf("Type: %d\n", packet->payload[1]);
+            printf("Flags: 0x%02X\n", packet->payload[6]);
+        }
+        printf("\n");
+    }
+
+    // Handle Legacy Connection Events (for compatibility)
     else if (packet->class_id == BGAPI_CLASS_CONNECTION && packet->command_id == 0x00) {
         printf("\n*** Connection Established! ***\n\n");
     }
 
-    // Handle Disconnection
+    // Handle Legacy Disconnection
     else if (packet->class_id == BGAPI_CLASS_CONNECTION && packet->command_id == 0x04) {
         printf("\n*** Connection Disconnected! ***\n\n");
 
-        // Re-enable advertising
-        printf(">>> Re-enabling GAP advertising...\n");
-        bgapi_cmd_gap_set_mode(&cmd, 0x02, 0x02);
-        bgapi_print_command(&cmd);
-        bgapi_send_command(serial_fd, &cmd);
+        // Re-enable BT GAP advertising for BT122
+        printf(">>> Re-enabling BT GAP mode...\n");
+        bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
+#ifdef _WIN32
+        bgapi_send_command_and_wait(serial_handle, &cmd, 1000);
+#else
+        bgapi_send_command_and_wait(serial_fd, &cmd, 1000);
+#endif
     }
 }
 
@@ -293,6 +395,27 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, signal_handler);
 
     // Open serial port
+#ifdef _WIN32
+    serial_handle = CreateFile(port,
+                              GENERIC_READ | GENERIC_WRITE,
+                              0,
+                              NULL,
+                              OPEN_EXISTING,
+                              0,
+                              NULL);
+    
+    if (serial_handle == INVALID_HANDLE_VALUE) {
+        printf("Error opening serial port %s\n", port);
+        printf("Make sure the port exists and is not being used by another application.\n");
+        return EXIT_FAILURE;
+    }
+
+    // Configure serial port
+    if (configure_serial_port(serial_handle) != 0) {
+        CloseHandle(serial_handle);
+        return EXIT_FAILURE;
+    }
+#else
     serial_fd = open(port, O_RDWR | O_NOCTTY | O_SYNC);
     if (serial_fd < 0) {
         perror("Error opening serial port");
@@ -306,6 +429,7 @@ int main(int argc, char *argv[]) {
         close(serial_fd);
         return EXIT_FAILURE;
     }
+#endif
 
     printf("Serial port opened and configured successfully.\n");
     printf("Waiting for data...\n\n");
@@ -323,9 +447,19 @@ int main(int argc, char *argv[]) {
     // Don't send hello immediately - wait for module to boot
     // We'll send commands when we receive the "ready" event
 
-    // Main read loop
+    // Main read loop - now just handles events after initialization
+    printf(">>> Listening for events and connections...\n");
     while (running) {
+#ifdef _WIN32
+        DWORD dwBytesRead;
+        if (ReadFile(serial_handle, buffer, sizeof(buffer) - 1, &dwBytesRead, NULL)) {
+            bytes_read = (int)dwBytesRead;
+        } else {
+            bytes_read = -1;
+        }
+#else
         bytes_read = read(serial_fd, buffer, sizeof(buffer) - 1);
+#endif
 
         if (bytes_read > 0) {
             // Display raw data in hex and ASCII
@@ -333,21 +467,30 @@ int main(int argc, char *argv[]) {
 
             // Parse and display BGAPI packets
             process_bgapi_data(buffer, bytes_read);
-
-            // Also write raw data to stdout for piping if needed
-            // write(STDOUT_FILENO, buffer, bytes_read);
         } else if (bytes_read < 0) {
+#ifdef _WIN32
+            DWORD error = GetLastError();
+            if (error != ERROR_TIMEOUT) {
+                printf("Error reading from serial port: %lu\n", error);
+                break;
+            }
+#else
             if (errno != EAGAIN && errno != EINTR) {
                 perror("Error reading from serial port");
                 break;
             }
+#endif
         }
         // bytes_read == 0 means timeout, continue waiting
     }
 
     // Cleanup
     printf("Closing serial port...\n");
+#ifdef _WIN32
+    CloseHandle(serial_handle);
+#else
     close(serial_fd);
+#endif
 
     return EXIT_SUCCESS;
 }

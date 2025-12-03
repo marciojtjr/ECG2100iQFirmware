@@ -1,4 +1,68 @@
+# MPLAB X Project build artifacts
 /IQ/IQ.X/build/
 /IQ/IQ.X/dist/
 /IQ/IQ.X/.generated_files/
 /TestBluetooth/TestBluetooth.X/build/
+
+# Atmel Studio build artifacts
+/IQ/bin/
+/IQ/obj/
+/IQ/Debug/
+/IQ/Release/
+/IQ/Bluetooth/
+/IQ/Production/
+/IQ/Bootloader/
+/IQ/ContinuousBluetooth/
+/IQ/Working/
+/IQ/Logging/
+/IQ/Comparison/
+/IQ/BaudRateChanger/
+
+# Object files and compiled artifacts
+*.o
+*.obj
+*.elf
+*.hex
+*.bin
+*.map
+*.lss
+*.eep
+*.srec
+*.sym
+*.lst
+*.d
+*.dep
+*.mk
+
+# Temporary files
+*~
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# IDE specific files
+.vs/
+*.suo
+*.user
+*.ncb
+*.aps
+*.plg
+*.opt
+*.clw
+*.tags
+*.atsln
+*.componentinfo.xml
+*.cproj.user
+
+# Build system files
+Makefile.targets
+*.make
+
+# Debug files
+*.pdb
+*.ilk
+
+# Log files
+*.log

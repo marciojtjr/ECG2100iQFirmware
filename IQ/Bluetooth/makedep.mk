@@ -4,13 +4,17 @@
 
 apple.c
 
+BGAPI\bgapi_commands.c
+
+BGAPI\bgapi_parser.c
+
 ffft.S
 
 main.c
 
 serial.c
 
-sp_driver.S
+sp_driver.s
 
 taskPaceSimu.c
 

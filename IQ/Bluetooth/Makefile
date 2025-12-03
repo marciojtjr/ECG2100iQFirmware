@@ -32,12 +32,15 @@ LIB_DEP:=
 LINKER_SCRIPT_DEP:=
 
 # Every subdirectory with source files must be described here
-SUBDIRS := 
+SUBDIRS :=  \
+../BGAPI
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
 ../apple.c \
+../BGAPI/bgapi_commands.c \
+../BGAPI/bgapi_parser.c \
 ../main.c \
 ../serial.c \
 ../taskPaceSimu.c \
@@ -68,7 +71,7 @@ C_SRCS +=  \
 
 PREPROCESSING_SRCS +=  \
 ../ffft.S \
-../sp_driver.S
+../sp_driver.s
 
 
 ASM_SRCS += 
@@ -76,6 +79,8 @@ ASM_SRCS +=
 
 OBJS +=  \
 apple.o \
+BGAPI/bgapi_commands.o \
+BGAPI/bgapi_parser.o \
 ffft.o \
 main.o \
 serial.o \
@@ -107,6 +112,8 @@ crc.o
 
 OBJS_AS_ARGS +=  \
 apple.o \
+BGAPI/bgapi_commands.o \
+BGAPI/bgapi_parser.o \
 ffft.o \
 main.o \
 serial.o \
@@ -138,6 +145,8 @@ crc.o
 
 C_DEPS +=  \
 apple.d \
+BGAPI/bgapi_commands.d \
+BGAPI/bgapi_parser.d \
 ffft.d \
 main.d \
 serial.d \
@@ -169,6 +178,8 @@ crc.d
 
 C_DEPS_AS_ARGS +=  \
 apple.d \
+BGAPI/bgapi_commands.d \
+BGAPI/bgapi_parser.d \
 ffft.d \
 main.d \
 serial.d \
@@ -212,67 +223,209 @@ LINKER_SCRIPT_DEP+=
 
 
 # AVR32/GNU C Compiler
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-./%.o: .././%.c
+./apple.o: .././apple.c
 	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
 	@echo Finished building: $<
 	
+
+BGAPI/bgapi_commands.o: ../BGAPI/bgapi_commands.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+BGAPI/bgapi_parser.o: ../BGAPI/bgapi_parser.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./main.o: .././main.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./serial.o: .././serial.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./taskPaceSimu.o: .././taskPaceSimu.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./rtos.o: .././rtos.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./wdt_driver.o: .././wdt_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./clksys_driver.o: .././clksys_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TC_driver.o: .././TC_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./iq.o: .././iq.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskAcq.o: .././TaskAcq.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./usart_driver.o: .././usart_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./adc_driver.o: .././adc_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./eeprom_driver.o: .././eeprom_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskUSB.o: .././TaskUSB.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskFlash.o: .././TaskFlash.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./spi_driver.o: .././spi_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./lowpower.o: .././lowpower.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./rtc_driver.o: .././rtc_driver.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./sleepmgr.o: .././sleepmgr.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./ccpwrite.o: .././ccpwrite.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./seg7.o: .././seg7.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./buffers.o: .././buffers.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./ulaw.o: .././ulaw.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./eeprom.o: .././eeprom.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskBT.o: .././TaskBT.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskWatchDog.o: .././TaskWatchDog.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./crc.o: .././crc.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"."  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 
 
 
@@ -283,25 +436,18 @@ LINKER_SCRIPT_DEP+=
 # AVR32/GNU Assembler
 ./ffft.o: .././ffft.S
 	@echo Building file: $<
-	@echo Invoking: AVR32/GNU Assembler : 4.8.1
-	$(QUOTE)C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Invoking: AVR/GNU Assembler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -Wall -gdwarf-2 -std=gnu99 -D__AVR_XMEGA__ -D__AVR_ATxmega64A3U__ -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
 	@echo Finished building: $<
 	
 
-./sp_driver.o: .././sp_driver.S
+./sp_driver.o: .././sp_driver.s
 	@echo Building file: $<
-	@echo Invoking: AVR32/GNU Assembler : 4.8.1
-	$(QUOTE)C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Invoking: AVR/GNU Assembler : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -Wall -gdwarf-2 -std=gnu99 -D__AVR_XMEGA__ -D__AVR_ATxmega64A3U__ -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
 	@echo Finished building: $<
 	
 
-
-./%.o: .././%.S
-	@echo Building file: $<
-	@echo Invoking: AVR32/GNU Assembler : 4.8.1
-	$(QUOTE)C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
 
 
 
@@ -319,14 +465,14 @@ all: $(OUTPUT_FILE_PATH) $(ADDITIONAL_DEPENDENCIES)
 
 $(OUTPUT_FILE_PATH): $(OBJS) $(USER_OBJS) $(OUTPUT_FILE_DEP) $(LIB_DEP) $(LINKER_SCRIPT_DEP)
 	@echo Building target: $@
-	@echo Invoking: AVR/GNU Linker : 4.8.1
-	$(QUOTE)C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -o$(OUTPUT_FILE_PATH_AS_ARGS) $(OBJS_AS_ARGS) $(USER_OBJS) $(LIBS) -Wl,-Map="iq_bluetooth.map" -Wl,--start-group -Wl,-lprintf_flt -Wl,-lscanf_flt -Wl,-lm  -Wl,--end-group -Wl,--gc-sections -mmcu=atxmega64a3u -Wl,-u,vfscanf -Wl,-u,vfprintf  
+	@echo Invoking: AVR/GNU Linker : 5.4.0
+	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -o$(OUTPUT_FILE_PATH_AS_ARGS) $(OBJS_AS_ARGS) $(USER_OBJS) $(LIBS) -Wl,-Map="iq_bluetooth.map" -Wl,--start-group -Wl,-lprintf_flt -Wl,-lscanf_flt -Wl,-lm  -Wl,--end-group -Wl,--gc-sections -mmcu=atxmega64a3u -Wl,-u,vfscanf -Wl,-u,vfprintf  
 	@echo Finished building target: $@
-	"C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures  "iq_bluetooth.elf" "iq_bluetooth.hex"
-	"C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-objcopy.exe" -j .eeprom  --set-section-flags=.eeprom=alloc,load --change-section-lma .eeprom=0  --no-change-warnings -O ihex "iq_bluetooth.elf" "iq_bluetooth.eep" || exit 0
-	"C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-objdump.exe" -h -S "iq_bluetooth.elf" > "iq_bluetooth.lss"
-	"C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O srec -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures "iq_bluetooth.elf" "iq_bluetooth.srec"
-	"C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1061\avr8-gnu-toolchain\bin\avr-size.exe" "iq_bluetooth.elf"
+	"D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures  "iq_bluetooth.elf" "iq_bluetooth.hex"
+	"D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -j .eeprom  --set-section-flags=.eeprom=alloc,load --change-section-lma .eeprom=0  --no-change-warnings -O ihex "iq_bluetooth.elf" "iq_bluetooth.eep" || exit 0
+	"D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objdump.exe" -h -S "iq_bluetooth.elf" > "iq_bluetooth.lss"
+	"D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O srec -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures "iq_bluetooth.elf" "iq_bluetooth.srec"
+	"D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-size.exe" "iq_bluetooth.elf"
 	
 	
 
