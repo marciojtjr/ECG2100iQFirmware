@@ -26,6 +26,11 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
 
                     debug_message("[BT122] BOOT COMPLETED\r\n");
 
+                    // STEP 1: Ensure we're NOT discoverable before changing name
+                    bgapi_cmd_bt_gap_set_mode(&cmd, 0, 0, 0);  // Not connectable, not discoverable
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    debug_message("[BT122] Stop advertising: %d\r\n", result);
+                    
                     // Set device name
                     bgapi_cmd_system_set_local_name(&cmd, (const uint8_t *)device_name, strlen(device_name));
                     result = bgapi_send_command_and_wait(&cmd, 1000);
