@@ -25,7 +25,7 @@
 #define BGAPI_EVENT_SYSTEM_BOOT         0x00
 #define BGAPI_EVENT_SYSTEM_INITIALIZED  0x01
 
-// BT Connection Events
+// BT Connection Events  
 #define BGAPI_EVENT_BT_CONNECTION_OPENED     0x00
 
 // Endpoint Events
@@ -39,20 +39,20 @@
 
 // BGAPI Packet Structure
 typedef struct {
-	uint8_t message_type;    // 0x00, 0x20, or 0xA0
-	uint8_t payload_length;  // Length of payload (excluding 4-byte header)
-	uint8_t class_id;        // Class ID
-	uint8_t command_id;      // Command/Event ID
-	uint8_t payload[256];    // Payload data
-	uint16_t total_length;   // Total packet length (header + payload)
+    uint8_t message_type;    // 0x00, 0x20, or 0xA0
+    uint8_t payload_length;  // Length of payload (excluding 4-byte header)
+    uint8_t class_id;        // Class ID
+    uint8_t command_id;      // Command/Event ID
+    uint8_t payload[256];    // Payload data
+    uint16_t total_length;   // Total packet length (header + payload)
 } bgapi_packet_t;
 
 // Parser state
 typedef struct {
-	uint8_t buffer[512];
-	uint16_t buffer_pos;
-	uint16_t expected_length;
-	uint8_t parsing;
+    uint8_t buffer[512];
+    uint16_t buffer_pos;
+    uint16_t expected_length;
+    uint8_t parsing;
 } bgapi_parser_state_t;
 
 // Function prototypes

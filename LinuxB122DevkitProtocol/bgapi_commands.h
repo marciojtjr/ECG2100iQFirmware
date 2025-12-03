@@ -2,9 +2,7 @@
 #define BGAPI_COMMANDS_H
 
 #include <stdint.h>
-
-// Forward declarations
-struct bgapi_packet_t;
+#include "bgapi_parser.h"
 
 // BGAPI Command builder structure
 typedef struct {
@@ -69,7 +67,7 @@ void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key);
 void bgapi_reset_response_tracking(void);
 int bgapi_is_response_received(void);
 int bgapi_get_last_response_error(void);
-void bgapi_handle_response(const struct bgapi_packet_t *packet);
+void bgapi_handle_response(const bgapi_packet_t *packet);
 
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd);

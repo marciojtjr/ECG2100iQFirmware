@@ -39,7 +39,7 @@
     static bgapi_parser_state_t parser_state;
     static HANDLE serial_handle = INVALID_HANDLE_VALUE;
 #else
-    #define SERIAL_PORT "/dev/ttyUSB1"
+    #define SERIAL_PORT "/dev/ttyUSB0"
     #define BAUD_RATE B115200
     #define BUFFER_SIZE 256
     static volatile int running = 1;
@@ -201,7 +201,7 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
         // Module just booted, wait for initialized event
     }
 
-    // Handle System Initialized Event (BT122)  
+    // Handle System Initialized Event (BT122)
     else if (packet->class_id == BGAPI_CLASS_SYSTEM && packet->command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
         printf("\n");
         printf("╔══════════════════════════════════════════════════════════════╗\n");
@@ -220,7 +220,7 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
 
         // BT122 initialization sequence as per commands.txt
 
-        // 1. Set local name  
+        // 1. Set local name
         printf(">>> Step 1: Set Local Name to 'Spaulding'\n");
         bgapi_cmd_system_set_local_name(&cmd, (const uint8_t*)"Spaulding", 9);
 #ifdef _WIN32
@@ -310,7 +310,7 @@ void handle_bgapi_event(const bgapi_packet_t *packet) {
             }
             printf("\n");
             printf("Central: %d\n", packet->payload[6]);
-            printf("Connection: %d\n", packet->payload[7]); 
+            printf("Connection: %d\n", packet->payload[7]);
             printf("Bonding: %d\n", packet->payload[8]);
         }
         printf("\n");
@@ -403,7 +403,7 @@ int main(int argc, char *argv[]) {
                               OPEN_EXISTING,
                               0,
                               NULL);
-    
+
     if (serial_handle == INVALID_HANDLE_VALUE) {
         printf("Error opening serial port %s\n", port);
         printf("Make sure the port exists and is not being used by another application.\n");
