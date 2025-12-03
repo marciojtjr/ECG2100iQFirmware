@@ -37,6 +37,7 @@
 #include "crc.h"
 #include "BGAPI/bgapi_parser.h"
 #include "BGAPI/bgapi_commands.h"
+#include "BGAPI/BT122_handler.h"
 
 #define USB_USART				USARTF0
 #define USB_USART_PORT	PORTF
@@ -352,65 +353,17 @@ BEGIN_TASK(TaskBT)
 		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
 		// Wait until we're in preacq before turning on the radio
 		// Or if we're full, let it go through as well
-        print_usb("[BT] Bluetooth waiting for acqState...\r\n");
 		//while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
 		//	osWAIT(1);
 		//}			
 		//acqState = FSM_PREACQ;
 		BTOn();
 		print_usb("[BT] Bluetooth waiting for ready...\r\n");
-		// Wait until we've recieved "READY" from the BT chip
-        uint8_t initPhase = 0;
-		while(readyForCommands == 0) {
-			while(btDebugTail != btDebugHead) {
-				//print_usb("%c", btDebugBuf[btDebugTail]);
-				unsigned char data = btDebugBuf[btDebugTail];
-				btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
 
-				bgapi_packet_t packet;
-                bgapi_command_t cmd;
-				int result = process_bgapi_data(&data, 1, &packet);
-                //print_usb("process_bgapi_data=%d initPhase=%d\r\n", result, initPhase);
-				if (result == 1) {
-                    if(packet.message_type == BGAPI_MSG_TYPE_EVENT
-                        && packet.class_id == BGAPI_CLASS_SYSTEM
-                        && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
-                        print_usb("==============BOOT COMPLETED \r\n");
-                        bgapi_cmd_system_set_local_name(&cmd, (const uint8_t *)device_name, strlen(device_name));
-                        result = bgapi_send_command_and_wait(&cmd, 1000);
-                        print_usb("==============bgapi_cmd_set_device_name COMPLETED %d\r\n", result);
-                        
-                        bgapi_cmd_system_set_class_of_device(&cmd, 0x202);
-                        result = bgapi_send_command_and_wait(&cmd, 1000);
-                        print_usb("==============bgapi_cmd_system_set_class_of_device COMPLETED %d\r\n", result);
-                        
-                        bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
-                        result = bgapi_send_command_and_wait(&cmd, 1000);
-                        print_usb("==============bgapi_cmd_bt_gap_set_mode COMPLETED %d\r\n", result);
-                        
-                        bgapi_cmd_sm_set_bondable_mode(&cmd, 1);
-                        result = bgapi_send_command_and_wait(&cmd, 1000);
-                        print_usb("==============bgapi_cmd_sm_set_bondable_mode COMPLETED %d\r\n", result);
-                        
-                        bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
-                        result = bgapi_send_command_and_wait(&cmd, 1000);
-                        print_usb("==============bgapi_cmd_bt_rfcomm_start_server COMPLETED %d\r\n", result);
-                        
-                    }
-                    /*switch(initPhase) {
-                        case 5:
-                            print_usb("bgapi_cmd_gap_set_mode\r\n"); 
-                            bgapi_cmd_gap_set_mode(&cmd, 0x02, 0x02);
-                            bgapi_send_command(&cmd);
-                            initPhase = 2;
-                            break;
-                        case 2:
-                            
-                            break;
-                    }*/
-				}
-			}
-			osWAIT(1);
+		// Initialize BT122 module via BGAPI
+		if (BT122_handler_init(device_name, 30000) != 0) {
+			print_usb("[BT] BT122 initialization failed!\r\n");
+			// Continue anyway - may recover later
 		}
 
 		print_usb("[BT] Bluetooth chip ready, initializing...\r\n");

@@ -7,6 +7,8 @@
       <logicalFolder name="BGAPI" displayName="BGAPI" projectFiles="true">
         <itemPath>../BGAPI/bgapi_commands.h</itemPath>
         <itemPath>../BGAPI/bgapi_parser.h</itemPath>
+        <itemPath>../BGAPI/BT122_handler.h</itemPath>
+        <itemPath>../BGAPI/legacybt_handler.h</itemPath>
       </logicalFolder>
       <itemPath>../apple.h</itemPath>
       <itemPath>../defines.h</itemPath>
@@ -57,6 +59,8 @@
       <logicalFolder name="BGAPI" displayName="BGAPI" projectFiles="true">
         <itemPath>../BGAPI/bgapi_commands.c</itemPath>
         <itemPath>../BGAPI/bgapi_parser.c</itemPath>
+        <itemPath>../BGAPI/BT122_handler.c</itemPath>
+        <itemPath>../BGAPI/legacybt_handler.c</itemPath>
       </logicalFolder>
       <itemPath>../apple.c</itemPath>
       <itemPath>../ffft.S</itemPath>
@@ -838,7 +842,7 @@
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
-        <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"

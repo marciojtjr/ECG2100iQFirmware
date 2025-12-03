@@ -1,0 +1,70 @@
+#include "BT122_handler.h"
+#include "bgapi_commands.h"
+#include "bgapi_parser.h"
+#include "../usart_driver.h"
+#include "../taskUSB.h"
+#include "../rtos.h"
+#include <string.h>
+
+// Initialize BT122 module and wait for it to be ready
+// Returns 0 on success, -1 on timeout
+int legacybt_handler_init(const char *device_name, int timeout_ms) {
+    int elapsed = 0;
+    bgapi_packet_t packet;
+    bgapi_command_t cmd;
+    int result;
+
+    print_usb("[BT122] Waiting for SYSTEM_INITIALIZED event...\r\n");
+    // Wait for SYSTEM_INITIALIZED event and configure BT122
+    while (elapsed < timeout_ms) {
+        while(btDebugTail != btDebugHead) {
+            unsigned char data = btDebugBuf[btDebugTail];
+            btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+
+            result = process_bgapi_data(&data, 1, &packet);
+
+            if (result == 1) {
+                if(packet.message_type == BGAPI_MSG_TYPE_EVENT
+                    && packet.class_id == BGAPI_CLASS_SYSTEM
+                    && packet.command_id == BGAPI_EVENT_SYSTEM_INITIALIZED) {
+
+                    print_usb("[BT122] BOOT COMPLETED\r\n");
+
+                    // Set device name
+                    bgapi_cmd_system_set_local_name(&cmd, (const uint8_t *)device_name, strlen(device_name));
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    print_usb("[BT122] Set device name: %d\r\n", result);
+
+                    // Set class of device
+                    bgapi_cmd_system_set_class_of_device(&cmd, 0x202);
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    print_usb("[BT122] Set class of device: %d\r\n", result);
+
+                    // Set GAP mode (connectable, discoverable)
+                    bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    print_usb("[BT122] Set GAP mode: %d\r\n", result);
+
+                    // Set bondable mode
+                    bgapi_cmd_sm_set_bondable_mode(&cmd, 1);
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    print_usb("[BT122] Set bondable mode: %d\r\n", result);
+
+                    // Start RFCOMM server
+                    bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
+                    result = bgapi_send_command_and_wait(&cmd, 1000);
+                    print_usb("[BT122] Start RFCOMM server: %d\r\n", result);
+
+                    print_usb("[BT122] Initialization completed successfully\r\n");
+                    return 0;  // Success
+                }
+            }
+        }
+
+        osWAIT(10);
+        elapsed += 10;
+    }
+
+    print_usb("[BT122] Initialization timeout\r\n");
+    return -1;  // Timeout
+}
