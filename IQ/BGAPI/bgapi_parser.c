@@ -133,10 +133,12 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
     } else if (class_id == BGAPI_CLASS_BT_CONNECTION) {
         switch (event_id) {
             case 0x00: return "opened";
+            case 0x02: return "parameters";
             default:   return "unknown";
         }
     } else if (class_id == BGAPI_CLASS_BT_RFCOMM) {
         switch (event_id) {
+            case 0x00: return "opened";
             case 0x01: return "start_server";
             case 0x03: return "stop_server";
             default:   return "unknown";
@@ -144,8 +146,9 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
     } else if (class_id == BGAPI_CLASS_ENDPOINT) {
         switch (event_id) {
             case 0x00: return "send";
+            case 0x01: return "data";
             case 0x02: return "status";
-            case 0x06: return "data";
+            case 0x06: return "data_alt";
             default:   return "unknown";
         }
     } else if (class_id == BGAPI_CLASS_GATT) {
@@ -178,18 +181,25 @@ const char* bgapi_get_event_name(uint8_t class_id, uint8_t event_id) {
 }
 
 void bgapi_print_packet(const bgapi_packet_t *packet) {
-    // Minimal BGAPI packet debug - saves ~2KB RAM vs full version
-    print_usb("BT[T:%02X C:%02X E:%02X L:%d",
+    // Enhanced BGAPI packet debug with detailed information
+    const char* msg_type = bgapi_get_message_type_string(packet->message_type);
+    const char* class_name = bgapi_get_class_name(packet->class_id);
+    const char* event_name = bgapi_get_event_name(packet->class_id, packet->command_id);
+    
+    print_usb("BT[%s %s::%s T:0x%02X C:0x%02X E:0x%02X L:%d",
+           msg_type, class_name, event_name,
            packet->message_type, packet->class_id,
            packet->command_id, packet->payload_length);
 
-    // Only print first 8 bytes of payload to save space
+    // Print full payload for detailed analysis
     if (packet->payload_length > 0) {
         print_usb(" D:");
-        for (int i = 0; i < packet->payload_length && i < 8; i++) {
+        for (int i = 0; i < packet->payload_length && i < 16; i++) {
             print_usb("%02X", packet->payload[i]);
         }
-        if (packet->payload_length > 8) printf("...");
+        if (packet->payload_length > 16) {
+            print_usb("...");
+        }
     }
     print_usb("]\n");
 }

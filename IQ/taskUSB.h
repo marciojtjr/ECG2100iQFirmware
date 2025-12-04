@@ -29,7 +29,7 @@ extern FILE usb_str;
 
 enum {PRINT_USB, PRINT_BT, PRINT_BT_APPLE};
 	
-void Hello(int type);
+void Hello(int type, bool isBT122, int bt122_endpoint);
 
 #endif
 #endif

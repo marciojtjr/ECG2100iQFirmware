@@ -26,7 +26,9 @@ static void build_command_header(bgapi_command_t *cmd, uint8_t class_id, uint8_t
 // Send command via bt FILE stream
 int bgapi_send_command(const bgapi_command_t *cmd) {
     extern FILE *bt;  // Defined in TaskBT
+    print_usb("[BGAPI_SEND] Sending %d bytes to BT122\n", cmd->length);
     fwrite(cmd->buffer, 1, cmd->length, bt);
+    print_usb("[BGAPI_SEND] Command sent successfully\n");
     return 0;
 }
 
@@ -104,12 +106,25 @@ void bgapi_cmd_sm_configure(bgapi_command_t *cmd, uint8_t flags, uint8_t io_capa
 // Endpoint Commands
 
 void bgapi_cmd_endpoint_send(bgapi_command_t *cmd, uint8_t endpoint, const uint8_t *data, uint8_t data_len) {
-    if (data_len > 251) data_len = 251;  // Max payload - header - endpoint
-    build_command_header(cmd, 0x0b, 0x00, 1 + data_len);
-    cmd->buffer[4] = endpoint;
+    if (data_len > 249) data_len = 249;  // Max payload - header - channel(1) - length(1)
+    build_command_header(cmd, 0x0b, 0x00, 1 + 1 + data_len);  // channel(1) + length(1) + data
+    cmd->buffer[4] = endpoint;    // Channel/Connection
+    cmd->buffer[5] = data_len;    // Data length
     if (data && data_len > 0) {
-        memcpy(&cmd->buffer[5], data, data_len);
+        memcpy(&cmd->buffer[6], data, data_len);
     }
+    
+    // Print command buffer for debugging
+    print_usb("[ENDPOINT_SEND] Command buffer (%d bytes): ", cmd->length);
+    for (int i = 0; i < cmd->length; i++) {
+        print_usb("%02X ", cmd->buffer[i]);
+    }
+    print_usb("\n");
+    print_usb("[ENDPOINT_SEND] Data payload (%d bytes): ", data_len);
+    for (int i = 0; i < data_len; i++) {
+        print_usb("%02X ", data[i]);
+    }
+    print_usb("\n");
 }
 
 // Legacy BLE GAP Commands (for compatibility)
@@ -291,9 +306,9 @@ void bgapi_handle_response(const bgapi_packet_t *packet) {
             print_usb(">>> Raw payload: %02X\n", packet->payload[0]);
             
             if (packet->payload[0] != 0) {
-                print_usb("⚠️  Command returned error code: 0x%02X\n", packet->payload[0]);
+                print_usb("Command returned error code: 0x%02X\n", packet->payload[0]);
             } else {
-                print_usb("✅ Command successful (result: 0x%02X)\n", packet->payload[0]);
+                print_usb("Command successful (result: 0x%02X)\n", packet->payload[0]);
             }
         } else {
             last_response_error = 0;
@@ -332,7 +347,8 @@ int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *
             // Handle events and send responses
             if (out_packet->message_type == BGAPI_MSG_TYPE_EVENT) {
                 if (out_packet->class_id == BGAPI_CLASS_ENDPOINT && 
-                    out_packet->command_id == BGAPI_EVENT_ENDPOINT_DATA) {
+                    (out_packet->command_id == BGAPI_EVENT_ENDPOINT_DATA || 
+                     out_packet->command_id == BGAPI_EVENT_ENDPOINT_DATA_ALT)) {
                     bgapi_handle_endpoint_data(out_packet);
                 }
             }
@@ -355,7 +371,7 @@ int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *
 // Handle endpoint data events
 // Packet format: endpoint (1 byte) + data_len (1 byte) + data (data_len bytes)
 // Example: 0xa0050b0106033f730d -> endpoint=6, data_len=3, data=3f730d
-void bgapi_handle_endpoint_data(const bgapi_packet_t *packet) {
+void bgapi_handle_endpoint_data(bgapi_packet_t *packet) {
     if (packet->payload_length < 2) {
         print_usb("[ENDPOINT] Invalid endpoint data event - payload too short\n");
         return;
@@ -364,40 +380,25 @@ void bgapi_handle_endpoint_data(const bgapi_packet_t *packet) {
     uint8_t endpoint = packet->payload[0];
     uint8_t data_len = packet->payload[1];
     
+    // Save endpoint to packet structure
+    packet->endpoint = endpoint;
+    
     if (packet->payload_length < (2 + data_len)) {
         print_usb("[ENDPOINT] Invalid endpoint data event - data length mismatch\n");
         return;
     }
 
+    // Move the actual data to the beginning of the payload, removing endpoint and data_len
+    if (data_len > 0) {
+        memmove(packet->payload, &packet->payload[2], data_len);
+        packet->payload_length = data_len;
+    } else {
+        packet->payload_length = 0;
+    }
+
     print_usb("[ENDPOINT] Data received on endpoint %d (%d bytes): ", endpoint, data_len);
     for (int i = 0; i < data_len; i++) {
-        print_usb("%02x", packet->payload[2 + i]);
+        print_usb("%02x", packet->payload[i]);
     }
     print_usb("\n");
-
-    // Handle the received data based on endpoint
-    switch (endpoint) {
-        case 6:
-            // Handle endpoint 6 data - this appears to be RFCOMM data
-            print_usb("[RFCOMM] Received %d bytes: ", data_len);
-            for (int i = 0; i < data_len; i++) {
-                uint8_t byte = packet->payload[2 + i];
-                if (byte >= 0x20 && byte <= 0x7E) {
-                    print_usb("%c", byte);  // Printable ASCII
-                } else {
-                    print_usb("[0x%02X]", byte);  // Non-printable as hex
-                }
-            }
-            print_usb("\n");
-            
-            // Echo the data back (optional)
-            bgapi_command_t cmd;
-            bgapi_cmd_endpoint_send(&cmd, endpoint, &packet->payload[2], data_len);
-            bgapi_send_command(&cmd);
-            break;
-            
-        default:
-            print_usb("[ENDPOINT] Unknown endpoint %d\n", endpoint);
-            break;
-    }
 }

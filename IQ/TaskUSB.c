@@ -145,7 +145,7 @@ void Dump(unsigned int i){
 */
 
 //------------------------------------------------------------------------------------
-void Hello(int type){
+void Hello(int type, bool isBT122, int bt122_endpoint){
 	if(type == PRINT_USB) {
 		print_usb("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 	}
@@ -214,7 +214,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 	//static unsigned long trueEnd;
 	//static int trueEndPage;
 
-	Hello(PRINT_USB);
+	Hello(PRINT_USB, false, -1);
 
 	while(1){
 		//DPLEDOn();
@@ -241,7 +241,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 		if(USBPortDescriptor.RxReady){	// we have a command
 			//--------------------------------------------------------------------------
 			if(USBPortDescriptor.RxBuf[0]==0){	// just a CR, no command, so send out operating summary
-				Hello(PRINT_USB);
+				Hello(PRINT_USB, false, -1);
 				if(BatteryIsCharging()){
 					print_usb("\r\nBattery: Charging");
 				}

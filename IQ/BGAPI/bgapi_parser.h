@@ -27,10 +27,15 @@
 
 // BT Connection Events  
 #define BGAPI_EVENT_BT_CONNECTION_OPENED     0x00
+#define BGAPI_EVENT_BT_CONNECTION_PARAMETERS 0x02
+
+// BT RFCOMM Events
+#define BGAPI_EVENT_BT_RFCOMM_OPENED         0x00
 
 // Endpoint Events
+#define BGAPI_EVENT_ENDPOINT_DATA       0x01
 #define BGAPI_EVENT_ENDPOINT_STATUS     0x02
-#define BGAPI_EVENT_ENDPOINT_DATA       0x06
+#define BGAPI_EVENT_ENDPOINT_DATA_ALT   0x06
 
 // Legacy Connection Events (for compatibility)
 #define BGAPI_EVENT_CONNECTION_STATUS       0x00
@@ -46,6 +51,7 @@ typedef struct {
     uint8_t command_id;      // Command/Event ID
     uint8_t payload[256];    // Payload data
     uint16_t total_length;   // Total packet length (header + payload)
+    uint8_t endpoint;        // Endpoint for endpoint data events (saved from payload[0])
 } bgapi_packet_t;
 
 // Parser state

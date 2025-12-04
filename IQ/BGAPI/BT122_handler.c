@@ -91,3 +91,9 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
     print_usb("[BT122] Initialization timeout\r\n");
     return -1;  // Timeout
 }
+
+void BT122_handler_data_send(uint8_t endpoint, const uint8_t *data, uint8_t data_len) {
+	bgapi_command_t cmd;
+	bgapi_cmd_endpoint_send(&cmd, endpoint, data, data_len);
+	bgapi_send_command(&cmd);
+}

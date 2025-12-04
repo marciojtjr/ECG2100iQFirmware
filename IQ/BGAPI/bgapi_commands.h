@@ -66,7 +66,7 @@ int bgapi_get_last_response_error(void);
 void bgapi_handle_response(const bgapi_packet_t *packet);
 
 // Event handlers
-void bgapi_handle_endpoint_data(const bgapi_packet_t *packet);
+void bgapi_handle_endpoint_data(bgapi_packet_t *packet);
 
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd);
