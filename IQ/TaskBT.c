@@ -372,7 +372,6 @@ BEGIN_TASK(TaskBT)
         if (isBT122) {
 			// Initialize BGAPI subsystem
             BT122_handler_init(device_name, 30000);
-			BTEnable = true;
         } else {
             legacybt_handler_init(device_name, 30000);
         }
@@ -391,9 +390,27 @@ BEGIN_TASK(TaskBT)
 						if (bt122_packet.endpoint != 0) {
 							bt122_endpoint = bt122_packet.endpoint;
 						}
-						bgapi_print_packet(&bt122_packet);					
+						bgapi_print_packet(&bt122_packet);
 						extracted_command[0] = bt122_packet.payload[0];
 						extracted_command[1] = bt122_packet.payload[1];
+
+						// Check for disconnect events
+						if (bt122_packet.message_type == BGAPI_MSG_TYPE_EVENT) {
+                            if (bt122_packet.class_id == BGAPI_CLASS_BT_RFCOMM &&
+							    bt122_packet.command_id == BGAPI_EVENT_BT_RFCOMM_OPENED) {
+								print_usb("[BT] RFCOMM socket connected (RFCOMM opened)\n");
+                                BTEnable = 1;
+							}
+							else if (bt122_packet.class_id == BGAPI_CLASS_ENDPOINT &&
+							         bt122_packet.command_id == BGAPI_EVENT_ENDPOINT_CLOSED) {
+								print_usb("[BT] RFCOMM socket disconnected (endpoint closed)\n");
+                                BTEnable = 0;
+							}
+							else if (bt122_packet.class_id == BGAPI_CLASS_BT_CONNECTION &&
+							         bt122_packet.command_id == BGAPI_EVENT_BT_CONNECTION_CLOSED) {
+								print_usb("[BT] BT client disconnected (connection closed)\n");
+							}
+						}
 					}
 				}
 			}

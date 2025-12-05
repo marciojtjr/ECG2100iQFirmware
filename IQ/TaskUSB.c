@@ -146,16 +146,18 @@ void Dump(unsigned int i){
 
 //------------------------------------------------------------------------------------
 void Hello(int type, bool isBT122, int bt122_endpoint){
+    sprintf(AppleBTString, "\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+	j = strlen(AppleBTString);
 	if(type == PRINT_USB) {
-		print_usb("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		print_usb("%s", AppleBTString);
 	}
 	else if(type == PRINT_BT) {
-		print_bt("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+        if (isBT122)
+            BT122_handler_data_send(bt122_endpoint, (uint8_t*)AppleBTString, j);
+        else
+            print_bt("%s", AppleBTString);
 	}
 	else if(type == PRINT_BT_APPLE) {
-		sprintf(AppleBTString, "\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
-		j = strlen(AppleBTString);
-
 		appleCrc = 0;
 		for(i = 0; i < j; i++) {
 			appleCrc += AppleBTString[i];
