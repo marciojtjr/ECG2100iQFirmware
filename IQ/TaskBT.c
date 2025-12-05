@@ -399,7 +399,11 @@ BEGIN_TASK(TaskBT)
                             if (bt122_packet.class_id == BGAPI_CLASS_BT_RFCOMM &&
 							    bt122_packet.command_id == BGAPI_EVENT_BT_RFCOMM_OPENED) {
 								print_usb("[BT] RFCOMM socket connected (RFCOMM opened)\n");
+                                keepAliveTimer = -1;
+                                DPLEDOn();
                                 BTEnable = 1;
+                                waitingForFirstCommand = 1;
+                                BTStatus = 0;
 							}
 							else if (bt122_packet.class_id == BGAPI_CLASS_ENDPOINT &&
 							         bt122_packet.command_id == BGAPI_EVENT_ENDPOINT_CLOSED) {

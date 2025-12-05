@@ -291,7 +291,7 @@ BEGIN_TASK(TaskMain)
 	} // if(!USBPresent())
 
 	else{ // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
-		osENABLE_TASK(TaskBT);
+		osENABLE_TASK(TaskUSB);
 	}
 
 	//-------------------------------------------------------------------------------------------
