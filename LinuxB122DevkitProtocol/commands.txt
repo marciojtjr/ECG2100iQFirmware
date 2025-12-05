@@ -56,6 +56,12 @@ BGAPI binary: 0xa0090700ecdeb82f95240004ff
 dumo_cmd_system_reset(0)
 BGAPI binary: 0x2001010100
 
+dumo_evt_endpoint_data	  endpoint:       6 (0x06)  data.len:3  data:3f730d
+BGAPI binary: 0xa0050b0106033f730d
+
+dumo_cmd_sm_configure	  flags:       2 (0x02)  io_capabilities:       3 (0x03)
+BGAPI binary: 0x20020f010203
+
 
 implement flow in BT122Test_simple:
 1. Open port use implemented functions

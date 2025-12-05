@@ -345,7 +345,7 @@ BEGIN_TASK(TaskBT)
 	        (int)(serial_num%10000));
 
 	// Bluetooth command parser
-	print_usb("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
+	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
 	if(true || !USBPresent()){
 		// Make sure our UART settings are correct
 		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
@@ -356,7 +356,7 @@ BEGIN_TASK(TaskBT)
 		//}			
 		//acqState = FSM_PREACQ;
 		BTOn();
-		print_usb("[BT] Bluetooth waiting for ready...\r\n");
+		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;
         while (firstByte == 0) {
             while(btDebugTail != btDebugHead && firstByte == 0) {
@@ -364,21 +364,43 @@ BEGIN_TASK(TaskBT)
                 debug_message("firstByte: %c %d\r\n", firstByte, firstByte);
             }
         }
-        bool isBT122 = firstByte == 160;
+        static bool isBT122;
+        static int execution_id = 0;
+        execution_id++;
+        isBT122 = (firstByte == 160);
+        debug_message("[BT] Execution %d: firstByte=%d, isBT122=%d\r\n", execution_id, firstByte, isBT122);
         if (isBT122) {
+			// Initialize BGAPI subsystem
             BT122_handler_init(device_name, 30000);
+			BTEnable = true;
         } else {
             legacybt_handler_init(device_name, 30000);
         }
-        
-        while(1) {
-            osWAIT(25);            
-        }
-        
+		static uint8_t bt122_endpoint;       
+		static char extracted_command[3];
 		while(1) {
+			bgapi_packet_t bt122_packet;
+			extracted_command[0] = 0;
+			extracted_command[1] = 0;
+			if (isBT122) {		
+				while(btDebugTail != btDebugHead) {
+					unsigned char data = btDebugBuf[btDebugTail];
+					btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+					result = process_bgapi_data(&data, 1, &bt122_packet);
+					if (result == 1) {
+						if (bt122_packet.endpoint != 0) {
+							bt122_endpoint = bt122_packet.endpoint;
+						}
+						bgapi_print_packet(&bt122_packet);					
+						extracted_command[0] = bt122_packet.payload[0];
+						extracted_command[1] = bt122_packet.payload[1];
+					}
+				}
+			}
+			
 			if(needToDropPairing) {
 				needToDropPairing = 0;
-				print_usb("[BT] Pairing dropped - resetting connection\r\n");
+				debug_message("[BT] Pairing dropped - resetting connection\r\n");
 				connectionType = CONNECTION_UNKNOWN;
 				osWAIT(25);
 				print_bt("SET BT PAIR *\r");
@@ -392,7 +414,7 @@ BEGIN_TASK(TaskBT)
 					//pinTimer = 0;
 					keepAliveTimer = -1;
 					DPLEDOn();
-					print_usb("[BT] CD pin high - entering data mode\r\n");
+					debug_message("[BT] CD pin high - entering data mode\r\n");
 					BTEnable = 1;					
 					waitingForFirstCommand = 1;
 					// Clear any status bits that have been set
@@ -404,8 +426,8 @@ BEGIN_TASK(TaskBT)
 			}	
 			else if(BTEnable){	
 				// if pin goes low for more than 500ms, it's a disconnect
-				if((PORTF.IN & PIN7_bm)==0) {
-					print_usb("[BT] Connection dropped (CD pin low)\r\n");
+				if(!isBT122 && (PORTF.IN & PIN7_bm)==0) {
+					debug_message("[BT] Execution %d: Connection dropped (CD pin low): %d\r\n", execution_id, isBT122);
 					DPLEDOff();
 					ElapsedMinutes = 0;
 					// Reset RTC
@@ -413,10 +435,13 @@ BEGIN_TASK(TaskBT)
 					BTEnable = 0;
 					connectionNeedsReset = 0;  // fix lockup issue (see ECR 79)
 				}				
-				if(BTPortDescriptor.RxReady) {
-					print_usb("[BT] Command received: %c%c\r\n", BTPortDescriptor.RxBuf[0], BTPortDescriptor.RxBuf[1]);
+				if(isBT122 || BTPortDescriptor.RxReady) {
+					if (!isBT122) {
+						strncpy(extracted_command, BTPortDescriptor.RxBuf, 2);
+						extracted_command[2] = '\0';
+					}		
 					if(iniAPMode) {
-						print_usb("[BT] iAP mode - processing Apple packet\r\n");
+						debug_message("[BT] iAP mode - processing Apple packet\r\n");
 						getApplePacket(BTPortDescriptor.RxBuf);
 						checkRecievedPacketAndSendNext();
 						if(haveCommandFromAppleDevice) {
@@ -428,31 +453,31 @@ BEGIN_TASK(TaskBT)
 							continue;
 						}
 					}
-					if(!strncmp("ka", BTPortDescriptor.RxBuf, 2)) {
+					if(!strncmp("ka", extracted_command, 2)) {
 						// If we get a keep alive command, reset the timer, connection is still active
 						keepAliveTimer = 0;
-						print_usb("[BT] Keep alive received\r\n");
+						debug_message("[BT] Keep alive received\r\n");
 					}					
-					else if(!strncmp("do", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
-						print_usb("[BT] 'do' command - sending Hello\r\n");
+					else if(!strncmp("do", extracted_command, 2) && (waitingForFirstCommand)) {
+						debug_message("[BT] 'do' command - sending Hello\r\n");
 						if(connectionType == CONNECTION_APPLE) {
-							Hello(PRINT_BT_APPLE);
+							Hello(PRINT_BT_APPLE, isBT122, bt122_endpoint);
 						} else {
-							Hello(PRINT_BT);
+							Hello(PRINT_BT, isBT122, bt122_endpoint);
 						}
-					} else if(!strncmp("lo", BTPortDescriptor.RxBuf, 2)) {
-						print_usb("[BT] Downsample enabled (500Hz mode)\r\n");
+					} else if(!strncmp("lo", extracted_command, 2)) {
+						debug_message("[BT] Downsample enabled (500Hz mode)\r\n");
 						downsample = 1;
 						outBufferPos = 0;
-					} else if(!strncmp("hi", BTPortDescriptor.RxBuf, 2)) {
-						print_usb("[BT] Downsample disabled (1000Hz mode)\r\n");
+					} else if(!strncmp("hi", extracted_command, 2)) {
+						debug_message("[BT] Downsample disabled (1000Hz mode)\r\n");
 						downsample = 0;
 						outBufferPos = 0;
-					} else if(!strncmp("to", BTPortDescriptor.RxBuf, 2)) {
-						argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+					} else if(!strncmp("to", extracted_command, 2)) {
+						argC = sscanf_P((const char *)(isBT122 ? bt122_packet.payload : BTPortDescriptor.RxBuf), PSTR("%2s%ld"), &cmd, &start);
 						print_usb("[BT] Timeout set to %ld minutes\r\n", start);
 						EE_Wr(EE_TIMEOUT_MINUTES, start);
-						
+												
 						if(connectionType == CONNECTION_APPLE) {
 							sprintf(AppleBTString, "%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
 							j = strlen(AppleBTString);
@@ -462,30 +487,47 @@ BEGIN_TASK(TaskBT)
 							}
 							sendECGPacketWithLength(j);
 						} else {
-							print_bt("%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
+							char timeout_str[16];
+							int len = sprintf(timeout_str, "%d\r\n", EE_Rd(EE_TIMEOUT_MINUTES));
+							if (isBT122) {
+								BT122_handler_data_send(bt122_endpoint, (uint8_t*)timeout_str, len);
+							} else {
+								print_bt("%s", timeout_str);
+							}
 						}
-					} else if(!strncmp("po", BTPortDescriptor.RxBuf, 2)) {
-						print_usb("[BT] Power off requested\r\n");
+					} else if(!strncmp("po", extracted_command, 2)) {
+						debug_message("[BT] Power off requested\r\n");
 						deviceNeedsToTurnOff = 1;
 					}
-					else if(!strncmp("sn", BTPortDescriptor.RxBuf, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
+					else if(!strncmp("sn", extracted_command, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
 						if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
-							argC=sscanf_P( (const char *)BTPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
+							argC = sscanf_P( (const char *)(isBT122 ? bt122_packet.payload : BTPortDescriptor.RxBuf), PSTR("%2s%ld"), &cmd, &start);
 							EE_Wr(EE_SERIAL_NUM,start);
 							print_usb("[BT] Serial number set to %ld\r\n", start);
 						}
-						print_bt("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
-						print_usb("[BT] Serial number query: SN:9-%02d-%02d-%04d-101\r\n",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+						char serial_str[24];
+						int len = sprintf(serial_str, "SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+						if (isBT122)
+							BT122_handler_data_send(bt122_endpoint, (uint8_t*)serial_str, len);
+						else
+							print_bt("%s", serial_str);
+						debug_message("[BT] Serial number query: SN:9-%02d-%02d-%04d-101\r\n",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 					}
-					else if(!strncmp("?s", BTPortDescriptor.RxBuf, 2) && (waitingForFirstCommand)) {
+					else if(!strncmp("?s", extracted_command, 2) && (waitingForFirstCommand)) {
 						// Write out our current state
 						short battMV = round(VBatt*100);
 						BTStateString[6] = acqState;
 						BTStateString[7] = battMV;
 						BTStateString[8] = battMV >> 8;
-						print_usb("[BT] Status query - State: %d, Battery: %dmV\r\n", acqState, battMV);
+						debug_message("[BT] Status query - State: %d, Battery: %dmV bt122_endpoint: %d\r\n", acqState, battMV, bt122_endpoint);
+						debug_message("%s", BTStateString);
 						if(connectionType != CONNECTION_APPLE) {
-							fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
+							if (isBT122) {
+								debug_message("[BT] Using endpoint %d for status response\r\n", bt122_endpoint);
+								BT122_handler_data_send(bt122_endpoint, (uint8_t*)BTStateString, BT_STATE_SIZE);
+							}
+							else	
+								fwrite(BTStateString, BT_STATE_SIZE, 1, bt);
 						} else {
 							sentPacket.payload[0] = getSessionID()[0];
 							sentPacket.payload[1] = getSessionID()[1];
@@ -496,12 +538,11 @@ BEGIN_TASK(TaskBT)
 							//sentPacket.length = 6+APPLE_BT_STRING_SIZE;
 							sentPacket.lingoID = 0;
 							sentPacket.commandID = 0x42;
-							sentPacket.transID = getCurrentTransID();
-							
+							sentPacket.transID = getCurrentTransID();							
 							sendPacket();
 						}
 					}
-					else if(!strncmp("ss", BTPortDescriptor.RxBuf, 2) && waitingForFirstCommand) {
+					else if(!strncmp("ss", extracted_command, 2) && waitingForFirstCommand) {
 						print_usb("[BT] Start streaming command received\r\n");
 						waitingForFirstCommand = 0;
 						keepAliveTimer = 0;
@@ -618,7 +659,10 @@ BEGIN_TASK(TaskBT)
 								appleCrc = 0;
 							}																			   
 					   } else if(connectionType == CONNECTION_ANDROID) {
-					   		fwrite(BTString, BT_SIZE, 1, bt);
+							if (isBT122)
+								BT122_handler_data_send(bt122_endpoint, (uint8_t*)BTString, BT_SIZE);
+							else
+					   			fwrite(BTString, BT_SIZE, 1, bt);
 					   }
 						FrameIndex++;
 					}		
