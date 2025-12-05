@@ -25,9 +25,10 @@
 #define BGAPI_EVENT_SYSTEM_BOOT         0x00
 #define BGAPI_EVENT_SYSTEM_INITIALIZED  0x01
 
-// BT Connection Events  
-#define BGAPI_EVENT_BT_CONNECTION_OPENED     0x00
-#define BGAPI_EVENT_BT_CONNECTION_PARAMETERS 0x02
+// BT Connection Events
+#define BGAPI_EVENT_BT_CONNECTION_OPENED       0x00
+#define BGAPI_EVENT_BT_CONNECTION_CLOSED       0x01
+#define BGAPI_EVENT_BT_CONNECTION_PARAMETERS   0x02
 
 // BT RFCOMM Events
 #define BGAPI_EVENT_BT_RFCOMM_OPENED         0x00
@@ -35,6 +36,7 @@
 // Endpoint Events
 #define BGAPI_EVENT_ENDPOINT_DATA       0x01
 #define BGAPI_EVENT_ENDPOINT_STATUS     0x02
+#define BGAPI_EVENT_ENDPOINT_CLOSED     0x03
 #define BGAPI_EVENT_ENDPOINT_DATA_ALT   0x06
 
 // Legacy Connection Events (for compatibility)
