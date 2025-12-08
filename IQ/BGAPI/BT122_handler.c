@@ -104,3 +104,17 @@ void BT122_handler_data_send(uint8_t endpoint, const uint8_t *data, uint8_t data
 	bgapi_cmd_endpoint_send(&cmd, endpoint, data, data_len);
 	bgapi_send_command(&cmd);
 }
+
+void BT122_handler_reset_to_discoverable(void) {
+	bgapi_command_t cmd;
+	
+	// First ensure RFCOMM server is running
+	bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
+	bgapi_send_command(&cmd);
+	debug_message("[BT122] Restarted RFCOMM server\r\n");
+	
+	// Then set GAP mode to discoverable
+	bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);  // connectable, discoverable, not limited
+	bgapi_send_command(&cmd);
+	debug_message("[BT122] Reset to discoverable mode\r\n");
+}

@@ -102,5 +102,7 @@ extern unsigned char isThereAnActiveConnection;
 
 extern unsigned char downsample;
 
+extern unsigned char isBT122;
+
 #endif
 #endif

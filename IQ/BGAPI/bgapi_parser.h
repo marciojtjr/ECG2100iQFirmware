@@ -32,6 +32,7 @@
 
 // BT RFCOMM Events
 #define BGAPI_EVENT_BT_RFCOMM_OPENED         0x00
+#define BGAPI_EVENT_BT_RFCOMM_CLOSED         0x01
 
 // Endpoint Events
 #define BGAPI_EVENT_ENDPOINT_DATA       0x01
