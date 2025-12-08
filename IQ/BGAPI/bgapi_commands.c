@@ -199,6 +199,22 @@ void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key) {
     cmd->buffer[5] = (key >> 8) & 0xFF;
 }
 
+// Hardware Commands
+
+void bgapi_cmd_hardware_set_uart_configuration(bgapi_command_t *cmd, uint8_t uart_index, uint32_t baud_rate, 
+                                              uint8_t data_bits, uint8_t stop_bits, uint8_t parity, uint8_t flow_control) {
+    build_command_header(cmd, 0x0c, 0x08, 9);
+    cmd->buffer[4] = uart_index;
+    cmd->buffer[5] = baud_rate & 0xFF;
+    cmd->buffer[6] = (baud_rate >> 8) & 0xFF;
+    cmd->buffer[7] = (baud_rate >> 16) & 0xFF;
+    cmd->buffer[8] = (baud_rate >> 24) & 0xFF;
+    cmd->buffer[9] = data_bits;
+    cmd->buffer[10] = stop_bits;
+    cmd->buffer[11] = parity;
+    cmd->buffer[12] = flow_control;
+}
+
 // Helper: Parse UUID string to byte array
 // Input: "72243468-25ee-4025-8fe7-1edd2cf13cd2" (with or without dashes)
 // Output: uuid_bytes[16] = {0x72,0x24,0x34,0x68,...}

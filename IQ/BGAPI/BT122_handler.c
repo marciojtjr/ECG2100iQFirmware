@@ -78,9 +78,16 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
 							launchStep = 7;
 						break;
 						case 7:
-						    debug_message("[BT122] Initialization completed successfully\r\n");
+						    debug_message("[BT122] bgapi_cmd_hardware_set_uart_configuration\r\n");
 						    readyForCommands = 1;
-						    return 0;  // Success
+							bgapi_cmd_hardware_set_uart_configuration(&cmd, 0, 921600, 8, 1, 0, 1);
+							bgapi_send_command(&cmd);
+						    launchStep = 8;
+						break;
+						case 8:
+							debug_message("[BT122] Initialization completed successfully\r\n");
+							readyForCommands = 1;
+							return 0;  // Success
 						break;
 					}
 				}

@@ -232,60 +232,58 @@ void ConfigureUSBUSART(unsigned long baudrate)
 // enable_rts: 1 to enable RTS (nRTS on PA0/PORTA PIN0), 0 to disable
 void ConfigureBTUSART(unsigned long baudrate, unsigned char enable_rts)
 {
-	if(!btConfigured) {
-		int bsel, bscale;
+	int bsel, bscale;
 
-		// Calculate BSEL and BSCALE for common baudrates at 32MHz
-		if(baudrate == 115200) {
-			bsel = 33;
-			bscale = -1;
-		} else if(baudrate == 921600) {
-			bsel = 19;
-			bscale = -4;
-		} else {
-			// Default to 921600 if unknown baudrate
-			bsel = 19;
-			bscale = -4;
-		}
-
-		BTPortDescriptor.RxBuf = largeRxBuf;
-		BTPortDescriptor.TxBuf = largeTxBuf;
-
-		BTPortDescriptor.TxBufSize = LARGE_TX_BUF_SIZE;
-		BTPortDescriptor.RxBufSize = LARGE_RX_BUF_SIZE;
-		BTPortDescriptor.TxBufMask = LARGE_TX_BUF_MASK;
-
-		bt = &bt_str;
-		BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
-		BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
-
-        // Configure RTS on PF7/SYNC(55) - BC  for USART
-        if(enable_rts) {
-            PORTF.DIRSET = PIN7_bm;        // Set PF7 as output
-            PORTF.OUTCLR = PIN7_bm;        // Set PF7 low (RTS active, nRTS = 0)
-            PORTF.PIN7CTRL = PORT_OPC_TOTEM_gc;  // Totem-pole configuration
-            
-            // Configure CTS input (PA0)
-            PORTA.DIRCLR = PIN0_bm;        // Set PA0 as input
-            PORTA.PIN0CTRL = PORT_OPC_PULLUP_gc;  // Enable pull-up
-            
-            print_usb("[USB] RTS enabled on PF7 (active low)\r\n");
-        } else {
-            PORTF.DIRCLR = PIN7_bm;        // Set PF7 as input (disabled)
-            print_usb("[USB] RTS disabled\r\n");
-        } 
-		USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc);
-		USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
-		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N1
-
-		USART_Baudrate_Set(BTPortDescriptor.usart, bsel, bscale);
-		USART_Rx_Enable(BTPortDescriptor.usart);
-		USART_Tx_Enable(BTPortDescriptor.usart);
-
-		btConfigured = 1;
-
-		print_usb("[BT] BT USART initialized at %lu baud\r\n", baudrate);
+	// Calculate BSEL and BSCALE for common baudrates at 32MHz
+	if(baudrate == 115200) {
+		bsel = 33;
+		bscale = -1;
+	} else if(baudrate == 921600) {
+		bsel = 19;
+		bscale = -4;
+	} else {
+		// Default to 921600 if unknown baudrate
+		bsel = 19;
+		bscale = -4;
 	}
+
+	BTPortDescriptor.RxBuf = largeRxBuf;
+	BTPortDescriptor.TxBuf = largeTxBuf;
+
+	BTPortDescriptor.TxBufSize = LARGE_TX_BUF_SIZE;
+	BTPortDescriptor.RxBufSize = LARGE_RX_BUF_SIZE;
+	BTPortDescriptor.TxBufMask = LARGE_TX_BUF_MASK;
+
+	bt = &bt_str;
+	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
+	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+
+    // Configure RTS on PF7/SYNC(55) - BC  for USART
+    if(enable_rts) {
+        PORTF.DIRSET = PIN7_bm;        // Set PF7 as output
+        PORTF.OUTCLR = PIN7_bm;        // Set PF7 low (RTS active, nRTS = 0)
+        PORTF.PIN7CTRL = PORT_OPC_TOTEM_gc;  // Totem-pole configuration
+            
+        // Configure CTS input (PA0)
+        PORTA.DIRCLR = PIN0_bm;        // Set PA0 as input
+        PORTA.PIN0CTRL = PORT_OPC_PULLUP_gc;  // Enable pull-up
+            
+        print_usb("[USB] RTS enabled on PF7 (active low)\r\n");
+    } else {
+        PORTF.DIRCLR = PIN7_bm;        // Set PF7 as input (disabled)
+        print_usb("[USB] RTS disabled\r\n");
+    } 
+	USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc);
+	USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
+	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N1
+
+	USART_Baudrate_Set(BTPortDescriptor.usart, bsel, bscale);
+	USART_Rx_Enable(BTPortDescriptor.usart);
+	USART_Tx_Enable(BTPortDescriptor.usart);
+
+	btConfigured = 1;
+
+	print_usb("[BT] BT USART initialized at %lu baud\r\n", baudrate);
 }
 
 //==========================================================================================
@@ -370,9 +368,10 @@ BEGIN_TASK(TaskBT)
         isBT122 = (firstByte == 160);
         debug_message("[BT] Execution %d: firstByte=%d, isBT122=%d\r\n", execution_id, firstByte, isBT122);
         if (isBT122) {
-			// Initialize BGAPI subsystem
             BT122_handler_init(device_name, 30000);
+			ConfigureBTUSART(921600, 1);
         } else {
+			ConfigureBTUSART(921600, 0);
             legacybt_handler_init(device_name, 30000);
         }
 		static uint8_t bt122_endpoint;       
