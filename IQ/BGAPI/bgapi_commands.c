@@ -26,9 +26,9 @@ static void build_command_header(bgapi_command_t *cmd, uint8_t class_id, uint8_t
 // Send command via bt FILE stream
 int bgapi_send_command(const bgapi_command_t *cmd) {
     extern FILE *bt;  // Defined in TaskBT
-    print_usb("[BGAPI_SEND] Sending %d bytes to BT122\n", cmd->length);
+    debug_message("[BGAPI_SEND] Sending %d bytes to BT122\n", cmd->length);
     fwrite(cmd->buffer, 1, cmd->length, bt);
-    print_usb("[BGAPI_SEND] Command sent successfully\n");
+    debug_message("[BGAPI_SEND] Command sent successfully\n");
     return 0;
 }
 
@@ -115,16 +115,16 @@ void bgapi_cmd_endpoint_send(bgapi_command_t *cmd, uint8_t endpoint, const uint8
     }
     
     // Print command buffer for debugging
-    print_usb("[ENDPOINT_SEND] Command buffer (%d bytes): ", cmd->length);
+    debug_message("[ENDPOINT_SEND] Command buffer (%d bytes): ", cmd->length);
     for (int i = 0; i < cmd->length; i++) {
-        print_usb("%02X ", cmd->buffer[i]);
+        debug_message("%02X ", cmd->buffer[i]);
     }
-    print_usb("\n");
-    print_usb("[ENDPOINT_SEND] Data payload (%d bytes): ", data_len);
+    debug_message("\n");
+    debug_message("[ENDPOINT_SEND] Data payload (%d bytes): ", data_len);
     for (int i = 0; i < data_len; i++) {
-        print_usb("%02X ", data[i]);
+        debug_message("%02X ", data[i]);
     }
-    print_usb("\n");
+    debug_message("\n");
 }
 
 // Legacy BLE GAP Commands (for compatibility)
@@ -259,15 +259,15 @@ int bgapi_parse_uuid(const char *uuid_string, uint8_t *uuid_bytes) {
 
 // Print command for debugging
 void bgapi_print_command(const bgapi_command_t *cmd) {
-    print_usb("\n>>> Sending BGAPI Command (%d bytes):\n", cmd->length);
-    print_usb("    ");
+    debug_message("\n>>> Sending BGAPI Command (%d bytes):\n", cmd->length);
+    debug_message("    ");
     for (int i = 0; i < cmd->length; i++) {
-        print_usb("%02X ", cmd->buffer[i]);
+        debug_message("%02X ", cmd->buffer[i]);
         if ((i + 1) % 16 == 0 && (i + 1) < cmd->length) {
-            print_usb("\n    ");
+            debug_message("\n    ");
         }
     }
-    print_usb("\n");
+    debug_message("\n");
 }
 
 // Response tracking functions
@@ -302,35 +302,35 @@ void bgapi_handle_response(const bgapi_packet_t *packet) {
             last_response_error = error_code;
             
             // Print the response details for debugging
-            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
+            debug_message(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            print_usb(">>> Raw payload: ");
+            debug_message(">>> Raw payload: ");
             for (int i = 0; i < packet->payload_length && i < 8; i++) {
-                print_usb("%02X ", packet->payload[i]);
+                debug_message("%02X ", packet->payload[i]);
             }
-            print_usb("\n");
+            debug_message("\n");
             
             if (error_code != 0) {
-                print_usb("Command returned error code: 0x%04X\n", error_code);
+                debug_message("Command returned error code: 0x%04X\n", error_code);
             } else {
-                print_usb("Command successful (result: 0x%04X)\n", error_code);
+                debug_message("Command successful (result: 0x%04X)\n", error_code);
             }
         } else if (packet->payload_length == 1) {
             last_response_error = packet->payload[0];
-            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
+            debug_message(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            print_usb(">>> Raw payload: %02X\n", packet->payload[0]);
+            debug_message(">>> Raw payload: %02X\n", packet->payload[0]);
             
             if (packet->payload[0] != 0) {
-                print_usb("Command returned error code: 0x%02X\n", packet->payload[0]);
+                debug_message("Command returned error code: 0x%02X\n", packet->payload[0]);
             } else {
-                print_usb("Command successful (result: 0x%02X)\n", packet->payload[0]);
+                debug_message("Command successful (result: 0x%02X)\n", packet->payload[0]);
             }
         } else {
             last_response_error = 0;
-            print_usb(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d (no payload)\n", 
+            debug_message(">>> Response: Class=0x%02X Cmd=0x%02X PayloadLen=%d (no payload)\n", 
                    packet->class_id, packet->command_id, packet->payload_length);
-            print_usb("Command successful (no error code)\n");
+            debug_message("Command successful (no error code)\n");
         }
     }
 }
@@ -389,7 +389,7 @@ int process_bgapi_data(const unsigned char *buffer, int length, bgapi_packet_t *
 // Example: 0xa0050b0106033f730d -> endpoint=6, data_len=3, data=3f730d
 void bgapi_handle_endpoint_data(bgapi_packet_t *packet) {
     if (packet->payload_length < 2) {
-        print_usb("[ENDPOINT] Invalid endpoint data event - payload too short\n");
+        debug_message("[ENDPOINT] Invalid endpoint data event - payload too short\n");
         return;
     }
 
@@ -400,7 +400,7 @@ void bgapi_handle_endpoint_data(bgapi_packet_t *packet) {
     packet->endpoint = endpoint;
     
     if (packet->payload_length < (2 + data_len)) {
-        print_usb("[ENDPOINT] Invalid endpoint data event - data length mismatch\n");
+        debug_message("[ENDPOINT] Invalid endpoint data event - data length mismatch\n");
         return;
     }
 
@@ -412,9 +412,9 @@ void bgapi_handle_endpoint_data(bgapi_packet_t *packet) {
         packet->payload_length = 0;
     }
 
-    print_usb("[ENDPOINT] Data received on endpoint %d (%d bytes): ", endpoint, data_len);
+    debug_message("[ENDPOINT] Data received on endpoint %d (%d bytes): ", endpoint, data_len);
     for (int i = 0; i < data_len; i++) {
-        print_usb("%02x", packet->payload[i]);
+        debug_message("%02x", packet->payload[i]);
     }
-    print_usb("\n");
+    debug_message("\n");
 }

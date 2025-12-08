@@ -345,14 +345,6 @@ BEGIN_TASK(TaskBT)
 	// Bluetooth command parser
 	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
 	if(true || !USBPresent()){
-		// Make sure our UART settings are correct
-		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
-		// Wait until we're in preacq before turning on the radio
-		// Or if we're full, let it go through as well
-		//while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
-		//	osWAIT(1);
-		//}			
-		//acqState = FSM_PREACQ;
 		BTOn();
 		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;
@@ -372,6 +364,14 @@ BEGIN_TASK(TaskBT)
 			ConfigureBTUSART(921600, 1);
         } else {
 			ConfigureBTUSART(921600, 0);
+			// Make sure our UART settings are correct
+			// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
+			// Wait until we're in preacq before turning on the radio
+			// Or if we're full, let it go through as well
+			while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
+				osWAIT(1);
+			}
+			acqState = FSM_PREACQ;
             legacybt_handler_init(device_name, 30000);
         }
 		static uint8_t bt122_endpoint;       
