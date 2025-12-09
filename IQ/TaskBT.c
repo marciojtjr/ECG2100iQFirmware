@@ -39,6 +39,9 @@
 #include "BGAPI/bgapi_commands.h"
 #include "BGAPI/BT122_handler.h"
 
+// External function declaration
+extern void ConfigureUSBUSART(unsigned long baudrate);
+
 #define USB_USART				USARTF0
 #define USB_USART_PORT	PORTF
 
@@ -180,51 +183,6 @@ CRCCalc(short crc, short x)
     return (crc << 8) ^ (x << 12) ^ (x <<5) ^ x;
 	}
 
-//==========================================================================================
-// USB USART Configuration Function
-// baudrate: desired baudrate (e.g., 115200, 921600)
-void ConfigureUSBUSART(unsigned long baudrate)
-{
-	if(!usbConfigured) {
-		int bsel, bscale;
-
-		// Calculate BSEL and BSCALE for common baudrates at 32MHz
-		if(baudrate == 115200) {
-			bsel = 33;
-			bscale = -1;
-		} else if(baudrate == 921600) {
-			bsel = 19;
-			bscale = -4;
-		} else {
-			// Default to 115200 if unknown baudrate
-			bsel = 33;
-			bscale = -1;
-		}
-
-		// Set up USB descriptor buffers first
-		USBPortDescriptor.TxBuf = smallTxBuf;
-		USBPortDescriptor.RxBuf = smallRxBuf;
-		USBPortDescriptor.TxBufSize = SMALL_TX_BUF_SIZE;
-		USBPortDescriptor.RxBufSize = SMALL_RX_BUF_SIZE;
-		USBPortDescriptor.TxBufMask = SMALL_TX_BUF_MASK;
-
-		usb = &usb_str;
-		USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
-		USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
-
-		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_HI_gc);
-		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
-		USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-
-		USART_Baudrate_Set(USBPortDescriptor.usart, bsel, bscale);
-		USART_Rx_Enable(USBPortDescriptor.usart);
-		USART_Tx_Enable(USBPortDescriptor.usart);
-		usbConfigured = 1;
-		// Wait for USART to be ready
-		osWAIT(10);
-		print_usb("\r\n[BT] USB USART initialized at %lu baud\r\n", baudrate);
-	}
-}
 
 //==========================================================================================
 // Bluetooth USART Configuration Function

@@ -35,6 +35,7 @@
 #include "TaskWatchDog.h"
 
 #include "taskBT.h"
+#include "taskCC.h"
 
 #define SYS_FREQ 16000	//Hz
 #define POLL_FREQ 128000
@@ -293,7 +294,7 @@ BEGIN_TASK(TaskMain)
 	else{ // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
 		osENABLE_TASK(TaskUSB);
 	}
-
+	osENABLE_TASK(TaskCC);
 	//-------------------------------------------------------------------------------------------
 	// We've handled all the power up conditions. If we make it this far, it's because:
 		// We're connected to USB (which keeps the power on)

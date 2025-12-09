@@ -814,27 +814,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 		}
 		osWAIT(50); // Wait for button bounce
 
-		// verify that the battery voltage is high enough to attempt acquisition
-		InitADCs(); // start the ADCs and then we'll override a few settings
-		
-		ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-		ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-		ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-		osWAIT(50);	// wait for power to stabilize
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1);
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1);
-		VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;		
-
-		// Reset ADC settings
-		InitADCs();
-		
-		//VBatt = 3.9f;
-		
+		VBatt = cc_get_batt_volt();	
+		InitADCs();	
 		acqState = FSM_EMPTY;
 
 		GlobalWatchTimer = 0;
@@ -1081,23 +1062,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 					connectionNeedsReset = 0;
 					waitingForFirstCommand = 1;
 				}
-				InitADCs();
-				
-				// Reset ADCs and VBatt
-				ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-				ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-				ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-				ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-				ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-				ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-				osWAIT(50);	// wait for power to stabilize
-				ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-				osWAIT(1); // wait for conversions to complete
-				ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-				osWAIT(1); // wait for conversions to complete
-				VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-
-				// Reset ADC settings
+				VBatt = cc_get_batt_volt();
 				InitADCs();
 				StartAcq(ACQ_IRQ_ECG);
 			}
@@ -1184,157 +1149,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 			MainPowerOff();
 			osWAIT(1);
 		}				
-/*
-	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
-		StartAcq(ACQ_IRQ_IDLE); // shut down any acquisition that's already running
-		
-		AnalogPowerOn();
-		
-		acqState = FSM_START;
-		
-		enableVoice = EE_Rd(EE_ENABLE_VOICE);
-		
-		// In case we broke out during BT transmission
-#ifdef BLUETOOTH
-		if(BTEnable) {
-			osDISABLE_TASK(TaskBT);
-			BTOff();
-			BTEnable = 0;
-		}
-#endif
-		
-		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
-		// if the button is still pressed after erasing, we wait for it to be released
-
-
-		// verify that the battery voltage is high enough to attempt acquisition
-		InitADCs(); // start the ADCs and then we'll override a few settings
-		ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-		ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-		ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-		osWAIT(50);	// wait for power to stabilize
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1); // wait for conversions to complete
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1); // wait for conversions to complete
-		VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-		
-		while(ButtonPressed()) {
-			MainPowerOff();
-			osWAIT(1);
-			if(ButtonTimer++ >= LONG_BUTTON_TIME)
-				break;
-		}
-		MainPowerOn();
-
-		if(ButtonTimer < LONG_BUTTON_TIME) {
-			MainPowerOff();
-		}
-
-		acqState = FSM_EMPTY;
-		//Seg7LP('E');	// tell the user we're empty
-
-		if(VBatt < EE_Rd(EE_LB)/1000.0){
-			Seg7LP('L');	// display low battery warning
-			MainPowerOff();
-			while(ButtonPressed()){ // if the button is pressed, hang here
-				osWAIT(1);
-			}
-		}
-		Seg7LP('O');
-
-		LFBiasOff();
-		
-		//if(enableVoice) {
-		//	StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
-		//}		 
-		Buf1.Status = BUF_EMPTY; // make the buffers ready
-		Buf2.Status = BUF_EMPTY;
-
-		// make fast copies of the LFBias thresholds
-		B1=EE_Rd(EE_B1);
-		B2=EE_Rd(EE_B2);
-		B3=EE_Rd(EE_B3);
-		LFMaxFilt=B3;
-		LFMinFilt=B1;
-
-		// prepare for LFBiasModel generation by clearing the models and setting the subsample index
-		LFBiasModelIndex=0;
-		M=0;
-		for(i=0;i<=15;i++){ // flush both models
-			for(j=0;j<=3;j++){
-				LFBiasModel[0][i][j]=0;
-			}
-		}
-
-		LFReady=0;
-
-		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
-
-		// start pre-acquisition here so lead QC can get going, but don't start buffering until the button is pressed
-
-		if(LFReady){
-			LFReady=0;
-		}
-		
-		acqState = FSM_PREACQ;
-		
-		osENABLE_TASK(TaskBT); // Make sure BT the task is running
-
-#ifdef BLUETOOTH
-		BTBufPhase = 0;
-       BTStatus = 0;               // Added by PRV
-#endif
-//#if !defined(COMPARE_VERSION) && defined(BLUETOOTH)
-	   BTOn(); // if BT got killed, turn it back on
-//#endif
-		ButtonTimer = 0;
-
-		while(ButtonPressed()) {
-			osWAIT(1);
-		}
-		
-		do {	// pre-acquire while the button is not pressed	
-		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
-			//osWAIT(1);
-			osYIELD;
-			if(LFReady){	// this will happen every four milliseconds
-				LFReady=0;
-				LFMag=0;
-			}
-			if(ButtonPressed()) {
-				if(ButtonTimer++ >= LONG_BUTTON_TIME) {
-					break;
-				}
-			} else if(!ButtonPressed() && ButtonTimer) {
-				ButtonTimer = 0;
-			}
-			
-		} while(1);
-
-					BTEnable = 0;
-					BTOff();
-					
-					// We're keeping ACQ active because we can go right back to another acquisition process after this
-					//break;
-				
-				
-				osDISABLE_TASK(TaskAcq); // We're done!
-				Flags.AcqActive = 0;
-				AnalogPowerOff();
-				FlashPowerOff();
-				MainPowerOff();
-				Seg7LP(' ');
-				DPLEDOff();
-				
-				while(1){
-					MainPowerOff();
-					osWAIT(1);
-				}				
-				*/
 	} // while(1) back to 'E'
 
 END_TASK

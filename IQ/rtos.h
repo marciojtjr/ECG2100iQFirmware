@@ -57,6 +57,10 @@
 #endif
 */
 
+#define __Task7                 TaskCC
+#define __Task7_priority        2
+#define __Task7_init            RTR_OFF
+
 /*-----------------------------------------------------------------------------------------------------------
  create semaphores here, (up to 15)- there is no semaphore 0 (only 1-15)
  enum {do_not_remove,firstSema,nSemas};  do_not_remove used to prevent using first one (0)

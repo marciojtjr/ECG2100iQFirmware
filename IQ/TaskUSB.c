@@ -32,7 +32,7 @@
 #include "TaskWatchDog.h"
 #include "taskBT.h"
 #include "taskUSB.h"
-
+#include "taskCC.h"
 #include "apple.h"
 
 #ifdef WORKING
@@ -168,36 +168,61 @@ void Hello(int type, bool isBT122, int bt122_endpoint){
 	}
 }
 
+//==========================================================================================
+// USB USART Configuration Function
+// baudrate: desired baudrate (e.g., 115200, 921600)
+void ConfigureUSBUSART(unsigned long baudrate)
+{
+	if(!usbConfigured) {
+		int bsel, bscale;
+
+		// Calculate BSEL and BSCALE for common baudrates at 32MHz
+		if(baudrate == 115200) {
+			bsel = 33;
+			bscale = -1;
+		} else if(baudrate == 921600) {
+			bsel = 19;
+			bscale = -4;
+		} else {
+			// Default to 115200 if unknown baudrate
+			bsel = 33;
+			bscale = -1;
+		}
+
+		// Set up USB descriptor buffers first
+		USBPortDescriptor.TxBuf = smallTxBuf;
+		USBPortDescriptor.RxBuf = smallRxBuf;
+		USBPortDescriptor.TxBufSize = SMALL_TX_BUF_SIZE;
+		USBPortDescriptor.RxBufSize = SMALL_RX_BUF_SIZE;
+		USBPortDescriptor.TxBufMask = SMALL_TX_BUF_MASK;
+
+		usb = &usb_str;
+		USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
+		USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+
+		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_HI_gc);
+		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
+		USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
+
+		USART_Baudrate_Set(USBPortDescriptor.usart, bsel, bscale);
+		USART_Rx_Enable(USBPortDescriptor.usart);
+		USART_Tx_Enable(USBPortDescriptor.usart);
+		usbConfigured = 1;
+		// Wait for USART to be ready
+		osWAIT(10);
+		print_usb("\r\n[USB] USB USART initialized at %lu baud\r\n", baudrate);
+	}
+}
 
 //==========================================================================================
 // USB Task
 BEGIN_TASK(TaskUSB)
-USBPortDescriptor.TxBuf = smallTxBuf;
-USBPortDescriptor.RxBuf = smallRxBuf;
-
-	USBPortDescriptor.TxBufSize = SMALL_TX_BUF_SIZE;
-	USBPortDescriptor.RxBufSize = SMALL_RX_BUF_SIZE;
-	USBPortDescriptor.TxBufMask = SMALL_TX_BUF_MASK;
-
 	//osENABLE_TASK(TaskFlash);	// we'll need Flash access
 
 	//------------------------------------------------------------------------------------------
 	// prepare the USB USART
 	if(!usbConfigured) {
-		usb = &usb_str;
-		USB_USART_PORT.DIRSET = PIN3_bm;  USB_USART_PORT.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
-		USB_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
-
-		USART_InterruptDriver_Initialize(&USBPortDescriptor, &USB_USART, USART_DREINTLVL_HI_gc); // setup USART, DRE interrupt priority is LOW
-		USART_RxdInterruptLevel_Set(USBPortDescriptor.usart, USART_RXCINTLVL_HI_gc); // receive interrupt priority is LOW
-		USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-
-		//USBPortDescriptor.usart->CTRLB |= USART_CLK2X_bm;
-
-		//USART_Baudrate_Set(USBPortDescriptor.usart, 34, 0); //921600 bps
-		USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4);
-		USART_Rx_Enable(USBPortDescriptor.usart);
-		USART_Tx_Enable(USBPortDescriptor.usart);
+		ConfigureUSBUSART(115200);
 		usbConfigured = 1;
 	}
 
@@ -279,23 +304,8 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				}
 				else if(strncmp(cmd, "ba",2 )==0) {
 						AnalogPowerOn();
-						
-						InitADCs(); // start the ADCs and then we'll override a few settings
-						ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-						ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-						ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-						ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-						ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-						ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-						osWAIT(50);	// wait for power to stabilize
-						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-						osWAIT(1); // wait for conversions to complete
-						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-						osWAIT(1); // wait for conversions to complete
-						VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-
-						AnalogPowerOff();
-										
+						VBatt = cc_get_batt_volt();
+						AnalogPowerOff();										
 						print_usb("Battery voltage: %0.2f\n", VBatt);
 				}
 
@@ -964,20 +974,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				}
 				*/
 				else if(!strncmp("vr", cmd, 2)) {
-					InitADCs(); // start the ADCs and then we'll override a few settings
-					ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-					ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-					ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-					ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-					osWAIT(50);	// wait for power to stabilize
-					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-					osWAIT(1); // wait for conversions to complete
-					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-					osWAIT(1); // wait for conversions to complete
-					
-					VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+					VBatt = cc_get_batt_volt();
 					short battMV = round(VBatt*100);
 					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
 				}
@@ -1212,9 +1209,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 						float zeroVolts = 4095.0f/2.0f - delta;
 						int voltage = 0;
 						//int voltage = ((RL_Mon-zeroVolts-delta)/(4095.0f-delta))*3.3f*1000;
-						
-						//VBatt = (ADCB.CH0.RES + ADCB.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-
+						VBatt = cc_get_batt_volt();
 						print_usb("\r%d %d %f %d %dmv", ADCB.CH0.RES, ADCA.CH2.RES, delta, voltage, BTLeadOff);
 					}
 
@@ -1222,15 +1217,8 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				}
 			else if(!strncmp("sp", cmd, 2)) {
 					//LFBiasOn();
-					acqState = FSM_PREACQ;
-					
+					acqState = FSM_PREACQ;					
 					InitADCs(); // start the ADCs and then we'll override a few settings
-					//ADC_Reference_Config(&ADCB, ADC_REFSEL_VCC_gc); 		    // temporarily use internal bandgap
-					//ADC_Prescaler_Config(&ADCB, ADC_PRESCALER_DIV256_gc);	    // 128KSPS @ 32MHZ
-					//ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_V1, 0);		// monitor battery voltage on ADCA
-					//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					//ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0); // monitor ground
-					//ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0); // monitor ground
 					osWAIT(50);	// wait for power to stabilize
 					USBWatchTimer = 0; // Keep us awak
 
@@ -1285,10 +1273,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					}
 					
 					StopAcq();
-				//}
-				//ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-				//osWAIT(1); // wait for conversions to complete
-				//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 			}
 			else if(!strncmp("br", cmd, 2)) {
 					// Change baudrate

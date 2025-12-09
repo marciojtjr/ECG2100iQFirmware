@@ -88,24 +88,24 @@ void Seg7E(char on){
 }
 
 void Seg7F(char on){
-	PORTE.DIRSET = PIN6_bm;
-	PORTE.PIN6CTRL = PORT_OPC_BUSKEEPER_gc;
-	if(on){
-		PORTE.OUTCLR = PIN6_bm;
-	}
-	else{
-		PORTE.OUTSET = PIN6_bm;
-	}
-}
-
-void Seg7G(char on){
 	PORTE.DIRSET = PIN5_bm;
-	PORTE.PIN5CTRL = PORT_OPC_BUSKEEPER_gc;
+	PORTE.PIN6CTRL = PORT_OPC_BUSKEEPER_gc;
 	if(on){
 		PORTE.OUTCLR = PIN5_bm;
 	}
 	else{
 		PORTE.OUTSET = PIN5_bm;
+	}
+}
+
+void Seg7G(char on){
+	PORTE.DIRSET = PIN6_bm;
+	PORTE.PIN5CTRL = PORT_OPC_BUSKEEPER_gc;
+	if(on){
+		PORTE.OUTCLR = PIN6_bm;
+	}
+	else{
+		PORTE.OUTSET = PIN6_bm;
 	}
 }
 
@@ -292,10 +292,51 @@ void Seg7HP(unsigned char c){
 	Seg7(c);
 }
 
+static void SegTest()
+{
+	// Turn all segments off initially
+	Seg7A(0);
+	Seg7B(0);
+	Seg7C(0);
+	Seg7D(0);
+	Seg7E(0);
+	Seg7F(0);
+	Seg7G(0);
+	Seg7DP(0);
+	_delay_ms(250);
+
+	// Turn on each segment one at a time
+	Seg7A(1); 
+	_delay_ms(250); 
+	Seg7A(0);
+	Seg7B(1); 
+	_delay_ms(250); 
+	Seg7B(0);
+	Seg7C(1); 
+	_delay_ms(250); 
+	Seg7C(0);
+	Seg7D(1); 
+	_delay_ms(250); 
+	Seg7D(0);
+	Seg7E(1); 
+	_delay_ms(250); 
+	Seg7E(0);
+	Seg7F(1); 
+	_delay_ms(250); 
+	Seg7F(0);
+	Seg7G(1); 
+	_delay_ms(250); 
+	Seg7G(0);
+	Seg7DP(1); 
+	_delay_ms(250); 
+	Seg7DP(0);
+
+}
 //------------------------------------------------------------------------------------
 // initialze the seven segment LED for zero power consumption and set priority to low level
 void InitSeg7(void){
 	Priority = 0;	// set current priority to low
+	//SegTest();
 	Seg7LP(' ');	// turn off all segments
 	Seg7DP(0);		// turn off the decimal point
 }

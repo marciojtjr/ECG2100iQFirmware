@@ -14,13 +14,19 @@ BGAPI\legacybt_handler.c
 
 ffft.S
 
+ltc2959.c
+
 main.c
 
 serial.c
 
 sp_driver.s
 
+TaskCC.c
+
 taskPaceSimu.c
+
+twi_driver.c
 
 rtos.c
 
@@ -67,4 +73,8 @@ TaskBT.c
 TaskWatchDog.c
 
 crc.c
+
+src\ASF\xmega\drivers\twi\twim.c
+
+src\ASF\common\services\clock\xmega\sysclk.c
 

@@ -84,6 +84,7 @@
         <avrgcc.compiler.symbols.DefSymbols>
           <ListValues>
             <Value>BLUETOOTH=1</Value>
+            <Value>BOARD=USER_BOARD</Value>
             <Value>F_CPU=32000000UL</Value>
             <Value>__AVR_ATxmega64A3U__</Value>
             <Value>__AVR_XMEGA__</Value>
@@ -106,6 +107,12 @@
             <Value>..\src\config</Value>
             <Value>..\src</Value>
             <Value>.</Value>
+            <Value>../src/ASF/common/services/clock</Value>
+            <Value>../src/ASF/common/boards</Value>
+            <Value>../src/ASF/xmega/drivers/cpu</Value>
+            <Value>../src/ASF/xmega/drivers/twi</Value>
+            <Value>../src/ASF/xmega/drivers/nvm</Value>
+            <Value>../src/ASF/common/boards/user_board</Value>
           </ListValues>
         </avrgcc.compiler.directories.IncludePaths>
         <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
@@ -468,6 +475,12 @@
     <Compile Include="ffft.S">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="ltc2959.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ltc2959.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -489,10 +502,25 @@
     <Compile Include="sp_driver.s">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="TaskCC.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="taskCC.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="taskPaceSimu.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="taskPaceSimu.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="twi_driver.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="twi_driver.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="twi_master.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="wdt_driver.h">
@@ -727,8 +755,23 @@
       <CustomCompilationSetting Condition="'$(Configuration)' == 'Production'">
       </CustomCompilationSetting>
     </Compile>
+    <Compile Include="src\ASF\xmega\drivers\twi\twim.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\common\services\clock\xmega\sysclk.c">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="BGAPI" />
+    <Folder Include="src\" />
+    <Folder Include="src\ASF\" />
+    <Folder Include="src\ASF\common\" />
+    <Folder Include="src\ASF\common\services\" />
+    <Folder Include="src\ASF\common\services\clock\" />
+    <Folder Include="src\ASF\common\services\clock\xmega\" />
+    <Folder Include="src\ASF\xmega\" />
+    <Folder Include="src\ASF\xmega\drivers\" />
+    <Folder Include="src\ASF\xmega\drivers\twi\" />
   </ItemGroup>
 </Project>
