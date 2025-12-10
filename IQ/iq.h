@@ -60,7 +60,8 @@
 #define InitButton()	PORTC.DIRCLR = PIN7_bm; PORTC.PIN7CTRL = PORT_OPC_PULLDOWN_gc
 #define ButtonPressed()	(PORTC.IN & PIN7_bm)
 
-#define InitUSBDetect()	PORTB.DIRCLR = PIN3_bm; PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// set USB sense pin to input with pulldown
+//#define InitUSBDetect()	PORTB.DIRCLR = PIN3_bm; PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// set USB sense pin to input with pulldown
+#define InitUSBDetect()	PORTB.DIRCLR = PIN3_bm; PORTB.PIN3CTRL = PORT_OPC_PULLDOWN_gc; //2200 board?
 #ifdef WORKING
 #define USBPresent()	 	!(PORTB.IN & PIN3_bm)		// pin is high if USB is present and awake
 #else
@@ -73,6 +74,8 @@
 #define InitRTS() PORTF.DIRCLR = PIN1_bm
 #define RTS() ((PORTF.IN & PIN1_bm) == 0)
 #define BTRTS() (!(PORTA.IN & PIN0_bm))
+//#define BTRTS() (!(PORTF.IN & PIN7_bm)) -- 2200 board?
+#define BTCTS() (!(PORTA.IN & PIN0_bm))
 
 #define LFBiasOff()	PORTC.DIRCLR = PIN4_bm;
 #define LFBiasOn()	{ PORTC.DIRSET = PIN4_bm; PORTC.PIN4CTRL = PORT_OPC_TOTEM_gc; }

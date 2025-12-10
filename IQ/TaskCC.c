@@ -25,7 +25,7 @@
 static float fVoltage = 4.2;		//Start off full before 1st reading
 static uint8_t ucBattPerc = 100;	//Start off full before 1st reading
 static bool charge_complete = false;
-static bool legacy_charger = false;
+bool legacy_charger = false;
 
 BEGIN_TASK(TaskCC)
     //Declare variables necessary for TWI
@@ -47,11 +47,18 @@ BEGIN_TASK(TaskCC)
 		} else {
 			cc_legacy_get_batt_volt();
 		}
-		if(!charge_complete)
-			ucBattPerc = (100*((float)fVoltage/(float)(legacy_charger ? LEGACY_FULL_BATT_CAP_MA : FULL_BATT_CAP_MA)));
+		if(!charge_complete) {
+			if (legacy_charger) {
+				float vBattDelta = VBatt-3.70f;
+				vBattDelta *= 200.0f;
+				ucBattPerc = (int)fmax(0, vBattDelta/10);
+			} else {
+				ucBattPerc = (100*((float)fVoltage/(float)(legacy_charger ? LEGACY_FULL_BATT_CAP_MA : FULL_BATT_CAP_MA)));
+			}
+		}
 		//Read the eeprom FG validity value
 		int fg = EE_Rd(EE_FG_VALID);
-		debug_message("fVoltage %.2f, ucBattPerc: %d, fg: %d\r\n", fVoltage, ucBattPerc, fg);
+		//debug_message("fVoltage %.2f, ucBattPerc: %d, fg: %d\r\n", fVoltage, ucBattPerc, fg);
 		osWAIT(250);
 		osWAIT(250);
 		osWAIT(250);

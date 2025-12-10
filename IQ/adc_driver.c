@@ -1,5 +1,6 @@
 #ifndef BOOTLOADER
 #include "adc_driver.h"
+#include "sp_driver.h"
 
 // clear the interrupt flag and return the signed conversion result
 int16_t ADC_ResultCh_GetWord_Offset(ADC_CH_t * adc_ch, int8_t signedOffset){
@@ -43,12 +44,6 @@ void ADC_CalibrationValues_Load(ADC_t * adc){
 	}
 }
 
-// read out calibration byte.
-uint8_t SP_ReadCalibrationByte( uint8_t index ){
-	uint8_t result;
-	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
- 	result = pgm_read_byte(index);
- 	NVM_CMD = NVM_CMD_NO_OPERATION_gc; // Clean up NVM Command register
-	return result;
-}
+// SP_ReadCalibrationByte is now provided by sp_driver.s
+// Removed duplicate definition to avoid multiple definition error
 #endif

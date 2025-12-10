@@ -15,6 +15,7 @@
 #include "eeprom.h"
 #include "eeprom_driver.h"
 #include "TaskWatchDog.h"
+#include "taskCC.h"
 
 #include <math.h>
 
@@ -356,18 +357,32 @@ void AcqInterrupt(){
 #endif
 
 				// rezero any lead that goes out of bounds
-				if(Acc[V3]>UPPER_THRESH){
+				if(Acc[V3]>UPPER_THRESH) {
 					Acc[V3] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V3;
-					PORT_V3_V6.DIRSET = REZERO_V3;
+					if (legacy_charger) {						
+						PORT_V3_V6.OUTCLR = REZERO_V3;
+						PORT_V3_V6.DIRSET = REZERO_V3;
+					} else {
+						PORT_V3_V4.OUTCLR = REZERO_V3;
+						PORT_V3_V4.DIRSET = REZERO_V3;
+					}
 				}
-				else if(Acc[V3] < LOWER_THRESH){
+				else if(Acc[V3] < LOWER_THRESH) {
 					Acc[V3]=0;
-					PORT_V3_V6.OUTSET = REZERO_V3;
-					PORT_V3_V6.DIRSET = REZERO_V3;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTSET = REZERO_V3;
+						PORT_V3_V6.DIRSET = REZERO_V3;
+					} else {
+						PORT_V3_V4.OUTSET = REZERO_V3;
+						PORT_V3_V4.DIRSET = REZERO_V3;
+					}
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V3;
+					if (legacy_charger) {
+						PORT_V3_V6.DIRCLR = REZERO_V3;
+					} else {
+						PORT_V3_V4.DIRCLR = REZERO_V3;
+					}
 				}
 				
 				// convert the unsigned values to signed and transfer to the Leads
@@ -376,16 +391,30 @@ void AcqInterrupt(){
 
 				if(Acc[V4]>UPPER_THRESH){
 					Acc[V4] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V4;
-					PORT_V3_V6.DIRSET = REZERO_V4;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTCLR = REZERO_V4;
+						PORT_V3_V6.DIRSET = REZERO_V4;
+					} else {
+						PORT_V3_V4.OUTCLR = REZERO_V4;
+						PORT_V3_V4.DIRSET = REZERO_V4;
+					}
 				}
 				else if(Acc[V4] < LOWER_THRESH){
 					Acc[V4]=0;
-					PORT_V3_V6.OUTSET = REZERO_V4;
-					PORT_V3_V6.DIRSET = REZERO_V4;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTSET = REZERO_V4;
+						PORT_V3_V6.DIRSET = REZERO_V4;
+					} else {
+						PORT_V3_V4.OUTSET = REZERO_V4;
+						PORT_V3_V4.DIRSET = REZERO_V4;
+					}
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V4;
+					if (legacy_charger) {
+						PORT_V3_V6.DIRCLR = REZERO_V4;
+					} else {
+						PORT_V3_V4.DIRCLR = REZERO_V4;
+					}
 				}
 				
 				Lead[V4] = Acc[V4]-0x8000;
@@ -393,16 +422,30 @@ void AcqInterrupt(){
 
 				if(Acc[V5]>UPPER_THRESH){
 					Acc[V4] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V5;
-					PORT_V3_V6.DIRSET = REZERO_V5;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTCLR = REZERO_V5;
+						PORT_V3_V6.DIRSET = REZERO_V5;
+					} else {
+						PORT_V5.OUTCLR = REZERO_V5;
+						PORT_V5.DIRSET = REZERO_V5;
+					}
 				}
 				else if(Acc[V5] < LOWER_THRESH){
 					Acc[V5]=0;
-					PORT_V3_V6.OUTSET = REZERO_V5;
-					PORT_V3_V6.DIRSET = REZERO_V5;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTSET = REZERO_V5;
+						PORT_V3_V6.DIRSET = REZERO_V5;
+					} else {
+						PORT_V5.OUTSET = REZERO_V5;
+						PORT_V5.DIRSET = REZERO_V5;
+					}
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V5;
+					if (legacy_charger) {
+						PORT_V3_V6.DIRCLR = REZERO_V5;
+					} else {
+						PORT_V5.DIRCLR = REZERO_V5;
+					}
 				}
 				
 				Lead[V5] = Acc[V5]-0x8000;
@@ -410,16 +453,30 @@ void AcqInterrupt(){
 
 				if(Acc[V6]>UPPER_THRESH){
 					Acc[V6] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V6;
-					PORT_V3_V6.DIRSET = REZERO_V6;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTCLR = REZERO_V6;
+						PORT_V3_V6.DIRSET = REZERO_V6;
+					} else {
+						PORT_V6.OUTCLR = REZERO_V6_2200;
+						PORT_V6.DIRSET = REZERO_V6_2200;
+					}
 				}
 				else if(Acc[V6] < LOWER_THRESH){
 					Acc[V6]=0;
-					PORT_V3_V6.OUTSET = REZERO_V6;
-					PORT_V3_V6.DIRSET = REZERO_V6;
+					if (legacy_charger) {
+						PORT_V3_V6.OUTSET = REZERO_V6;
+						PORT_V3_V6.DIRSET = REZERO_V6;
+					} else {
+						PORT_V6.OUTSET = REZERO_V6_2200;
+						PORT_V6.DIRSET = REZERO_V6_2200;
+					}
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V6;
+					if (legacy_charger) {
+						PORT_V3_V6.DIRCLR = REZERO_V6;
+					} else {
+						PORT_V6.DIRCLR = REZERO_V6_2200;
+					}
 				}
 				
 				Lead[V6] = Acc[V6]-0x8000;
@@ -820,35 +877,18 @@ while(1){	// do something until we complete or abort the acquisition process any
 
 		GlobalWatchTimer = 0;
 		AcqWatchTimer = 0;
-		
-		vBattDelta = VBatt-3.70f;
-		vBattDelta *= 200.0f;
-		vBattPercent = (int)fmax(0, vBattDelta/10);
-		
+
 #ifdef WORKING
 		ButtonTimer = LONG_BUTTON_TIME;
 #endif
 
 		if(ButtonTimer < LONG_BUTTON_TIME) {
-			
-			/*
-			if(VBatt >= 4.10) {
-				QC = 3;
-			} else if(VBatt >= 3.90) {
-				QC = 2;
-			} else {
-				QC = 1;
-			}
-			*/
-			
 			Seg7LP('0'+vBattPercent);
 
 			AbandonTimer = 3000;
 			while(AbandonTimer-- && !ButtonPressed() && !USBPresent()) {
-			//while(1) {
 				osWAIT(1);
 			}
-			//}
 			osWAIT(30); // Wait for button bounce
 
 			MainPowerOff();
@@ -1128,7 +1168,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 
 
 			osWAIT(1);
-		} while(true || !USBPresent());
+		} while(!USBPresent());
 
 		BTEnable = 0;
 		BTOff();

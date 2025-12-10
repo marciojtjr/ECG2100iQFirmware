@@ -302,7 +302,7 @@ BEGIN_TASK(TaskBT)
 
 	// Bluetooth command parser
 	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
-	if(true || !USBPresent()){
+	if(!USBPresent()){
 		BTOn();
 		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;

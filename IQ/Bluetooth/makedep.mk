@@ -22,6 +22,16 @@ serial.c
 
 sp_driver.s
 
+src\ASF\xmega\drivers\cpu\ccp.s
+
+src\ASF\xmega\drivers\nvm\nvm.c
+
+src\ASF\xmega\drivers\nvm\nvm_asm.s
+
+src\ASF\xmega\drivers\twi\twis.c
+
+update_handler.c
+
 TaskCC.c
 
 taskPaceSimu.c

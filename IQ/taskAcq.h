@@ -51,10 +51,16 @@ void UnPackECG(signed int *out, unsigned char *in);
 #define REZERO_V2	PIN0_bm
 
 #define PORT_V3_V6 PORTC
+#define PORT_V3_V4 PORTC
 #define REZERO_V3	PIN3_bm
 #define REZERO_V4	PIN2_bm
 #define REZERO_V5	PIN1_bm
 #define REZERO_V6	PIN0_bm
+
+#define PORT_V6 PORTA
+#define REZERO_V6_2200	PIN2_bm
+#define PORT_V5 PORTB
+#define REZERO_V5	PIN2_bm
 
 #define PORT_PACE_DETECT PORTA
 #define PACE_DETECT_L1 PIN3_bm

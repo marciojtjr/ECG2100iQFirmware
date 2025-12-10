@@ -51,6 +51,11 @@ void InitUSBUART(void){
 	PORTF.DIRCLR = PIN2_bm;// RXD is input
 }
 
+void InitTWI(void){
+	PORTC.DIRSET = PIN0_bm | PIN1_bm;  // SDA, SCL as outputs
+	PORTC.PIN0CTRL = PORT_OPC_WIREDANDPULL_gc;  // SDA with pull-up
+	PORTC.PIN1CTRL = PORT_OPC_WIREDANDPULL_gc;  // SCL with pull-up
+}
 void SlowClock(void){
 	CLKSYS_Enable( OSC_RC32KEN_bm );
 	CLKSYS_Prescalers_Config( CLK_PSADIV_1_gc, CLK_PSBCDIV_1_1_gc );
@@ -113,9 +118,9 @@ void Error(unsigned char c){
 
 int main(void){
 	//volatile int stringSize = APPLE_BT_STRING_SIZE;
-	WDT_EnableAndSetTimeout( WDT_PER_2KCLK_gc );
+	//WDT_EnableAndSetTimeout( WDT_PER_2KCLK_gc );
 	
-	PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// fix glitch in bootstrap loaded that enabled pulldown on microphone input rather than USBDetect
+	//PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// fix glitch in bootstrap loaded that enabled pulldown on microphone input rather than USBDetect
 	FastClock();
 	HIGHPOWER_Init();
 	InitSeg7();	// blank the 7 segment display
@@ -125,6 +130,7 @@ int main(void){
 	//Seg7HP('P');
 	InitUSBDetect();
 	InitButton();
+	InitTWI();
 	Flags.AcqActive = 0;
 
 	CLK.RTCCTRL = CLK_RTCSRC_RCOSC_gc | CLK_RTCEN_bm;	// start the RTC (clocked at 1024Hz) so we can set registers
@@ -433,18 +439,6 @@ BEGIN_TASK(TaskMain)
 
 END_TASK
 
-/*
-ISR(TCE1_OVF_vect) {
-	// Our own "interrupt" for BT USART
-	if((BTPortDescriptor.usart->STATUS & USART_DREIF_bm) != 0 && BTRTS()) {
-		USART_DataRegEmptyNotInterrupt(&BTPortDescriptor);
-	}
-	if((BTPortDescriptor.usart->STATUS & USART_RXCIF_bm) != 0) {
-		USART_RXComplete(&BTPortDescriptor);
-		//BTPortDescriptor.usart->STATUS &= ~USART_RXCIF_bm;
-	}
-}
-*/
 
 // 16KHz main interrupt. Drives acquisition and SysTick
 ISR(TCC1_OVF_vect){

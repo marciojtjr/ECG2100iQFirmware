@@ -9,6 +9,8 @@
 #ifndef TASKCC_H_
 #define TASKCC_H_
 
+extern bool legacy_charger;
+
 uint8_t cc_get_batt_per();
 float cc_get_batt_volt();
 void cc_set_charge_complete();
