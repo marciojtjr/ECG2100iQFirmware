@@ -30,7 +30,6 @@
 #include "lowpower.h"
 #include "rtc_driver.h"
 #include "eeprom.h"
-#include "taskFlash.h"
 #include "taskAcq.h"
 #include "TaskWatchDog.h"
 

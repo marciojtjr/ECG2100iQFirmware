@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
@@ -290,4 +291,4 @@ uint8_t FW_ProcessPacketData(const uint8_t *data, uint16_t length) {
     
     return 0;
 }
-
+#endif

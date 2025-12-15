@@ -31,10 +31,6 @@
 #define __Task2_priority        2
 #define __Task2_init            RTR_OFF
 
-#define __Task3                 TaskFlash
-#define __Task3_priority        2
-#define __Task3_init            RTR_OFF
-
 #define __Task4                 TaskWatchDog
 #define __Task4_priority        2
 #define __Task4_init            RTR_ON

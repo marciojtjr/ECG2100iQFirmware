@@ -8,7 +8,6 @@
 #include "wdt_driver.h"
 #include "taskUSB.h"
 #include "taskBT.h"
-#include "taskFlash.h"
 #include "rtos.h"
 #include "seg7.h"
 #include "eeprom.h"

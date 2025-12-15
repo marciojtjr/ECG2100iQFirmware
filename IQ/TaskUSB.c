@@ -23,7 +23,6 @@
 #include "eeprom_driver.h"
 #include "adc_driver.h"
 #include "buffers.h"
-#include "taskFlash.h"
 #include "taskAcq.h"
 #include "eeprom.h"
 #include "ulaw.h"

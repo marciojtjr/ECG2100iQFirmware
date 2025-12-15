@@ -9,7 +9,6 @@
 #include "taskAcq.h"
 #include "TC_driver.h"
 #include "buffers.h"
-#include "taskFlash.h"
 #include "ulaw.h"
 #include "seg7.h"
 #include "eeprom.h"
@@ -804,7 +803,6 @@ BEGIN_TASK(TaskAcq)
 #ifdef WORKING
 osENABLE_TASK(TaskUSB);
 #endif
-//osENABLE_TASK(TaskFlash);
 
 	static unsigned int ButtonTimer;
 	//static unsigned int ShutoffTimer;

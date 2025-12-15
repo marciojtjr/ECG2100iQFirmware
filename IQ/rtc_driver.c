@@ -126,7 +126,7 @@ void RTC_SetIntLevels( RTC_OVFINTLVL_t ovfIntLevel,
  *
  *  This function sets a timeout alarm by adding the timeout to the current
  *  count value. If the resulting alarm value is larger than the RTC period
- *  value, it will wrap around. An RTC compare interrupt will be triggered¨
+ *  value, it will wrap around. An RTC compare interrupt will be triggeredï¿½
  *  after the specified timeout.
  *
  *  \note The program code needs to check if the RTC is busy before calling

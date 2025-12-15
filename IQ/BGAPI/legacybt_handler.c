@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include "BT122_handler.h"
 #include "bgapi_commands.h"
 #include "bgapi_parser.h"
@@ -55,3 +56,4 @@ int legacybt_handler_init(const char *device_name, int timeout_ms) {
 	debug_message("[BT] Bluetooth chip INIT, completed.\r\n");
     return 0;
 }
+#endif

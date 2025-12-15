@@ -26,7 +26,6 @@
 #include "adc_driver.h"
 #include "buffers.h"
 #include "taskAcq.h"
-#include "taskFlash.h"
 #include "eeprom.h"
 #include "seg7.h"
 #include "taskUSB.h"

@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 /*
  * ltc2959.c
  *
@@ -181,3 +182,4 @@ bool LTC2959_get_uvlo() {
 uint8_t LTC2959_get_i2c_addr() {
 	return I2C_ADDR;
 }
+#endif

@@ -31,7 +31,47 @@ long unsigned int AppCRC; // holds the CRC of the application flash after loadin
 //-------------------------------------------------------------------------
 void (*appVec)( void ) = 0x0000; // Set up function pointer to RESET vector.
 
+/*	Seg7A(1); - top segment
+	Seg7B(2); - top right segment
+	Seg7C(0); - bottom right
+	Seg7D(0); - bottom
+	Seg7E(0); - bottom left
+	Seg7F(0); - middle 
+	Seg7G(0); - top left
+	Seg7DP(0); - dot*/
+
+void BootSeg7(char c) {
+	Seg7A(0); Seg7B(0); Seg7C(0); Seg7D(0); Seg7E(0); Seg7F(0); Seg7G(0);
+	switch(c) {
+		case '0': Seg7A(1); Seg7B(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7G(1); break;
+		case '1': Seg7B(1); Seg7C(1); break;
+		case '2': Seg7A(1); Seg7B(1); Seg7D(1); Seg7E(1); Seg7F(1); break;
+		case '3': Seg7A(1); Seg7B(1); Seg7C(1); Seg7D(1); Seg7F(1); break;
+		case '4': Seg7B(1); Seg7C(1); Seg7F(1); Seg7G(1); break;
+		case '5': Seg7A(1); Seg7C(1); Seg7D(1); Seg7F(1); Seg7G(1); break;
+		case '6': Seg7A(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case '7': Seg7A(1); Seg7B(1); Seg7C(1); break;
+		case '8': Seg7A(1); Seg7B(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case '9': Seg7A(1); Seg7B(1); Seg7C(1); Seg7D(1); Seg7F(1); Seg7G(1); break;
+		case 'P': case 'p': Seg7A(1); Seg7B(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case 'D': case 'd': Seg7B(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7G(1); break;
+		case 'N': case 'n': Seg7C(1); Seg7E(1); Seg7F(1); break;
+		case 'E': case 'e': Seg7A(1); Seg7D(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case 'A': case 'a': Seg7A(1); Seg7B(1); Seg7C(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case 'B': case 'b': Seg7C(1); Seg7D(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case 'C': Seg7A(1); Seg7D(1); Seg7E(1); Seg7G(1); break;
+		case 'c': Seg7D(1); Seg7E(1); Seg7F(1); break;
+		case 'F': case 'f': Seg7A(1); Seg7E(1); Seg7F(1); Seg7G(1); break;
+		case 'L': case 'l': Seg7D(1); Seg7E(1); Seg7G(1); break;
+		case 'U': case 'u': Seg7B(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7G(1); break;
+		case '.': Seg7DP(1); break;
+		case '-': Seg7F(1); break;
+	}
+}
+
 void gotoApp(void){
+	BootSeg7('L');
+	return;
 	SP_WaitForSPM();
 	SP_LockSPM();
 	EIND = 0x00;
@@ -126,17 +166,8 @@ int main(void){
 	InitUSBDetect();	// prepare to look for USB power
 
 	// blank the LED
-	Seg7A(0);
-	Seg7B(0);
-	Seg7C(0);
-	Seg7D(0);
-	Seg7E(0);
-	Seg7F(0);
-	Seg7G(0);
-	Seg7DP(0);
-
+	BootSeg7('U');
 	FastClock();
-
 	temp_int=10000;
 	while(temp_int--);	// wait for things to settle
 
@@ -149,20 +180,6 @@ int main(void){
 			gotoApp();
 		}
 	}
-
-	// The application is not valid, or the button was pressed while we started with USB present
-	// we had a watchdog reset while USB is present, wait for release of the button, while keeping the watchdog from tripping again
-
-	// display "U" on the LED
-	Seg7A(0);
-	Seg7B(1);
-	Seg7C(1);
-	Seg7D(1);
-	Seg7E(1);
-	Seg7F(1);
-	Seg7G(0);
-	Seg7DP(0);
-
 	//-------------------------------------------------------------------------
 	// We're here because of a watchdog timer reset that occurred while we were connected to USB
 	// If we were reset by the watchdog, that means the application is either damaged, or has received a firmware update command and wants to
@@ -178,14 +195,16 @@ int main(void){
 	EEPROM_DisableMapping();
 
 	initbootuart(19, -4); // 921600
-
+	sendchar('1');
+	BootSeg7('1');
   while(1){  	/* Main loop */
-
-    cmd = recchar(); // Wait for command character.
-
-		if(cmd=='!'){	// ! is the go to app command
-			gotoApp();
-		}
+	sendchar('2');
+	BootSeg7('2');
+	//PORTE.OUTTGL = PIN7_bm;
+	cmd = recchar();
+	if(cmd=='!'){	// ! is the go to app command
+		gotoApp();
+	}
     if(cmd=='a'){    // Check autoincrement status.
       sendchar('Y'); // Yes, we do autoincrement.
     }

@@ -34,8 +34,6 @@ update_handler.c
 
 TaskCC.c
 
-taskPaceSimu.c
-
 twi_driver.c
 
 rtos.c
@@ -57,8 +55,6 @@ adc_driver.c
 eeprom_driver.c
 
 TaskUSB.c
-
-TaskFlash.c
 
 spi_driver.c
 

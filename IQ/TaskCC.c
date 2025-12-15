@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 /*
  * TaskCC.c
  *
@@ -126,3 +127,4 @@ void cc_clear_fg_valid()
 {
 	EE_Wr(EE_FG_VALID, 0);
 }
+#endif

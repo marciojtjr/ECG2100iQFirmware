@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 /*
  * twi_driver.c
  *
@@ -76,3 +77,4 @@ int twi_read(uint8_t reg, uint8_t *ucpData, uint8_t ucDataSize)
 	return 0;
 	
 }
+#endif

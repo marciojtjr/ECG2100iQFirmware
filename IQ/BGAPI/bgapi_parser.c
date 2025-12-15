@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include "bgapi_parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -203,3 +204,4 @@ void bgapi_print_packet(const bgapi_packet_t *packet) {
     }
     print_usb("]\n");
 }
+#endif

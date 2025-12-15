@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include "bgapi_commands.h"
 #include "bgapi_parser.h"
 #include <string.h>
@@ -418,3 +419,4 @@ void bgapi_handle_endpoint_data(bgapi_packet_t *packet) {
     }
     debug_message("\n");
 }
+#endif

@@ -4,15 +4,37 @@
 
 apple.c
 
+BGAPI\bgapi_commands.c
+
+BGAPI\bgapi_parser.c
+
+BGAPI\BT122_handler.c
+
+BGAPI\legacybt_handler.c
+
 ffft.S
+
+ltc2959.c
 
 main.c
 
 serial.c
 
-sp_driver.S
+sp_driver.s
 
-taskPaceSimu.c
+src\ASF\xmega\drivers\cpu\ccp.s
+
+src\ASF\xmega\drivers\nvm\nvm.c
+
+src\ASF\xmega\drivers\nvm\nvm_asm.s
+
+src\ASF\xmega\drivers\twi\twis.c
+
+update_handler.c
+
+TaskCC.c
+
+twi_driver.c
 
 rtos.c
 
@@ -33,8 +55,6 @@ adc_driver.c
 eeprom_driver.c
 
 TaskUSB.c
-
-TaskFlash.c
 
 spi_driver.c
 
@@ -59,4 +79,8 @@ TaskBT.c
 TaskWatchDog.c
 
 crc.c
+
+src\ASF\xmega\drivers\twi\twim.c
+
+src\ASF\common\services\clock\xmega\sysclk.c
 

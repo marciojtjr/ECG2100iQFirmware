@@ -71,7 +71,6 @@ C_SRCS +=  \
 ../src/ASF/xmega/drivers/twi/twis.c \
 ../update_handler.c \
 ../TaskCC.c \
-../taskPaceSimu.c \
 ../twi_driver.c \
 ../rtos.c \
 ../wdt_driver.c \
@@ -83,7 +82,6 @@ C_SRCS +=  \
 ../adc_driver.c \
 ../eeprom_driver.c \
 ../TaskUSB.c \
-../TaskFlash.c \
 ../spi_driver.c \
 ../lowpower.c \
 ../rtc_driver.c \
@@ -127,7 +125,6 @@ src/ASF/xmega/drivers/nvm/nvm_asm.o \
 src/ASF/xmega/drivers/twi/twis.o \
 update_handler.o \
 TaskCC.o \
-taskPaceSimu.o \
 twi_driver.o \
 rtos.o \
 wdt_driver.o \
@@ -139,7 +136,6 @@ usart_driver.o \
 adc_driver.o \
 eeprom_driver.o \
 TaskUSB.o \
-TaskFlash.o \
 spi_driver.o \
 lowpower.o \
 rtc_driver.o \
@@ -172,7 +168,6 @@ src/ASF/xmega/drivers/nvm/nvm_asm.o \
 src/ASF/xmega/drivers/twi/twis.o \
 update_handler.o \
 TaskCC.o \
-taskPaceSimu.o \
 twi_driver.o \
 rtos.o \
 wdt_driver.o \
@@ -184,7 +179,6 @@ usart_driver.o \
 adc_driver.o \
 eeprom_driver.o \
 TaskUSB.o \
-TaskFlash.o \
 spi_driver.o \
 lowpower.o \
 rtc_driver.o \
@@ -217,7 +211,6 @@ src/ASF/xmega/drivers/nvm/nvm_asm.d \
 src/ASF/xmega/drivers/twi/twis.d \
 update_handler.d \
 TaskCC.d \
-taskPaceSimu.d \
 twi_driver.d \
 rtos.d \
 wdt_driver.d \
@@ -229,7 +222,6 @@ usart_driver.d \
 adc_driver.d \
 eeprom_driver.d \
 TaskUSB.d \
-TaskFlash.d \
 spi_driver.d \
 lowpower.d \
 rtc_driver.d \
@@ -262,7 +254,6 @@ src/ASF/xmega/drivers/nvm/nvm_asm.d \
 src/ASF/xmega/drivers/twi/twis.d \
 update_handler.d \
 TaskCC.d \
-taskPaceSimu.d \
 twi_driver.d \
 rtos.d \
 wdt_driver.d \
@@ -274,7 +265,6 @@ usart_driver.d \
 adc_driver.d \
 eeprom_driver.d \
 TaskUSB.d \
-TaskFlash.d \
 spi_driver.d \
 lowpower.d \
 rtc_driver.d \
@@ -388,13 +378,6 @@ src/ASF/xmega/drivers/twi/twis.o: ../src/ASF/xmega/drivers/twi/twis.c
 	@echo Finished building: $<
 	
 
-./taskPaceSimu.o: .././taskPaceSimu.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 5.4.0
-	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DBOARD=USER_BOARD -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"." -I"../src/ASF/common/services/clock" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/twi" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/common/boards/user_board" -I"../src/Config" -I"../src/ASF/common/services/twi" -I"../src/ASF/common/utils" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
 ./twi_driver.o: .././twi_driver.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
@@ -466,13 +449,6 @@ src/ASF/xmega/drivers/twi/twis.o: ../src/ASF/xmega/drivers/twi/twis.c
 	
 
 ./TaskUSB.o: .././TaskUSB.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 5.4.0
-	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DBOARD=USER_BOARD -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"." -I"../src/ASF/common/services/clock" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/twi" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/common/boards/user_board" -I"../src/Config" -I"../src/ASF/common/services/twi" -I"../src/ASF/common/utils" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-./TaskFlash.o: .././TaskFlash.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DBOARD=USER_BOARD -DF_CPU=32000000UL -D__AVR_ATxmega64A3U__ -D__AVR_XMEGA__ -DWDE=3 -DSLEEP_MODE_IDLE=0x00 -DSLEEP_MODE_STANDBY=0x06 -DSLEEP_MODE_PWR_DOWN=0x04 -DSLEEP_MODE_EXT_STANDBY=0x07 -DSLEEP_MODE_SAVE=0x05  -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"D:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include" -I"..\src\ASF\common\utils" -I"..\src\ASF\xmega\utils" -I"..\src\ASF\xmega\utils\preprocessor" -I"..\src\ASF\common\utils\interrupt" -I"..\src\config" -I"..\src" -I"." -I"../src/ASF/common/services/clock" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/twi" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/common/boards/user_board" -I"../src/Config" -I"../src/ASF/common/services/twi" -I"../src/ASF/common/utils" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -c -mmcu=atxmega64a3u -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

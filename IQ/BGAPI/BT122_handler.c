@@ -1,3 +1,4 @@
+#ifndef BOOTLOADER
 #include "BT122_handler.h"
 #include "bgapi_commands.h"
 #include "bgapi_parser.h"
@@ -118,3 +119,4 @@ void BT122_handler_reset_to_discoverable(void) {
 	bgapi_send_command(&cmd);
 	debug_message("[BT122] Reset to discoverable mode\r\n");
 }
+#endif
