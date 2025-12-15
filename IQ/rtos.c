@@ -399,7 +399,8 @@ void __set_rtr(uint8_t tn, uint8_t i){
   }
 }
 
-int __get_rtr(uint8_t tn) {
+int __get_rtr(uint8_t tn, uint8_t i) {
+  (void)i;  // unused
   return ((myTasks[tn].status & RTR_ON) && (!myTasks[tn].ticks));
 }
 

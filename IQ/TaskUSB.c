@@ -47,8 +47,6 @@
 (byte & 0x01 ? 1 : 0)
 #endif
 
-#include "update_handler.h"
-
 #define USB_USART				USARTF0
 #define USB_USART_PORT	PORTF
 
@@ -241,121 +239,22 @@ BEGIN_TASK(TaskUSB)
 	//static int trueEndPage;
 
 	Hello(PRINT_USB, false, -1);
-
-	static char hexRecord[128] = {0};  // Buffer for complete hex record (increased for safety)
-	static uint16_t recordPos = 0;
-	static uint8_t inFirmwareUpdate = 0;
-	static uint8_t firstRun = 1;
-	
-	// Initialize on first run to prevent garbage values
-	if(firstRun) {
-		firstRun = 0;
-		recordPos = 0;
-		inFirmwareUpdate = 0;
-		memset(hexRecord, 0, sizeof(hexRecord));
-		// Ensure btDebug pointers are valid
-		btDebugTail = btDebugTail % BT_DEBUG_BUF_SIZE;
-		btDebugHead = btDebugHead % BT_DEBUG_BUF_SIZE;
-	}
-	
-	//update test
-	/*while(USBPresent()) {
-		// Validate buffer pointers before processing
-		if(btDebugTail >= BT_DEBUG_BUF_SIZE) {
-			btDebugTail = 0;
-		}
-		if(btDebugHead >= BT_DEBUG_BUF_SIZE) {
-			btDebugHead = 0;
-		}
-		
-		while(btDebugTail != btDebugHead) {
-			uint8_t byte = btDebugBuf[btDebugTail];
-			
-			// Start of new hex record
-			if(byte == ':') {
-				if(!inFirmwareUpdate && !FW_IsUpdateActive()) {
-					FW_InitUpdate();
-					inFirmwareUpdate = 1;
-				}
-				recordPos = 0;  // Reset for new record
-			}
-			// If firmware update is active, collect hex record (but skip if we just added ':')
-			if(inFirmwareUpdate && recordPos < (sizeof(hexRecord) - 1)) {
-				hexRecord[recordPos++] = byte;
-				
-				// End of hex record found
-				if(byte == '\n') {
-					// Null terminate the record
-					hexRecord[recordPos] = '\0';
-					
-					// Remove \r if present
-					if(recordPos > 1 && hexRecord[recordPos-2] == '\r') {
-						hexRecord[recordPos-2] = '\0';
-					}
-					
-					// Process the complete hex record
-					if(FW_ParseHexRecord(hexRecord) != 0) {
-						print_usb("Error processing hex record: %s\r\n", hexRecord);
-						FW_CancelUpdate();
-						inFirmwareUpdate = 0;
-					}
-					
-					recordPos = 0;  // Reset for next record
-				}
-				
-				// Check if firmware update completed
-				if(!FW_IsUpdateActive()) {
-					inFirmwareUpdate = 0;
-					recordPos = 0;
-				}
-			}
-			
-			// Safe increment with bounds checking
-			btDebugTail++;
-			if(btDebugTail >= BT_DEBUG_BUF_SIZE) {
-				btDebugTail = 0;
-			}
-		}
-		osWAIT(1);
-	}*/
-
+	//print_usb("%s", "===================================TEST UPDATE STRING \r\n");
 	while(USBPresent()){
 		//DPLEDOn();
-		//static int startPage, startIndex, endPage, endIndex;
-
-		USBWatchTimer = FLASH_WATCH_TIME; // longest command is erase all flash "ea" which can take up to 80 seconds, according to the data sheet.
+		//USBWatchTimer = FLASH_WATCH_TIME; // longest command is erase all flash "ea" which can take up to 80 seconds, according to the data sheet.
 
 		AnalogPowerOn();
 
 		if(USBPortDescriptor.RxReady){	// we have a command
 			//--------------------------------------------------------------------------
-			// Auto-detect Intel HEX file by first character ':'
-			if(USBPortDescriptor.RxBuf[0] == ':' && !FW_IsUpdateActive()) {
-				// Detected Intel HEX file - automatically start firmware update
-				FW_InitUpdate();
-			}
-			
-			//--------------------------------------------------------------------------
-			// If firmware update is active, process all data through packet handler
-			if(FW_IsUpdateActive()) {
-				// Get the length of received data (may contain null bytes)
-				//uint16_t rxLength = strlen((const char*)USBPortDescriptor.RxBuf);
-				//print_usb("rxLength: %d\r\n", rxLength);
-				// Use packet processing to handle data that may span multiple packets
-				/*if(FW_ProcessPacketData(USBPortDescriptor.RxBuf, rxLength) != 0) {
-					print_usb("Error processing firmware data\r\n");
-					FW_CancelUpdate();
-				}*/
-				//USBPortDescriptor.RxReady = 0;
-			}
-			//--------------------------------------------------------------------------
-			else if(USBPortDescriptor.RxBuf[0]==0){	// just a CR, no command, so send out operating summary
+			if(USBPortDescriptor.RxBuf[0] == 0){	// just a CR, no command, so send out operating summary
 				Hello(PRINT_USB, false, -1);
 				if(BatteryIsCharging()){
-					print_usb("\r\nBattery: Charging");
+					print_usb("\r\nBattery: Charging\r\n");
 				}
 				else{
-					print_usb("\r\nBattery: Charged");
+					print_usb("\r\nBattery: Charged\r\n");
 				}
 			}
 
@@ -363,15 +262,15 @@ BEGIN_TASK(TaskUSB)
 			else { // we have a command, parse it into a command string and a floating point data value
 				argC=sscanf_P( (const char *)USBPortDescriptor.RxBuf,PSTR("%2s%f%f"), &cmd, &data1, &data2);
 				strlwr(cmd);
-				print_usb("\r\n>");
 				argC--;	// discount the command string and count only the numeric arguments
 
 				//-------------------------------------
 				// "UPdate" transfer control to the bootstrap loader
-				if(strncmp(cmd,"up",2)==0){
-					//while(1) {
-					//} // wait for watchdog timer to get us
-					while(1) {};
+				if(strncmp(cmd, "up", 2) == 0) {
+					print_usb("update command\r\n>");
+					EE_Wr(EE_UPDATE_REQUESTED, 1);  // Set flag for bootloader
+					WDT_EnableAndSetTimeout(WDT_PER_8CLK_gc);
+					while(1) {};  // Wait for watchdog to reset
 				}
 
 				//-------------------------------------

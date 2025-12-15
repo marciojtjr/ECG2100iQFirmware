@@ -31,31 +31,23 @@
 #define __Task2_priority        2
 #define __Task2_init            RTR_OFF
 
-#define __Task4                 TaskWatchDog
-#define __Task4_priority        2
-#define __Task4_init            RTR_ON
+#define __Task3                 TaskWatchDog
+#define __Task3_priority        2
+#define __Task3_init            RTR_ON
 
 #if BLUETOOTH
-#define __Task5                 TaskBT
-#define __Task5_priority        2
+#define __Task4                 TaskBT
+#define __Task4_priority        2
 #ifndef WORKING
-#define __Task5_init            RTR_OFF
+#define __Task4_init            RTR_OFF
 #else
-#define __Task5_init            RTR_ON
+#define __Task4_init            RTR_ON
 #endif
 #endif
 
-/*
-#ifdef WORKING
-#define __Task6						TaskPaceSimu
-#define __Task6_priority			2
-#define __Task6_init				RTR_OFF
-#endif
-*/
-
-#define __Task7                 TaskCC
-#define __Task7_priority        2
-#define __Task7_init            RTR_OFF
+#define __Task5                 TaskCC
+#define __Task5_priority        2
+#define __Task5_init            RTR_OFF
 
 /*-----------------------------------------------------------------------------------------------------------
  create semaphores here, (up to 15)- there is no semaphore 0 (only 1-15)
@@ -216,6 +208,8 @@ void    __wait          (uint8_t nTicks);
 void    __resetTask     (uint8_t tn);
 void    __enable_task(uint8_t tn, uint8_t i);
 void    __disable_task(uint8_t tn, uint8_t i);
+int     __get_rtr(uint8_t tn, uint8_t i);
+int     __get_enabled(uint8_t tn, uint8_t i);
 #if (SEMAPHORES_ON)
 uint8_t __getSema       (uint8_t n);
 void    __releaseSema   (uint8_t n);

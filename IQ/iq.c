@@ -126,7 +126,6 @@ int main(void){
 	DPLEDOff();
 	AnalogPowerOff();
 	FlashPowerOff();
-	//Seg7HP('P');
 	InitUSBDetect();
 	InitButton();
 	InitTWI();
@@ -134,14 +133,13 @@ int main(void){
 
 	CLK.RTCCTRL = CLK_RTCSRC_RCOSC_gc | CLK_RTCEN_bm;	// start the RTC (clocked at 1024Hz) so we can set registers
 	while(RTC_Busy());	// Wait until RTC is ready.
-	
 	//RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV16_gc );	// Configure RTC wakeup period, clock it at 1Hz
 	RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 
 	//------------------------------------------------------------------------------------------
 	// Catch uninitialized EEPROM parameters
 	// if the abandon time is a nonsense value, set all EEPROM coefficients to default
-	if(EE_Rd(EE_ABANDON_TIME)>600){
+	if(EE_Rd(EE_ABANDON_TIME) > 600){
 		SetDefaults();
 	}
 	
@@ -156,7 +154,6 @@ int main(void){
 	//if(EE_Rd(EE_ENABLE_VOICE)>1) {
 	//	EE_Wr(EE_ENABLE_VOICE, 1);
 	//}
-
 	while(1){
 
 		//------------------------------------------------------------------------------------------

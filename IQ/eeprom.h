@@ -33,7 +33,8 @@ enum {
 	EE_ENABLE_CONTINUOUS,
 	EE_LAST_CONNECTION_TYPE,
 	EE_TIMEOUT_MINUTES,
-	EE_FG_VALID							//Whether the fuel gauge is valid
+	EE_FG_VALID,						//Whether the fuel gauge is valid
+	EE_UPDATE_REQUESTED					// Set by app to request firmware update
 };
 
 #endif

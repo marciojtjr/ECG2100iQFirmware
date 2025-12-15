@@ -2,6 +2,7 @@
 
 #include <avr/io.h>
 #include <avr/wdt.h>
+#include <util/delay.h>
 #include "avr_compiler.h"
 #include "peanut.h"
 #include "defines.h"
@@ -11,6 +12,7 @@
 #include "clksys_driver.h"
 #include "seg7.h"
 #include "eeprom.h"
+#include "update_handler.h"
 
 #define BOOT_VERSION 3	// the first version was actually 0xffffffff
 
@@ -40,7 +42,7 @@ void (*appVec)( void ) = 0x0000; // Set up function pointer to RESET vector.
 	Seg7G(0); - top left
 	Seg7DP(0); - dot*/
 
-void BootSeg7(char c) {
+/*void BootSeg7(char c) {
 	Seg7A(0); Seg7B(0); Seg7C(0); Seg7D(0); Seg7E(0); Seg7F(0); Seg7G(0);
 	switch(c) {
 		case '0': Seg7A(1); Seg7B(1); Seg7C(1); Seg7D(1); Seg7E(1); Seg7G(1); break;
@@ -67,11 +69,9 @@ void BootSeg7(char c) {
 		case '.': Seg7DP(1); break;
 		case '-': Seg7F(1); break;
 	}
-}
+}*/
 
 void gotoApp(void){
-	BootSeg7('L');
-	return;
 	SP_WaitForSPM();
 	SP_LockSPM();
 	EIND = 0x00;
@@ -92,57 +92,13 @@ void FastClock(void){
 	CLKSYS_Disable( OSC_RC2MEN_bm | OSC_RC32KEN_bm);
 }
 
-//-------------------------------------------------------------------------
-
-#define BLOCKSIZE PAGESIZE // BLOCKSIZE should be chosen so that the following holds: BLOCKSIZE*n = PAGESIZE,  where n=1,2,3...
-
-unsigned char BlockLoad(unsigned int size, unsigned char mem, ADDR_T *address){   
-  unsigned int data;    
-  ADDR_T tempaddress;
-        	
-	if(mem=='F'){  // Flash memory type  NOTE: For flash programming, 'address' is given in words.
-    (*address) <<= 1; // Convert address to bytes temporarily.
-    tempaddress = (*address);  // Store address in page.
-    do{
-      data = recchar();
-      data |= (recchar() << 8);
-      SP_LoadFlashWord(*address, data);
-      (*address)+=2; // Select next word in memory.            
-      size -= 2; // Reduce number of bytes to write by two.
-    } while(size); // Loop until all bytes written.
-    SP_WriteApplicationPage(tempaddress);
-
-    SP_WaitForSPM();
-    (*address) >>= 1; // Convert address back to Flash words again.
-    return '\r'; // Report programming OK
-  }
-  else{ // Invalid memory type?
-    return '?';
-  }
-}
-
-void BlockRead(unsigned int size, unsigned char mem, ADDR_T *address){
-	if(mem=='F'){    // Flash memory type.
-    (*address) <<= 1; // Convert address to bytes temporarily.
-    do{
-      sendchar( SP_ReadByte( *address) );
-      sendchar( SP_ReadByte( (*address)+1) );
-      (*address) += 2;    // Select next word in memory.
-      size -= 2;          // Subtract two bytes from number of bytes to read
-    } while (size);         // Repeat until all block has been read
-    (*address) >>= 1;       // Convert address back to Flash words again.
-  }
-}
-
 //==============================================================================================================
 //==============================================================================================================
 //==============================================================================================================
-int main(void){
-
+int main(void) {
 	ADDR_T address = 0;
-  volatile unsigned int temp_int = 0;
+	volatile unsigned int temp_int = 0;
 	volatile unsigned char cmd = 0;
-
 	if(EE_Rd(EE_BOOT_VERSION)!= BOOT_VERSION){
 		EE_Wr(EE_BOOT_VERSION, BOOT_VERSION);
 	}
@@ -166,16 +122,13 @@ int main(void){
 	InitUSBDetect();	// prepare to look for USB power
 
 	// blank the LED
-	BootSeg7('U');
+	//BootSeg7('U');
 	FastClock();
-	temp_int=10000;
-	while(temp_int--);	// wait for things to settle
 
 	if(SP_ApplicationCRC() == EE_Rd(EE_APP_CRC)){ // if the application is valid, see if we should run it
 		if(!USBPresent()){	// if we're not being powered by USB, there's no way to update, so go to the app
 			gotoApp();
 		}
-
 		if( (RST.STATUS & RST_WDRF_bm)==0 ){ // if we did not get a watchdog reset, go to the application and let it handle the reset
 			gotoApp();
 		}
@@ -194,101 +147,75 @@ int main(void){
 	EEPROM_FlushBuffer();
 	EEPROM_DisableMapping();
 
-	initbootuart(19, -4); // 921600
-	sendchar('1');
-	BootSeg7('1');
-  while(1){  	/* Main loop */
-	sendchar('2');
-	BootSeg7('2');
-	//PORTE.OUTTGL = PIN7_bm;
-	cmd = recchar();
-	if(cmd=='!'){	// ! is the go to app command
+	//initbootuart(19, -4); // 921600
+	initbootuart(33, -1); //115200
+	
+	static char hexRecord[128] = {0};  // Buffer for complete hex record
+	static uint8_t recordPos = 0;
+	static uint8_t inFirmwareUpdate = 0;
+	static uint8_t waitForCancel = 0;
+
+	// Check if update was requested by app
+	if(EE_Rd(EE_UPDATE_REQUESTED)) {
+		EE_Wr(EE_UPDATE_REQUESTED, 0);  // Clear flag
+		sendStr("Bootloader update mode\r\n");
+	} else {
+		sendStr("Bootloader running app\r\n");
 		gotoApp();
 	}
-    if(cmd=='a'){    // Check autoincrement status.
-      sendchar('Y'); // Yes, we do autoincrement.
-    }
-    else if(cmd == 'A'){ // Set address... // NOTE: Flash addresses are in words, not bytes.
-      address = (recchar() << 8) | recchar(); // Read address high and low byte.	  
-	  sendchar('\r'); // Send OK back.
-    }
-    else if(cmd=='e'){ // Chip erase.
-      for(address = 0; address < APP_END; address += PAGESIZE){ // NOTE: Here we use address as a byte-address, not word-address, for convenience.
-        SP_WaitForSPM();
-      	SP_EraseApplicationPage( address );
-				wdt_reset();
-      }
-      sendchar('\r'); // Send OK back.
-    }
-
-    else if(cmd=='b'){ // Check block load support.
-			sendchar('Y'); // Report block load supported.
-			sendchar((BLOCKSIZE >> 8) & 0xFF); // MSB first.
- 			sendchar(BLOCKSIZE & 0xFF); // Report BLOCKSIZE (bytes).
+	while(1) {
+		uint8_t byte = recchar();
+		if (waitForCancel) {
+			FW_CancelUpdate();
+			waitForCancel = RTS();
+			if (!waitForCancel) {
+				sendStr("Update restarted \r\n");
+			}
+			send_xon();
 		}
-		else if(cmd=='B'){ // Start block load.
-  	  DPLEDTog();
-			temp_int = (recchar()<<8) | recchar(); // Get block size.
-      cmd = recchar(); // Get memtype.
-	    sendchar( BlockLoad(temp_int, cmd, &address) ); // Block load.
-    }	    
-		else if(cmd=='g'){ // Start block read.
-  	  DPLEDTog();
-			temp_int = (recchar()<<8) | recchar(); // Get block size.
-		  cmd = recchar(); // Get memtype
-  		BlockRead(temp_int, cmd, &address); // Block read
-		}		
-
-    else if((cmd=='P')||(cmd=='L')){ // Enter and leave programming mode.
-      sendchar('\r'); // Nothing special to do, just answer OK.
-    }
-
-    else if(cmd=='E'){ // Exit bootloader.
-      sendchar('\r');
-			AppCRC = SP_ApplicationCRC();
-			EE_Wr(EE_APP_CRC,AppCRC);
-      gotoApp();
-    }
-	
-
-    else if (cmd=='p'){ // Get programmer type.        
-      sendchar('S'); // Answer 'SERIAL'.
-    }
-    else if(cmd=='t'){ // Return supported device codes.
-
-#if PARTCODE+0 > 0
-      sendchar( PARTCODE ); // Supports only this device, of course.
-#endif /* PARTCODE */
-      sendchar( 0 ); // Send list terminator.
-    }
-    else if((cmd=='x')||(cmd=='y')||(cmd=='T')){ // Set LED, clear LED and set device type.
-      recchar(); // Ignore the command and its parameter.
-      sendchar('\r'); // Send OK back.
-    }
-
-    else if(cmd=='S'){ // Return programmer identifier.
-      sendchar('A'); // Return 'AVRBOOT'.
-      sendchar('V'); // Software identifier (aka programmer signature) is always 7 characters.
-      sendchar('R');
-      sendchar('B');
-      sendchar('O');
-      sendchar('O');
-      sendchar('T');
-    }
-    else if(cmd=='V'){ // Return software version.
-      sendchar('1');
-      sendchar('6');
-    }        
-    else if(cmd=='s') { // Return signature bytes.
-      sendchar( SIGNATURE_2 );
-      sendchar( SIGNATURE_1 );
-      sendchar( SIGNATURE_0 );
-    }       
-    // The last command to accept is ESC (synchronization).
-    else if(cmd!=0x1b){ // If not ESC, then it is unrecognized...
-      sendchar('?');
-    }
-  } // end: while(1)
-} // end: main
-
+		// Start of new hex record
+		if(!waitForCancel && byte == ':') {
+			if(!inFirmwareUpdate) {
+				//sendStr("Update started ...\r\n");
+				FW_InitUpdate();  // Fresh start
+				inFirmwareUpdate = 1;
+			}
+			recordPos = 0;  // Reset for new record
+		}
+		// If firmware update is active, collect hex record
+		if(inFirmwareUpdate && recordPos < (sizeof(hexRecord) - 1)) {
+			hexRecord[recordPos++] = byte;
+			// End of hex record found
+			if(byte == '\n') {
+				send_xoff();  // Pause sender while processing
+				// Null terminate the record
+				hexRecord[recordPos] = '\0';
+				// Remove \r if present
+				if(recordPos > 1 && hexRecord[recordPos-2] == '\r') {
+					hexRecord[recordPos-2] = '\0';
+				}
+				// Process the complete hex record
+				if(FW_ParseHexRecord(hexRecord) != 0) {
+					FW_CancelUpdate();
+					flush_uart();  // Clear any garbage
+					waitForCancel = 1;
+					inFirmwareUpdate = 0;
+					recordPos = 0;
+				} else {
+					sendchar('.');
+					recordPos = 0;  // Reset for next record
+					send_xon();  // Resume sender
+				}
+			}
+				
+			// Check if firmware update completed
+			if(!waitForCancel && !FW_IsUpdateActive()) {
+				sendStr("App start\r\n");
+				gotoApp();
+				inFirmwareUpdate = 0;
+				recordPos = 0;
+			}
+		}
+	}
+}
 #endif
