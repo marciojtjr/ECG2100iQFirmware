@@ -127,11 +127,12 @@ int main(void) {
 
 	if(SP_ApplicationCRC() == EE_Rd(EE_APP_CRC)){ // if the application is valid, see if we should run it
 		if(!USBPresent()){	// if we're not being powered by USB, there's no way to update, so go to the app
-			gotoApp();
+			sendStr("Bootloader USB not present\r\n");
+            gotoApp();
 		}
-		if( (RST.STATUS & RST_WDRF_bm)==0 ){ // if we did not get a watchdog reset, go to the application and let it handle the reset
-			gotoApp();
-		}
+		//if( (RST.STATUS & RST_WDRF_bm)==0 ){ // if we did not get a watchdog reset, go to the application and let it handle the reset
+		//	gotoApp();
+		//}
 	}
 	//-------------------------------------------------------------------------
 	// We're here because of a watchdog timer reset that occurred while we were connected to USB

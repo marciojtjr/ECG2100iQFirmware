@@ -45,6 +45,7 @@
       <itemPath>../twi_driver.h</itemPath>
       <itemPath>../ltc2959.h</itemPath>
       <itemPath>../twi_master.h</itemPath>
+      <itemPath>../update_handler.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -98,6 +99,7 @@
       <itemPath>../src/ASF/xmega/drivers/twi/twis.c</itemPath>
       <itemPath>../src/ASF/xmega/drivers/nvm/nvm.c</itemPath>
       <itemPath>../src/ASF/common/services/clock/xmega/sysclk.c</itemPath>
+      <itemPath>../update_handler.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -820,7 +822,7 @@
         <appendMe value="-Wl,-u,vfscanf -Wl,-u,vfprintf"/>
       </AVR-LD>
       <AtmelIceTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="AutoSelectMemRanges" value="manual"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
@@ -843,15 +845,15 @@
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-87ff"/>
+        <property key="memories.programmemory.ranges" value="0-7fff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.eraseb4program" value="false"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.preserveeeprom" value="true"/>
+        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
+        <property key="programoptions.preserveprogram.ranges" value="8000-ffff"/>
+        <property key="programoptions.preserveprogramrange" value="true"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="toolpack.updateoptions"
@@ -861,7 +863,7 @@
         <property key="voltagevalue" value=""/>
       </AtmelIceTool>
       <Tool>
-        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="AutoSelectMemRanges" value="manual"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
@@ -884,15 +886,15 @@
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-87ff"/>
+        <property key="memories.programmemory.ranges" value="0-7fff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.eraseb4program" value="false"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.preserveeeprom" value="true"/>
+        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
+        <property key="programoptions.preserveprogram.ranges" value="8000-ffff"/>
+        <property key="programoptions.preserveprogramrange" value="true"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="toolpack.updateoptions"
@@ -1048,7 +1050,7 @@
         <property key="v-printf" value="false"/>
       </AVR-LD>
       <AtmelIceTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="AutoSelectMemRanges" value="manual"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
@@ -1071,13 +1073,13 @@
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-87ff"/>
+        <property key="memories.programmemory.ranges" value="8000-ffff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.eraseb4program" value="false"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
+        <property key="programoptions.preserveeeprom" value="true"/>
+        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>
@@ -1089,7 +1091,7 @@
         <property key="voltagevalue" value=""/>
       </AtmelIceTool>
       <Tool>
-        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="AutoSelectMemRanges" value="manual"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
@@ -1112,13 +1114,13 @@
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-87ff"/>
+        <property key="memories.programmemory.ranges" value="8000-ffff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.eraseb4program" value="false"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
+        <property key="programoptions.preserveeeprom" value="true"/>
+        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>

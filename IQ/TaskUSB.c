@@ -294,6 +294,18 @@ BEGIN_TASK(TaskUSB)
 					short battMV = round(VBatt*100);
 					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
 				}
+				//-------------------------------------
+				// "VErsion" - Display firmware version information
+				else if(!strncmp("ve", cmd, 2)) {
+					print_usb("Spaulding Electrocardiograph\r\n");
+					print_usb("BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n",
+						(int)EE_Rd(EE_BOOT_VERSION),
+						VERSION,
+						MCU.JTAGUID,
+						(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100),
+						(int)((EE_Rd(EE_SERIAL_NUM)/10000)%100),
+						(int)(EE_Rd(EE_SERIAL_NUM)%10000));
+				}
 				else if(!strncmp("to", cmd, 2)) {
 					if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
 						argC=sscanf_P( (const char *)USBPortDescriptor.RxBuf,PSTR("%2s%ld"), &cmd, &start);
