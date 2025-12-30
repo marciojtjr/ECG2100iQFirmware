@@ -130,9 +130,9 @@ int main(void) {
 			sendStr("Bootloader USB not present\r\n");
             gotoApp();
 		}
-		//if( (RST.STATUS & RST_WDRF_bm)==0 ){ // if we did not get a watchdog reset, go to the application and let it handle the reset
-		//	gotoApp();
-		//}
+		if( (RST.STATUS & RST_WDRF_bm)==0 ){ // if we did not get a watchdog reset, go to the application and let it handle the reset
+			gotoApp();
+		}
 	}
 	//-------------------------------------------------------------------------
 	// We're here because of a watchdog timer reset that occurred while we were connected to USB
