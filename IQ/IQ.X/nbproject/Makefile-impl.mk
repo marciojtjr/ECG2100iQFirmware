@@ -31,7 +31,7 @@ DEFAULTCONF=Bluetooth
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Bluetooth Production Comparison Logging Working BaudRateChanger Bootloader ContinuousBluetooth 
+ALLCONFS=Bluetooth Bootloader 
 
 
 # build
@@ -46,26 +46,14 @@ ALLCONFS=Bluetooth Production Comparison Logging Working BaudRateChanger Bootloa
 # clobber
 .clobber-impl: .clobber-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Bluetooth clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Production clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Comparison clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Logging clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Working clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=BaudRateChanger clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Bootloader clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=ContinuousBluetooth clean
 
 
 
 # all
 .all-impl: .all-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Bluetooth build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Production build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Comparison build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Logging build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Working build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=BaudRateChanger build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Bootloader build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=ContinuousBluetooth build
 
 
 

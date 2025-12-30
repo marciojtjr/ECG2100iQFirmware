@@ -9,7 +9,7 @@
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList>
-                <sourceRootElem>../BGAPI</sourceRootElem>
+                <sourceRootElem>..</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>
@@ -17,31 +17,7 @@
                     <type>2</type>
                 </confElem>
                 <confElem>
-                    <name>Production</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
-                    <name>Comparison</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
-                    <name>Logging</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
-                    <name>Working</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
-                    <name>BaudRateChanger</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
                     <name>Bootloader</name>
-                    <type>2</type>
-                </confElem>
-                <confElem>
-                    <name>ContinuousBluetooth</name>
                     <type>2</type>
                 </confElem>
             </confList>
