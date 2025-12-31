@@ -1039,7 +1039,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 			*/
 
 			if(connectionNeedsReset) {
-				//print_usb("Connection lost. Resetting...\r\n");
+				debug_message("Connection lost. Resetting %d...\r\n", isBT122);
 				// Reset BT
 				//Seg7LP('r');
 				DPLEDOff();
@@ -1048,55 +1048,39 @@ while(1){	// do something until we complete or abort the acquisition process any
 				// Reset RTC
 				RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 
-				BTEnable = 0;
-				BTOff();
-				osDISABLE_TASK(TaskBT);
-				
-				//resetAllVariables();
-				
-				//RESET_TASK(TaskBT);
-				osWAIT(250);
-				osWAIT(250);
-				
-				acqState = FSM_PREACQ;
-
-				//print_usb("Flushing BTRxBuffer\r\n");
-				//memset((void*)BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);
-				//BTPortDescriptor.RxReady = 0;
-				readyForCommands = 0;
-				BTOn();
+				if (!isBT122) {
+					BTEnable = 0;
+					BTOff();
+					osDISABLE_TASK(TaskBT);
+					osWAIT(250);
+					osWAIT(250);
+					acqState = FSM_PREACQ;
+					readyForCommands = 0;
+					BTOn();
 				
 				
-				while(!readyForCommands) {
-					osWAIT(1);
+					while(!readyForCommands) {
+						osWAIT(1);
+					}
+					ignoreNextRFCOMM = 1;
+					print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
+					osWAIT(50);
+					// Make settings change
+					if(connectionType == CONNECTION_APPLE) {
+						print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
+						//Seg7HP('9');
+					}
+					else {
+						print_bt("SET CONTROL AUTOCALL\r");
+					}				
+					connectionNeedsReset = 0;
+					waitingForFirstCommand = 1;				
+					osENABLE_TASK(TaskBT);
+				} else {
+					debug_message("SKIPPING BT122... \r\n");
+					connectionNeedsReset = 0;
+					waitingForFirstCommand = 1;
 				}
-				//print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
-				ignoreNextRFCOMM = 1;
-				print_bt("SDP ADD 72243468-25ee-4025-8fe7-1edd2cf13cd2 SpauldingECGRFCOMM\r");
-				//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
-				
-				osWAIT(50);
-				// Make settings change
-				if(connectionType == CONNECTION_APPLE) {
-					print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
-					//Seg7HP('9');
-				}
-				//else if (lastConnection == CONNECTION_ANDROID) {
-				//else if(connectionType == CONNECTION_ANDROID) {
-					//ignoreNextRFCOMM = 1;
-					//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
-					//Seg7HP('A');
-				//	print_bt("SET CONTROL AUTOCALL\r");
-				//} 
-				else {
-					print_bt("SET CONTROL AUTOCALL\r");
-				}
-				
-				connectionNeedsReset = 0;
-				waitingForFirstCommand = 1;
-				
-				osENABLE_TASK(TaskBT);
-				
 				InitADCs();
 				
 				// Reset ADCs and VBatt
@@ -1179,7 +1163,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 
 
 			osWAIT(1);
-		} while(!USBPresent());
+		} while(true || !USBPresent());
 
 		BTEnable = 0;
 		BTOff();

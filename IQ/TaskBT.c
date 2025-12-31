@@ -61,6 +61,7 @@ char AppleBTString[APPLE_BT_STRING_SIZE];
 unsigned char BTString[BT_SIZE]; // Bigger now.
 static int appleStringIndex = 0;
 unsigned char isThereAnActiveConnection = 0;
+unsigned char isBT122 = 0;  // Global variable to track BT122 vs legacy BT
 
 // Are we downsampling to 500Hz?
 unsigned char downsample = 0;
@@ -70,7 +71,6 @@ unsigned char downsample = 0;
 //static unsigned char format = FORMAT_BINARY;
 
 static uint8_t outBufferPos;
-
 //##########################################################################################
 // define and allocate globals for the bluetooth task
 
@@ -232,60 +232,58 @@ void ConfigureUSBUSART(unsigned long baudrate)
 // enable_rts: 1 to enable RTS (nRTS on PA0/PORTA PIN0), 0 to disable
 void ConfigureBTUSART(unsigned long baudrate, unsigned char enable_rts)
 {
-	if(!btConfigured) {
-		int bsel, bscale;
+	int bsel, bscale;
 
-		// Calculate BSEL and BSCALE for common baudrates at 32MHz
-		if(baudrate == 115200) {
-			bsel = 33;
-			bscale = -1;
-		} else if(baudrate == 921600) {
-			bsel = 19;
-			bscale = -4;
-		} else {
-			// Default to 921600 if unknown baudrate
-			bsel = 19;
-			bscale = -4;
-		}
-
-		BTPortDescriptor.RxBuf = largeRxBuf;
-		BTPortDescriptor.TxBuf = largeTxBuf;
-
-		BTPortDescriptor.TxBufSize = LARGE_TX_BUF_SIZE;
-		BTPortDescriptor.RxBufSize = LARGE_RX_BUF_SIZE;
-		BTPortDescriptor.TxBufMask = LARGE_TX_BUF_MASK;
-
-		bt = &bt_str;
-		BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
-		BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
-
-        // Configure RTS on PF7/SYNC(55) - BC  for USART
-        if(enable_rts) {
-            PORTF.DIRSET = PIN7_bm;        // Set PF7 as output
-            PORTF.OUTCLR = PIN7_bm;        // Set PF7 low (RTS active, nRTS = 0)
-            PORTF.PIN7CTRL = PORT_OPC_TOTEM_gc;  // Totem-pole configuration
-            
-            // Configure CTS input (PA0)
-            PORTA.DIRCLR = PIN0_bm;        // Set PA0 as input
-            PORTA.PIN0CTRL = PORT_OPC_PULLUP_gc;  // Enable pull-up
-            
-            print_usb("[USB] RTS enabled on PF7 (active low)\r\n");
-        } else {
-            PORTF.DIRCLR = PIN7_bm;        // Set PF7 as input (disabled)
-            print_usb("[USB] RTS disabled\r\n");
-        } 
-		USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc);
-		USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
-		USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N1
-
-		USART_Baudrate_Set(BTPortDescriptor.usart, bsel, bscale);
-		USART_Rx_Enable(BTPortDescriptor.usart);
-		USART_Tx_Enable(BTPortDescriptor.usart);
-
-		btConfigured = 1;
-
-		print_usb("[BT] BT USART initialized at %lu baud\r\n", baudrate);
+	// Calculate BSEL and BSCALE for common baudrates at 32MHz
+	if(baudrate == 115200) {
+		bsel = 33;
+		bscale = -1;
+	} else if(baudrate == 921600) {
+		bsel = 19;
+		bscale = -4;
+	} else {
+		// Default to 921600 if unknown baudrate
+		bsel = 19;
+		bscale = -4;
 	}
+
+	BTPortDescriptor.RxBuf = largeRxBuf;
+	BTPortDescriptor.TxBuf = largeTxBuf;
+
+	BTPortDescriptor.TxBufSize = LARGE_TX_BUF_SIZE;
+	BTPortDescriptor.RxBufSize = LARGE_RX_BUF_SIZE;
+	BTPortDescriptor.TxBufMask = LARGE_TX_BUF_MASK;
+
+	bt = &bt_str;
+	BT_USART_PORT.DIRSET = PIN3_bm;// TXD is output
+	BT_USART_PORT.DIRCLR = PIN2_bm;// RXD is input
+
+    // Configure RTS on PF7/SYNC(55) - BC  for USART
+    if(enable_rts) {
+        PORTF.DIRSET = PIN7_bm;        // Set PF7 as output
+        PORTF.OUTCLR = PIN7_bm;        // Set PF7 low (RTS active, nRTS = 0)
+        PORTF.PIN7CTRL = PORT_OPC_TOTEM_gc;  // Totem-pole configuration
+            
+        // Configure CTS input (PA0)
+        PORTA.DIRCLR = PIN0_bm;        // Set PA0 as input
+        PORTA.PIN0CTRL = PORT_OPC_PULLUP_gc;  // Enable pull-up
+            
+        print_usb("[USB] RTS enabled on PF7 (active low)\r\n");
+    } else {
+        PORTF.DIRCLR = PIN7_bm;        // Set PF7 as input (disabled)
+        print_usb("[USB] RTS disabled\r\n");
+    } 
+	USART_InterruptDriver_Initialize(&BTPortDescriptor, &BT_USART, USART_DREINTLVL_HI_gc);
+	USART_RxdInterruptLevel_Set(BTPortDescriptor.usart, USART_RXCINTLVL_HI_gc);
+	USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, false);	//8N1
+
+	USART_Baudrate_Set(BTPortDescriptor.usart, bsel, bscale);
+	USART_Rx_Enable(BTPortDescriptor.usart);
+	USART_Tx_Enable(BTPortDescriptor.usart);
+
+	btConfigured = 1;
+
+	print_usb("[BT] BT USART initialized at %lu baud\r\n", baudrate);
 }
 
 //==========================================================================================
@@ -347,14 +345,6 @@ BEGIN_TASK(TaskBT)
 	// Bluetooth command parser
 	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
 	if(true || !USBPresent()){
-		// Make sure our UART settings are correct
-		// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
-		// Wait until we're in preacq before turning on the radio
-		// Or if we're full, let it go through as well
-		//while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
-		//	osWAIT(1);
-		//}			
-		//acqState = FSM_PREACQ;
 		BTOn();
 		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;
@@ -364,15 +354,23 @@ BEGIN_TASK(TaskBT)
                 debug_message("firstByte: %c %d\r\n", firstByte, firstByte);
             }
         }
-        static bool isBT122;
         static int execution_id = 0;
         execution_id++;
         isBT122 = (firstByte == 160);
         debug_message("[BT] Execution %d: firstByte=%d, isBT122=%d\r\n", execution_id, firstByte, isBT122);
         if (isBT122) {
-			// Initialize BGAPI subsystem
             BT122_handler_init(device_name, 30000);
+			ConfigureBTUSART(921600, 1);
         } else {
+			ConfigureBTUSART(921600, 0);
+			// Make sure our UART settings are correct
+			// we can run Bluetooth only on non rev 1 hardware (which has unprogrammed JTAG UID)
+			// Wait until we're in preacq before turning on the radio
+			// Or if we're full, let it go through as well
+			while(acqState < FSM_PREACQ && acqState != FSM_FULL) {
+				osWAIT(1);
+			}
+			acqState = FSM_PREACQ;
             legacybt_handler_init(device_name, 30000);
         }
 		static uint8_t bt122_endpoint;       
@@ -380,7 +378,7 @@ BEGIN_TASK(TaskBT)
 		while(1) {
 			bgapi_packet_t bt122_packet;
 			extracted_command[0] = 0;
-			extracted_command[1] = 0;
+			extracted_command[1] = 0;	
 			if (isBT122) {		
 				while(btDebugTail != btDebugHead) {
 					unsigned char data = btDebugBuf[btDebugTail];
@@ -394,11 +392,11 @@ BEGIN_TASK(TaskBT)
 						extracted_command[0] = bt122_packet.payload[0];
 						extracted_command[1] = bt122_packet.payload[1];
 
-						// Check for disconnect events
 						if (bt122_packet.message_type == BGAPI_MSG_TYPE_EVENT) {
+							debug_message("[BT] BT122 EVENT: Class=0x%02X Cmd=0x%02X\n", bt122_packet.class_id, bt122_packet.command_id);
                             if (bt122_packet.class_id == BGAPI_CLASS_BT_RFCOMM &&
 							    bt122_packet.command_id == BGAPI_EVENT_BT_RFCOMM_OPENED) {
-								print_usb("[BT] RFCOMM socket connected (RFCOMM opened)\n");
+								debug_message("[BT] RFCOMM socket connected (RFCOMM opened)\n");
                                 keepAliveTimer = -1;
                                 DPLEDOn();
                                 BTEnable = 1;
@@ -407,12 +405,16 @@ BEGIN_TASK(TaskBT)
 							}
 							else if (bt122_packet.class_id == BGAPI_CLASS_ENDPOINT &&
 							         bt122_packet.command_id == BGAPI_EVENT_ENDPOINT_CLOSED) {
-								print_usb("[BT] RFCOMM socket disconnected (endpoint closed)\n");
-                                BTEnable = 0;
+								debug_message("[BT] RFCOMM socket disconnected (endpoint closed)\n");
+								BTEnable = 0;
 							}
 							else if (bt122_packet.class_id == BGAPI_CLASS_BT_CONNECTION &&
 							         bt122_packet.command_id == BGAPI_EVENT_BT_CONNECTION_CLOSED) {
-								print_usb("[BT] BT client disconnected (connection closed)\n");
+								debug_message("[BT] BT client disconnected (connection closed)\n");
+								BTEnable = 0; 
+							}
+							else {
+								debug_message("[BT] Unhandled BT122 event: Class=0x%02X Cmd=0x%02X\n", bt122_packet.class_id, bt122_packet.command_id);
 							}
 						}
 					}
@@ -455,7 +457,14 @@ BEGIN_TASK(TaskBT)
 					RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 					BTEnable = 0;
 					connectionNeedsReset = 0;  // fix lockup issue (see ECR 79)
-				}				
+				}
+				// For BT122, if BTEnable goes from 1 to 0, ensure we're discoverable
+				static uint8_t prev_BTEnable = 0;
+				if (isBT122 && prev_BTEnable == 1 && BTEnable == 0) {
+					debug_message("[BT] BT122 connection lost - resetting to discoverable\r\n");
+					BT122_handler_reset_to_discoverable();
+				}
+				prev_BTEnable = BTEnable;				
 				if(isBT122 || BTPortDescriptor.RxReady) {
 					if (!isBT122) {
 						strncpy(extracted_command, BTPortDescriptor.RxBuf, 2);

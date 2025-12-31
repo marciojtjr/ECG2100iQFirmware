@@ -50,6 +50,10 @@ void bgapi_cmd_ps_save(bgapi_command_t *cmd, uint16_t key, const uint8_t *value,
 void bgapi_cmd_ps_load(bgapi_command_t *cmd, uint16_t key);
 void bgapi_cmd_ps_erase(bgapi_command_t *cmd, uint16_t key);
 
+// Hardware Commands
+void bgapi_cmd_hardware_set_uart_configuration(bgapi_command_t *cmd, uint8_t uart_index, uint32_t baud_rate, 
+                                              uint8_t data_bits, uint8_t stop_bits, uint8_t parity, uint8_t flow_control);
+
 // Helper: Parse UUID string to byte array
 // Input: "72243468-25ee-4025-8fe7-1edd2cf13cd2"
 // Output: {0x72,0x24,0x34,0x68,...}

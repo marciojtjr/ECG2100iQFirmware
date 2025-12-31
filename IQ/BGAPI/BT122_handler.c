@@ -78,9 +78,16 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
 							launchStep = 7;
 						break;
 						case 7:
-						    debug_message("[BT122] Initialization completed successfully\r\n");
+						    debug_message("[BT122] bgapi_cmd_hardware_set_uart_configuration\r\n");
 						    readyForCommands = 1;
-						    return 0;  // Success
+							bgapi_cmd_hardware_set_uart_configuration(&cmd, 0, 921600, 8, 1, 0, 1);
+							bgapi_send_command(&cmd);
+						    launchStep = 8;
+						break;
+						case 8:
+							debug_message("[BT122] Initialization completed successfully\r\n");
+							readyForCommands = 1;
+							return 0;  // Success
 						break;
 					}
 				}
@@ -96,4 +103,18 @@ void BT122_handler_data_send(uint8_t endpoint, const uint8_t *data, uint8_t data
 	bgapi_command_t cmd;
 	bgapi_cmd_endpoint_send(&cmd, endpoint, data, data_len);
 	bgapi_send_command(&cmd);
+}
+
+void BT122_handler_reset_to_discoverable(void) {
+	bgapi_command_t cmd;
+	
+	// First ensure RFCOMM server is running
+	bgapi_cmd_bt_rfcomm_start_server(&cmd, 2, 0);
+	bgapi_send_command(&cmd);
+	debug_message("[BT122] Restarted RFCOMM server\r\n");
+	
+	// Then set GAP mode to discoverable
+	bgapi_cmd_bt_gap_set_mode(&cmd, 1, 1, 0);  // connectable, discoverable, not limited
+	bgapi_send_command(&cmd);
+	debug_message("[BT122] Reset to discoverable mode\r\n");
 }
