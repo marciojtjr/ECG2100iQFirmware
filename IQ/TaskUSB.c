@@ -214,19 +214,8 @@ void ConfigureUSBUSART(unsigned long baudrate)
 //==========================================================================================
 // USB Task
 BEGIN_TASK(TaskUSB)
-	//osENABLE_TASK(TaskFlash);	// we'll need Flash access
-
-	//------------------------------------------------------------------------------------------
-	// prepare the USB USART
-	if(!usbConfigured) {
-		ConfigureUSBUSART(115200);
-		usbConfigured = 1;
-	}
-
-
 	//==========================================================================================
 	// USB command parser
-
 
 	static unsigned char argC;
 	static char cmd[3];
@@ -272,6 +261,39 @@ BEGIN_TASK(TaskUSB)
 					WDT_EnableAndSetTimeout(WDT_PER_8CLK_gc);
 					while(1) {};  // Wait for watchdog to reset
 				}
+				else if(strncmp(cmd,"a1",2)==0) {
+					Seg7A(1);
+					} else if(strncmp(cmd,"a0",2)==0) {
+					Seg7A(0);
+					} else if(strncmp(cmd,"b1",2)==0) {
+					Seg7B(1);
+					} else if(strncmp(cmd,"b0",2)==0) {
+					Seg7B(0);
+					} else if(strncmp(cmd,"c1",2)==0) {
+					Seg7C(1);
+					} else if(strncmp(cmd,"c0",2)==0) {
+					Seg7C(0);
+					} else if(strncmp(cmd,"d1",2)==0) {
+					Seg7D(1);
+					} else if(strncmp(cmd,"d0",2)==0) {
+					Seg7D(0);
+					} else if(strncmp(cmd,"e1",2)==0) {
+					Seg7E(1);
+					} else if(strncmp(cmd,"e0",2)==0) {
+					Seg7E(0);
+					} else if(strncmp(cmd,"f1",2)==0) {
+					Seg7F(1);
+					} else if(strncmp(cmd,"f0",2)==0) {
+					Seg7F(0);
+					} else if(strncmp(cmd,"g1",2)==0) {
+					Seg7G(1);
+					} else if(strncmp(cmd,"g0",2)==0) {
+					Seg7G(0);
+					} else if(strncmp(cmd,"dp1",3)==0) {
+					Seg7DP(1);
+					} else if(strncmp(cmd,"dp0",3)==0) {
+					Seg7DP(0);
+				}
 
 				//-------------------------------------
 				// accept a query to set/get our serial number
@@ -283,16 +305,8 @@ BEGIN_TASK(TaskUSB)
 
 					print_usb("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 				}
-				else if(strncmp(cmd, "ba",2 )==0) {
-						AnalogPowerOn();
-						VBatt = cc_get_batt_volt();
-						AnalogPowerOff();										
-						print_usb("Battery voltage: %0.2f\n", VBatt);
-				}
-				else if(!strncmp("vr", cmd, 2)) {
-					VBatt = cc_get_batt_volt();
-					short battMV = round(VBatt*100);
-					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
+				else if(strncmp(cmd, "ba",2 )==0) {							
+					print_usb("Battery percent: %0.2f\n", cc_get_batt_per());
 				}
 				//-------------------------------------
 				// "VErsion" - Display firmware version information

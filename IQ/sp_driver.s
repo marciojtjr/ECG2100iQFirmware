@@ -67,7 +67,9 @@
 ;* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;******************************************************************************
 
-#include <avr/io.h>
+#include <avr\io.h>
+
+#ifdef BOOTLOADER
 
 #define PROGMEM_PAGE_SIZE SPM_PAGESIZE
 
@@ -791,3 +793,5 @@ SP_CommonSPM:
 	
 	
 ; END OF FILE
+
+#endif

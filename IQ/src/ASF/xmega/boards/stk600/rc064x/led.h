@@ -1,13 +1,14 @@
-/*****************************************************************************
- *
+/**
  * \file
  *
- * \brief TWI Slave driver for AVR XMEGA.
+ * \brief STK600 board LEDs support package.
  *
- * This file defines a useful set of functions for the TWI interface on AVR Xmega
- * devices.
+ * This file contains definitions and services related to the LED features of
+ * the STK600 board.
  *
- * Copyright (c) 2009-2015 Atmel Corporation. All rights reserved.
+ * To use this board, define BOARD=STK600_RC064X.
+ *
+ * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -43,36 +44,38 @@
  *
  * \asf_license_stop
  *
- ******************************************************************************/
+ */
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
+#ifndef _LED_H_
+#define _LED_H_
 
-#ifndef _TWI_SLAVE_H_
-#define _TWI_SLAVE_H_
+#include "gpio.h"
 
-#include "compiler.h"
-#include "sysclk.h"
-#include "status_codes.h"
-#include "twis.h"
+/*! \brief Turns off the specified LEDs.
+ *
+ * \param led_gpio LED to turn off (LEDx_GPIO).
+ *
+ * \note The pins of the specified LEDs are set to GPIO output mode.
+ */
+#define LED_Off(led_gpio)     gpio_set_pin_high(led_gpio)
 
-typedef TWI_t *twi_slave_t;
-typedef twi_options_t twi_slave_options_t;
+/*! \brief Turns on the specified LEDs.
+ *
+ * \param led_gpio LED to turn on (LEDx_GPIO).
+ *
+ * \note The pins of the specified LEDs are set to GPIO output mode.
+ */
+#define LED_On(led_gpio)      gpio_set_pin_low(led_gpio)
 
-static inline void twi_slave_setup(twi_slave_t twi,
-		twi_slave_options_t *opt, TWI_Slave_t *twiSlave,
-		void (*processDataFunction) (void), uint8_t address,
-		TWI_SLAVE_INTLVL_t intLevel)
-{
-	opt->speed_reg = TWI_BAUD(sysclk_get_cpu_hz(),opt->speed);
+/*! \brief Toggles the specified LEDs.
+ *
+ * \param led_gpio LED to toggle (LEDx_GPIO).
+ *
+ * \note The pins of the specified LEDs are set to GPIO output mode.
+ */
+#define LED_Toggle(led_gpio)  gpio_toggle_pin(led_gpio)
 
-	sysclk_enable_peripheral_clock(twi);
-
-	TWI_SlaveInitializeDriver(twiSlave, twi, processDataFunction);
-	TWI_SlaveInitializeModule(twiSlave, address, intLevel);
-}
-
-#endif  // _TWI_SLAVE_H_
-
-
+#endif  // _LED_H_

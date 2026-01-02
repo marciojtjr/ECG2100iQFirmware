@@ -53,8 +53,6 @@ int16_t Lead[8];	// final ECG leads
 unsigned int sampleIndex; // used to index into the ECG buffer
 unsigned int voiceIndex;	// used to index into the Voice buffer
 
-float VBatt;
-
 // Lead Fail Stuff
 char LFBiasEnable;	// 1 = inject 250Hz bias, 0 = don't
 int16_t LFBiasModel[2][8][4];	// two models (so we can ping-pong) for the eight channels, each model containing four samples
@@ -96,19 +94,6 @@ unsigned int msSinceLastSpike = 0;
 #endif
 
 //unsigned int test;
-
-//------------------------------------------------------------------------------------------
-// return the battery voltage, in mV.
-// If acquisition is running (AcqIrqState != ACQ_IRQ_IDLE) we use the raw battery ADC reading
-// provided by the interrupt routine. If acquisition is NOT running, we'll do a direct ADC conversion here
-unsigned int MeasureBatt(void){
-	if(AcqIrqState != ACQ_IRQ_IDLE){
-		return(VBatt);
-	}
-	else{
-		return(1);
-	}
-}
 
 //------------------------------------------------------------------------------------------
 // pack an array of eight 16-bit signed ECG samples (of which 12 bits are valid) into 12 bytes
@@ -635,7 +620,7 @@ void AcqInterrupt(){
 						ADC_Ch_InputMux_Config(&ADCB.CH2, ADC_CH_V1, 0);
 						ADC_Ch_InputMux_Config(&ADCB.CH3, ADC_CH_V2, 0);
 				*/
-
+ACQ_USB_TEST
 #ifdef WORKING
 				//if(capturePosition != FFT_N) {
 				//	capture[capturePosition++] = Lead[currentFFTLead];
@@ -800,15 +785,10 @@ void AcqInterrupt(){
 
 
 BEGIN_TASK(TaskAcq)
-#ifdef WORKING
-osENABLE_TASK(TaskUSB);
-#endif
 
 	static unsigned int ButtonTimer;
 	//static unsigned int ShutoffTimer;
 	static unsigned char i,j;
-	static float vBattDelta;
-	static int vBattPercent;
 	//static unsigned char preAcqButtonReleased = 0;
 
 	#define SHUTOFF_TIME 5000	// milliseconds
@@ -839,13 +819,10 @@ osENABLE_TASK(TaskUSB);
 	GlobalWatchTimer = 0;
 #endif
 
-	//print_usb("In taskAcq");
+	print_usb("In taskAcq %d\r\n", legacy_charger);
 while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
 		
 		StartAcq(ACQ_IRQ_IDLE); // shut down any acquisition that's already running
-		
-		//AnalogPowerOn();
-		
 		acqState = FSM_START;
 		
 		//enableVoice = 1;// EE_Rd(EE_ENABLE_VOICE);
@@ -869,19 +846,19 @@ while(1){	// do something until we complete or abort the acquisition process any
 		}
 		osWAIT(50); // Wait for button bounce
 
-		VBatt = cc_get_batt_volt();	
+		debug_message("VBatt %d\r\n", cc_get_batt_per());
 		InitADCs();	
 		acqState = FSM_EMPTY;
 
 		GlobalWatchTimer = 0;
 		AcqWatchTimer = 0;
 
-#ifdef WORKING
+#ifdef ACQ_USB_TEST
 		ButtonTimer = LONG_BUTTON_TIME;
 #endif
 
 		if(ButtonTimer < LONG_BUTTON_TIME) {
-			Seg7LP('0'+vBattPercent);
+			Seg7LP('0'+cc_get_batt_per());
 
 			AbandonTimer = 3000;
 			while(AbandonTimer-- && !ButtonPressed() && !USBPresent()) {
@@ -897,7 +874,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 
 		Seg7LP('P');	// tell the user we're empty
 
-		if(VBatt < EE_Rd(EE_LB)/1000.0){
+		if(cc_get_batt_per() < 3){
 			Seg7LP('L');	// display low battery warning
 			MainPowerOff();
 			while(ButtonPressed()){ // if the button is pressed, hang here
@@ -968,11 +945,9 @@ while(1){	// do something until we complete or abort the acquisition process any
 		
 #ifdef BLUETOOTH
 		osENABLE_TASK(TaskBT); // Make sure BT the task is running
-
 		BTBufPhase = 0;
-       BTStatus = 0;               // Added by PRV
-
-	   BTOn(); // if BT got killed, turn it back on
+		BTStatus = 0;               // Added by PRV
+		BTOn();
 #endif
 		//Seg7LP(0x29+1);
 
@@ -983,7 +958,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 	   lastCheckState = BTEnable;
 		//print_usb("Hitting main loop\r\n");
 		do {	// pre-acquire while the button is not pressed	
-			
 			if(RTC.INTFLAGS & RTC_OVFIF_bm){	// if the RTC overflowed
 				RTC.INTFLAGS = RTC_OVFIF_bm;		// clear the flag
 				if(ElapsedMinutes<0xffff){
@@ -1056,7 +1030,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 				}
 			}
 			*/
-
 			if(connectionNeedsReset) {
 				debug_message("Connection lost. Resetting %d...\r\n", isBT122);
 				// Reset BT
@@ -1100,15 +1073,12 @@ while(1){	// do something until we complete or abort the acquisition process any
 					connectionNeedsReset = 0;
 					waitingForFirstCommand = 1;
 				}
-				VBatt = cc_get_batt_volt();
 				InitADCs();
 				StartAcq(ACQ_IRQ_ECG);
 			}
-			
-			if(LFReady){	// this will happen every 8 milliseconds
+			if(LFReady){	// this will happen every 8 milliseconds					
 				LFReady=0;
 				LFMag=0;
-				
 				for(i=0;i<8;i++){
 					LFLo = LFBiasModel[M][i][0];
 					LFHi = LFBiasModel[M][i][0];
@@ -1144,14 +1114,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 					else if(LFMaxFilt[i]<B3)badLeads[i]=0;
 					else if(LFMaxFilt[i]<B2)badLeads[i]=0;
 					else badLeads[i]=1;
-
-					//DPLEDTog();
 				}
 			}				
-				
-				
-				//DPLEDTog();
-				//Seg7LP(0x29+QC);
 
 			if(ButtonPressed()) {
 				//Seg7HP('b');
@@ -1163,10 +1127,15 @@ while(1){	// do something until we complete or abort the acquisition process any
 			}
 			
 			lastCheckState = BTEnable;
-
-
+			//print_usb(".");
 			osWAIT(1);
-		} while(!USBPresent());
+		} while(
+		#ifdef ACQ_USB_TEST
+			true
+		#else
+			!USBPresent()
+		#endif
+		);
 
 		BTEnable = 0;
 		BTOff();

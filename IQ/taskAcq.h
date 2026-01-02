@@ -7,6 +7,8 @@
 #include "fft.h"
 #endif
 
+#define ACQ_USB_TEST 1;
+
 void InitADCs(void);
 void AcqInterrupt(void);
 void PackECG(unsigned char *out, unsigned char *in);

@@ -19,7 +19,7 @@ extern unsigned char usbConfigured;
 // macro to make sending stuff a little easier
 #define print_usb(fmt,...)  do { if(usb) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__); } while(0)
 #define print_debug(fmt,...) do { if(Verbose && usb) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__); } while(0)
-#define debug_message(fmt,...)  do { if(usb) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__); } while(0)
+#define debug_message(fmt,...)  do { if(false && usb) fprintf_P(usb, PSTR(fmt), ## __VA_ARGS__); } while(0)
 
 extern USART_desc_t USBPortDescriptor;	// a descriptor for the USART connected to the USB bridge chip
 extern FILE usb_str;

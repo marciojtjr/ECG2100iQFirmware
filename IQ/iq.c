@@ -35,9 +35,12 @@
 
 #include "taskBT.h"
 #include "taskCC.h"
+#include "taskUSB.h"
 
 #define SYS_FREQ 16000	//Hz
 #define POLL_FREQ 128000
+
+extern void ConfigureUSBUSART(unsigned long baudrate);
 
 unsigned char inBluetoothUpdateMode = 0;
 unsigned char continuousMode = 0;
@@ -203,25 +206,26 @@ BEGIN_TASK(TaskMain)
 		// Regardless of the reason we were off, it means we don't know the ElapsedMinutes. So powerup zeros it and we let it be.
 		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
 
-		Seg7LP('F');
-		//Seg7LP('0' + state);
+		//Seg7LP('F');
+		////Seg7LP('0' + state);
 		acqState = FSM_START;
 		
 		//MainPowerOn();
 	}
 	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not. (Now, with Full mode it causes problems. Look into it)
 	*/
+	ConfigureUSBUSART(115200);
+	//osENABLE_TASK(TaskCC);
 	
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 		osENABLE_TASK(TaskAcq);
-		
 /*
 		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0 || (EE_Rd(EE_VOICE_RECORD_LENGTH) == 0 && EE_Rd(EE_ENABLE_VOICE) == 0)) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
 			
 			buttonTimer = 0;
 			do {
-				Seg7LP('F');
-				//Seg7LP('0' + EE_Rd(EE_TEST));
+				//Seg7LP('F');
+				////Seg7LP('0' + EE_Rd(EE_TEST));
 				if(++buttonTimer >= 5000) {
 					MainPowerOn();
 					
@@ -292,11 +296,10 @@ BEGIN_TASK(TaskMain)
 			Flags.AcqActive = 1;
 		}*/
 	} // if(!USBPresent())
-
-	else{ // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
-		osENABLE_TASK(TaskUSB);
+	else { // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
+		osENABLE_TASK(TaskAcq);
+		//osENABLE_TASK(TaskUSB);
 	}
-	osENABLE_TASK(TaskCC);
 	//-------------------------------------------------------------------------------------------
 	// We've handled all the power up conditions. If we make it this far, it's because:
 		// We're connected to USB (which keeps the power on)
@@ -339,7 +342,7 @@ BEGIN_TASK(TaskMain)
 		}
 		else{	// we're running too slow to allow use of the scheduler, so we handle the watchdog directly and do not release to the scheduler
 			wdt_reset();
-			DPLEDOff();	// in case it was left on by the watchdog task, which no longer runs
+			//DPLEDOff();	// in case it was left on by the watchdog task, which no longer runs
 		}
 
 
@@ -401,20 +404,20 @@ BEGIN_TASK(TaskMain)
 #ifdef WORKING
 				if(!inBluetoothUpdateMode) 
 #endif
-					Seg7LP('F');
+					//Seg7LP('F');
 			}
 			*/
 			if(BatteryIsCharging()){
 #ifdef WORKING
 				if(!inBluetoothUpdateMode) 
 #endif
-					Seg7LP('C');
+					////Seg7LP('C');
 			}
 			if(BatteryIsCharged()){
 #ifdef WORKING
 				if(!inBluetoothUpdateMode) {
 #endif
-					Seg7LP('C');
+					//Seg7LP('C');
 					DPLEDOn();
 #ifdef WORKING
 				}
@@ -425,10 +428,10 @@ BEGIN_TASK(TaskMain)
 		// if TaskAcq is running, it will handle the button, the display, and power
 		else if(!Flags.AcqActive){
 			if(!ElapsedMinutes){
-				MainPowerOff();	// TaskAcq isn't running and ElapsedMinutes is zero (so even if we've recorded something, we can't maintain it)... so turn off when the button is released
+				//MainPowerOff();	// TaskAcq isn't running and ElapsedMinutes is zero (so even if we've recorded something, we can't maintain it)... so turn off when the button is released
 			}
 			if(!ButtonPressed()){ // the button is released and we're still running, so blank the display (it draws a lot of power)
-				Seg7LP(' ');
+				//Seg7LP(' ');
 			}
 		}
 	} // while(1)

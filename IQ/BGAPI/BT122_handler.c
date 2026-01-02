@@ -10,7 +10,6 @@
 // Initialize BT122 module and wait for it to be ready
 // Returns 0 on success, -1 on timeout
 int BT122_handler_init(const char *device_name, int timeout_ms) {
-    int elapsed = 0;
     bgapi_packet_t packet;
     bgapi_command_t cmd;
     int result;
@@ -80,7 +79,6 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
 						break;
 						case 7:
 						    debug_message("[BT122] bgapi_cmd_hardware_set_uart_configuration\r\n");
-						    readyForCommands = 1;
 							bgapi_cmd_hardware_set_uart_configuration(&cmd, 0, 921600, 8, 1, 0, 1);
 							bgapi_send_command(&cmd);
 						    launchStep = 8;
@@ -94,7 +92,6 @@ int BT122_handler_init(const char *device_name, int timeout_ms) {
 				}
             }
         }
-        elapsed += 1;
     }
     print_usb("[BT122] Initialization timeout\r\n");
     return -1;  // Timeout
