@@ -127,7 +127,7 @@ int16_t ADC_ResultCh_GetWord_Offset(ADC_CH_t * adc_ch, int8_t offset);
 int16_t ADC_ResultCh_GetWord(ADC_CH_t * adc_ch);
 int8_t ADC_Offset_Get(ADC_CH_t *ch);
 void ADC_Wait(ADC_t * adc);
-// SP_ReadCalibrationByte is now provided by sp_driver.h/sp_driver.s
+uint8_t SP_ReadCalibrationByte( uint8_t index );
 
 //Offset addresses for production signature row (not in current GCC header files)
 #ifndef ADCACAL0_offset

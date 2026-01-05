@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief TWI Slave Mode management
+ * \brief Common gpio data/structure for all AVR XMEGA implementations.
  *
  * Copyright (c) 2010-2015 Atmel Corporation. All rights reserved.
  *
@@ -43,61 +43,41 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
-#ifndef TWI_SLAVE_H_INCLUDED
-#define TWI_SLAVE_H_INCLUDED
 
-#include <parts.h>
-#include <compiler.h>
+#ifndef _XMEGA_GPIO_H_
+#define _XMEGA_GPIO_H_
 
-#if (SAM3S || SAM3U || SAM3N || SAM3XA || SAM4S || SAM4E || SAM4N || SAM4C || SAM4CM || SAMG || SAM4CP)
-# include "sam_twi/twi_slave.h"
-#elif XMEGA
-# include "xmega_twi/twi_slave.h"
-#elif MEGA_RF
-# include "megarf_twi/twi_slave.h"
-#elif (defined(__GNUC__) && defined(__AVR32__)) || (defined(__ICCAVR32__) || defined(__AAVR32__))
-#if (defined AVR32_TWI)
-#error Not supported.
-#endif
-#else
-# error Unsupported chip type
-#endif
+#include "compiler.h"
+#include "ioport.h"
 
-/**
- *
- * \defgroup twi_group Two Wire-interface(TWI)
- *
- * This is the common API for TWIs. Additional features are available
- * in the documentation of the specific modules.
- *
- * \section twi_group_platform Platform Dependencies
- *
- * The twi API is partially chip- or platform-specific. While all
- * platforms provide mostly the same functionality, there are some
- * variations around how different bus types and clock tree structures
- * are handled.
- *
- * The following functions are available on all platforms, but there may
- * be variations in the function signature (i.e. parameters) and
- * behaviour. These functions are typically called by platform-specific
- * parts of drivers, and applications that aren't intended to be
- * portable:
- *   - twi_slave_setup()
- *   - twi_slave_enable()
- *   - twi_slave_disable()
- *   - twi_slave_read()
- *   - twi_slave_write()
- *
- * @{
- */
+#define gpio_pin_is_low(io_id) \
+	ioport_pin_is_low(io_id)
 
-/**
- * \typedef twi_slave_t
- * This type can be used independently to refer to TWI slave module for the
- * architecture used. It refers to the correct type definition for the
- * architecture, ie. TWI_t* for XMEGA or avr32_twi_t* for UC3
- */
+#define gpio_pin_is_high(io_id) \
+	ioport_pin_is_high(io_id)
 
-//! @}
+#define gpio_set_pin_high(io_id) \
+	ioport_set_value(io_id,1)
 
-#endif /* TWI_SLAVE_H_INCLUDED */
+#define gpio_set_pin_low(io_id) \
+	ioport_set_value(io_id,0)
+
+#define gpio_toggle_pin(io_id) \
+	ioport_toggle_pin(io_id)
+
+#define gpio_configure_pin(io_id,io_flags) \
+	ioport_configure_pin(io_id,io_flags)
+
+#define gpio_configure_group(port_id,port_mask,io_flags) \
+	ioport_configure_group(port_id,port_mask,io_flags)
+
+#define gpio_set_pin_group_high(port_id,mask) \
+	ioport_set_group_high(port_id,mask)
+
+#define gpio_set_pin_group_low(port_id,mask) \
+	ioport_set_group_low(port_id,mask)
+
+#define gpio_toggle_pin_group(port_id,mask) \
+	ioport_tgl_group(port_id,mask)
+
+#endif  // _XMEGA_GPIO_H_

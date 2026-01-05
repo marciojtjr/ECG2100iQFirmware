@@ -56,6 +56,15 @@
 #include <ccp.h>
 #include <xmega_reset_cause.h>
 
+// From module: GPIO - General purpose Input/Output
+#include <gpio.h>
+
+// From module: Generic board support
+#include <board.h>
+
+// From module: IOPORT - General purpose I/O service
+#include <ioport.h>
+
 // From module: Interrupt management - XMEGA implementation
 #include <interrupt.h>
 
@@ -65,18 +74,18 @@
 // From module: Part identification macros
 #include <parts.h>
 
+// From module: STK600-RC064X LED support enabled
+#include <led.h>
+
 // From module: System Clock Control - XMEGA A1U/A3U/A3BU/A4U/B/C implementation
 #include <sysclk.h>
 
 // From module: TWI - Two-Wire Interface - XMEGA implementation
 #include <twi_master.h>
-#include <twi_slave.h>
 #include <xmega_twi/twi_master.h>
-#include <xmega_twi/twi_slave.h>
 
-// From module: TWI - Two-wire Master and Slave Interface
+// From module: TWI - Two-wire Master Interface
 #include <twim.h>
-#include <twis.h>
 
 // From module: XMEGA compiler driver
 #include <compiler.h>

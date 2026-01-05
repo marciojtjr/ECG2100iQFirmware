@@ -259,10 +259,10 @@ void Seg7(unsigned char c){
 		Seg7E(1);
 	}
 	if(c & 0x20){
-		Seg7F(1);
+		Seg7G(1);  // bit 5 (f) = top left = physical Seg7G
 	}
 	if(c & 0x40){
-		Seg7G(1);
+		Seg7F(1);  // bit 6 (g) = middle = physical Seg7F
 	}
 }
 

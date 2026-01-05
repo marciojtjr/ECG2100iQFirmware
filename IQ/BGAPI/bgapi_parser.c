@@ -187,21 +187,21 @@ void bgapi_print_packet(const bgapi_packet_t *packet) {
     const char* class_name = bgapi_get_class_name(packet->class_id);
     const char* event_name = bgapi_get_event_name(packet->class_id, packet->command_id);
     
-    print_usb("BT[%s %s::%s T:0x%02X C:0x%02X E:0x%02X L:%d",
+    debug_message("BT[%s %s::%s T:0x%02X C:0x%02X E:0x%02X L:%d",
            msg_type, class_name, event_name,
            packet->message_type, packet->class_id,
            packet->command_id, packet->payload_length);
 
     // Print full payload for detailed analysis
     if (packet->payload_length > 0) {
-        print_usb(" D:");
+        debug_message(" D:");
         for (int i = 0; i < packet->payload_length && i < 16; i++) {
-            print_usb("%02X", packet->payload[i]);
+            debug_message("%02X", packet->payload[i]);
         }
         if (packet->payload_length > 16) {
-            print_usb("...");
+            debug_message("...");
         }
     }
-    print_usb("]\n");
+    debug_message("]\n");
 }
 #endif

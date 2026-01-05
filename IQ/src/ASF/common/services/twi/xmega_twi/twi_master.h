@@ -60,7 +60,7 @@ typedef twi_options_t twi_master_options_t;
 
 static inline int twi_master_setup(twi_master_t twi, twi_master_options_t *opt)
 {
-	opt->speed_reg = TWI_BAUD(sysclk_get_cpu_hz(),opt->speed);
+	//opt->speed_reg = TWI_BAUD(sysclk_get_cpu_hz(),opt->speed);
 
 	sysclk_enable_peripheral_clock(twi);
 

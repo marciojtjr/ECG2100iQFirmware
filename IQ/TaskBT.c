@@ -38,8 +38,6 @@
 #include "BGAPI/bgapi_commands.h"
 #include "BGAPI/BT122_handler.h"
 
-// External function declaration
-extern void ConfigureUSBUSART(unsigned long baudrate);
 
 #define USB_USART				USARTF0
 #define USB_USART_PORT	PORTF
@@ -247,10 +245,6 @@ void ConfigureBTUSART(unsigned long baudrate, unsigned char enable_rts)
 // Bluetooth Task
 
 BEGIN_TASK(TaskBT)
-    if (USBPresent()) {
-        // Configure USB USART for logging with RTS enabled on PF1
-        ConfigureUSBUSART(115200);
-    }
 	// Configure Bluetooth USART with RTS enabled (PA0/nRTS active for BT122)
 	ConfigureBTUSART(115200, 1);
 	static unsigned char ix = 0;
@@ -301,7 +295,13 @@ BEGIN_TASK(TaskBT)
 
 	// Bluetooth command parser
 	debug_message("[BT] TaskBT started, USBPresent=%d\r\n", USBPresent());
-	if(!USBPresent()){
+	if(
+	#ifdef ACQ_USB_TEST
+		true
+	#else
+		!USBPresent()
+	#endif
+	) {
 		BTOn();
 		debug_message("[BT] Bluetooth waiting for ready...\r\n");
         unsigned char firstByte = 0;
@@ -394,7 +394,7 @@ BEGIN_TASK(TaskBT)
 					//pinTimer = 0;
 					keepAliveTimer = -1;
 					DPLEDOn();
-					debug_message("[BT] CD pin high - entering data mode\r\n");
+					print_usb("[BT] CD pin high - entering data mode\r\n");
 					BTEnable = 1;					
 					waitingForFirstCommand = 1;
 					// Clear any status bits that have been set
@@ -407,7 +407,7 @@ BEGIN_TASK(TaskBT)
 			else if(BTEnable){	
 				// if pin goes low for more than 500ms, it's a disconnect
 				if(!isBT122 && (PORTF.IN & PIN7_bm)==0) {
-					debug_message("[BT] Execution %d: Connection dropped (CD pin low): %d\r\n", execution_id, isBT122);
+					print_usb("[BT] Execution %d: Connection dropped (CD pin low): %d\r\n", execution_id, isBT122);
 					DPLEDOff();
 					ElapsedMinutes = 0;
 					// Reset RTC
@@ -418,15 +418,21 @@ BEGIN_TASK(TaskBT)
 				// For BT122, if BTEnable goes from 1 to 0, ensure we're discoverable
 				static uint8_t prev_BTEnable = 0;
 				if (isBT122 && prev_BTEnable == 1 && BTEnable == 0) {
-					debug_message("[BT] BT122 connection lost - resetting to discoverable\r\n");
+					print_usb("[BT] BT122 connection lost - resetting to discoverable\r\n");
 					BT122_handler_reset_to_discoverable();
 				}
-				prev_BTEnable = BTEnable;				
+				prev_BTEnable = BTEnable;		
 				if(isBT122 || BTPortDescriptor.RxReady) {
 					if (!isBT122) {
-						strncpy(extracted_command, BTPortDescriptor.RxBuf, 2);
-						extracted_command[2] = '\0';
-					}		
+						// Read command from circular buffer
+						uint8_t cmd_idx = 0;
+						while(btDebugTail != btDebugHead && cmd_idx < 2) {
+							extracted_command[cmd_idx++] = btDebugBuf[btDebugTail];
+							btDebugTail = (btDebugTail + 1) & (BT_DEBUG_BUF_SIZE - 1);
+						}
+						extracted_command[cmd_idx] = '\0';
+						print_usb("extracted_command: %s\r\n", extracted_command);
+					}
 					if(iniAPMode) {
 						debug_message("[BT] iAP mode - processing Apple packet\r\n");
 						getApplePacket(BTPortDescriptor.RxBuf);
@@ -443,21 +449,21 @@ BEGIN_TASK(TaskBT)
 					if(!strncmp("ka", extracted_command, 2)) {
 						// If we get a keep alive command, reset the timer, connection is still active
 						keepAliveTimer = 0;
-						debug_message("[BT] Keep alive received\r\n");
+						print_usb("[BT] Keep alive received\r\n");
 					}					
 					else if(!strncmp("do", extracted_command, 2) && (waitingForFirstCommand)) {
-						debug_message("[BT] 'do' command - sending Hello\r\n");
+						print_usb("[BT] 'do' command - sending Hello\r\n");
 						if(connectionType == CONNECTION_APPLE) {
 							Hello(PRINT_BT_APPLE, isBT122, bt122_endpoint);
 						} else {
 							Hello(PRINT_BT, isBT122, bt122_endpoint);
 						}
 					} else if(!strncmp("lo", extracted_command, 2)) {
-						debug_message("[BT] Downsample enabled (500Hz mode)\r\n");
+						print_usb("[BT] Downsample enabled (500Hz mode)\r\n");
 						downsample = 1;
 						outBufferPos = 0;
 					} else if(!strncmp("hi", extracted_command, 2)) {
-						debug_message("[BT] Downsample disabled (1000Hz mode)\r\n");
+						print_usb("[BT] Downsample disabled (1000Hz mode)\r\n");
 						downsample = 0;
 						outBufferPos = 0;
 					} else if(!strncmp("to", extracted_command, 2)) {
@@ -483,7 +489,7 @@ BEGIN_TASK(TaskBT)
 							}
 						}
 					} else if(!strncmp("po", extracted_command, 2)) {
-						debug_message("[BT] Power off requested\r\n");
+						print_usb("[BT] Power off requested\r\n");
 						deviceNeedsToTurnOff = 1;
 					}
 					else if(!strncmp("sn", extracted_command, 2) && (acqState == FSM_FULL || acqState == FSM_FULL_ON)) {
@@ -498,16 +504,15 @@ BEGIN_TASK(TaskBT)
 							BT122_handler_data_send(bt122_endpoint, (uint8_t*)serial_str, len);
 						else
 							print_bt("%s", serial_str);
-						debug_message("[BT] Serial number query: SN:9-%02d-%02d-%04d-101\r\n",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+							print_usb("[BT] Serial number query: SN:9-%02d-%02d-%04d-101\r\n",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
 					}
 					else if(!strncmp("?s", extracted_command, 2) && (waitingForFirstCommand)) {
 						// Write out our current state
-						short battMV = round(VBatt*100);
+						short battPercent = cc_get_batt_per();
 						BTStateString[6] = acqState;
-						BTStateString[7] = battMV;
-						BTStateString[8] = battMV >> 8;
-						debug_message("[BT] Status query - State: %d, Battery: %dmV bt122_endpoint: %d\r\n", acqState, battMV, bt122_endpoint);
-						debug_message("%s", BTStateString);
+						BTStateString[7] = battPercent;
+						BTStateString[8] = battPercent >> 8;
+						print_usb("[BT] Status query - State: %d, Battery %: %d bt122_endpoint: %d\r\n", acqState, cc_get_batt_per(), bt122_endpoint);
 						if(connectionType != CONNECTION_APPLE) {
 							if (isBT122) {
 								debug_message("[BT] Using endpoint %d for status response\r\n", bt122_endpoint);
@@ -607,6 +612,13 @@ BEGIN_TASK(TaskBT)
 						for(i = 0; i < 8; i++) {
 							BTLeadOff |= (badLeads[i]<<i);
 						}
+						/*if (BTLeadOff) {
+							print_usb("[BT] Bad leads detected: 0x%02X (", BTLeadOff);
+							for(i = 0; i < 8; i++) {
+								if(badLeads[i]) print_usb("L%d ", i);
+							}
+							print_usb(")\r\n");
+						}*/
 						BTString[BT_LEADOFF] = BTLeadOff;     // Lead Off Indicator Bits
 						BTString[BT_PACESPIKE] = ((BTStatus & 8) ? btSpikeIndex : 0);		// Pacer spike index bits
 						if(btSpikeIndex2 != 0xFF && (BTStatus & 8)) BTString[BT_PACESPIKE] |= (btSpikeIndex2 << 4);
@@ -656,7 +668,7 @@ BEGIN_TASK(TaskBT)
 					
 					BTBufPhase ^= 1;
 					}
-				}			
+				}
 			    osYIELD;	// let other stuff run
 		    }
 	    }

@@ -22,13 +22,19 @@ serial.c
 
 sp_driver.s
 
+src\ASF\common\services\clock\xmega\sysclk.c
+
+src\ASF\common\services\ioport\xmega\ioport_compat.c
+
+src\ASF\xmega\boards\stk600\rc064x\init.c
+
 src\ASF\xmega\drivers\cpu\ccp.s
 
 src\ASF\xmega\drivers\nvm\nvm.c
 
 src\ASF\xmega\drivers\nvm\nvm_asm.s
 
-src\ASF\xmega\drivers\twi\twis.c
+src\ASF\xmega\drivers\twi\twim.c
 
 update_handler.c
 
@@ -79,8 +85,4 @@ TaskBT.c
 TaskWatchDog.c
 
 crc.c
-
-src\ASF\xmega\drivers\twi\twim.c
-
-src\ASF\common\services\clock\xmega\sysclk.c
 
