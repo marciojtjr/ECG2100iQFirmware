@@ -3,11 +3,13 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/iq.h</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/src/ASF/common/boards/board.h</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskAcq.c</file>
             <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskUSB.c</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskCC.c</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/twi_master.h</file>
-            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/main.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/TaskBT.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/sp_driver.s</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/iq.c</file>
+            <file>file:/home/slavakupreev/_projects/spaulding/ECG2100iQFirmware/IQ/adc_driver.c</file>
         </group>
     </open-files>
 </project-private>

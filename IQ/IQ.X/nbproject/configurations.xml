@@ -96,7 +96,6 @@
       <itemPath>../twi_driver.c</itemPath>
       <itemPath>../ltc2959.c</itemPath>
       <itemPath>../src/ASF/xmega/drivers/twi/twim.c</itemPath>
-      <itemPath>../src/ASF/xmega/drivers/twi/twis.c</itemPath>
       <itemPath>../src/ASF/xmega/drivers/nvm/nvm.c</itemPath>
       <itemPath>../src/ASF/common/services/clock/xmega/sysclk.c</itemPath>
       <itemPath>../update_handler.c</itemPath>
@@ -764,7 +763,7 @@
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
         <property key="extra-include-directories"
-                  value="../src/ASF/common/utils;../src/ASF/xmega/utils;../src/ASF/xmega/utils/preprocessor;../src/ASF/common/utils/interrupt;../src/config;../src;../src/ASF/common/services/clock;../src/ASF/common/boards;../src/ASF/xmega/drivers/cpu;../src/ASF/xmega/drivers/twi;../src/ASF/xmega/drivers/nvm;../src/ASF/common/boards/user_board;../src/Config;../src/ASF/common/services/twi"/>
+                  value="../src/ASF/common/boards;../src/ASF/xmega/utils/preprocessor;../src/ASF/xmega/utils;../src/ASF/common/utils;../src/ASF/xmega/boards/stk600/rc064x;../src/ASF/xmega/boards;../src/ASF/common/services/gpio;../src/ASF/common/services/ioport;../src;../src/config;../src/ASF/xmega/drivers/cpu;../src/ASF/xmega/drivers/nvm;../src/ASF/common/services/clock;../src/ASF/common/services/twi;../src/ASF/xmega/drivers/twi"/>
         <property key="extra-warnings" value="false"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>
@@ -775,7 +774,7 @@
         <property key="optimization-level" value="-Os"/>
         <property key="pack-struct" value="true"/>
         <property key="preprocessor-macros"
-                  value="BLUETOOTH=1;BOARD=USER_BOARD;F_CPU=32000000UL;__AVR_ATxmega64A3U__;__AVR_XMEGA__;WDE=3;SLEEP_MODE_IDLE=0x00;SLEEP_MODE_STANDBY=0x06;SLEEP_MODE_PWR_DOWN=0x04;SLEEP_MODE_EXT_STANDBY=0x07;SLEEP_MODE_SAVE=0x05"/>
+                  value="BLUETOOTH=1;BOARD=STK600_RC064X;F_CPU=32000000UL;__AVR_ATxmega64A3U__;__AVR_XMEGA__;WDE=3;SLEEP_MODE_IDLE=0x00;SLEEP_MODE_STANDBY=0x06;SLEEP_MODE_PWR_DOWN=0x04;SLEEP_MODE_EXT_STANDBY=0x07;SLEEP_MODE_SAVE=0x05"/>
         <property key="preprocessor-macros-undefined" value=""/>
         <property key="save-temps" value="false"/>
         <property key="short-calls" value="false"/>
@@ -822,36 +821,42 @@
         <appendMe value="-Wl,-u,vfscanf -Wl,-u,vfprintf"/>
       </AVR-LD>
       <AtmelIceTool>
-        <property key="AutoSelectMemRanges" value="manual"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="event.recorder.debugger.behavior" value="Running"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"
                   value="Press to select which tool pack to use"/>
         <property key="firmware.update.action" value="firmware.update.use.latest"/>
         <property key="freeze.timers" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
         <property key="memories.configurationmemory2" value="true"/>
-        <property key="memories.dataflash" value="false"/>
+        <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>
         <property key="memories.exclude.configurationmemory" value="true"/>
-        <property key="memories.flashdata" value="false"/>
+        <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-7fff"/>
+        <property key="memories.programmemory.ranges" value="0-87ff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="false"/>
+        <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="true"/>
-        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
+        <property key="programoptions.preserveeeprom" value="false"/>
+        <property key="programoptions.preserveeeprom.ranges" value=""/>
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>
@@ -863,36 +868,42 @@
         <property key="voltagevalue" value=""/>
       </AtmelIceTool>
       <Tool>
-        <property key="AutoSelectMemRanges" value="manual"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="event.recorder.debugger.behavior" value="Running"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"
                   value="Press to select which tool pack to use"/>
         <property key="firmware.update.action" value="firmware.update.use.latest"/>
         <property key="freeze.timers" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
         <property key="memories.configurationmemory2" value="true"/>
-        <property key="memories.dataflash" value="false"/>
+        <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>
         <property key="memories.exclude.configurationmemory" value="true"/>
-        <property key="memories.flashdata" value="false"/>
+        <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-7fff"/>
+        <property key="memories.programmemory.ranges" value="0-87ff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programoptions.eraseb4program" value="false"/>
+        <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveeeprom" value="true"/>
-        <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
+        <property key="programoptions.preserveeeprom" value="false"/>
+        <property key="programoptions.preserveeeprom.ranges" value=""/>
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>
@@ -994,7 +1005,7 @@
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
         <property key="extra-include-directories"
-                  value="../src/ASF/common/utils;../src/ASF/xmega/utils;../src/ASF/xmega/utils/preprocessor;../src/ASF/common/utils/interrupt;../src/config;../src;../src/ASF/common/services/clock;../src/ASF/common/boards;../src/ASF/xmega/drivers/cpu;../src/ASF/xmega/drivers/twi;../src/ASF/xmega/drivers/nvm;../src/ASF/common/boards/user_board;../src/Config;../src/ASF/common/services/twi"/>
+                  value="../src/ASF/common/boards;../src/ASF/xmega/utils/preprocessor;../src/ASF/xmega/utils;../src/ASF/common/utils;../src/ASF/xmega/boards/stk600/rc064x;../src/ASF/xmega/boards;../src/ASF/common/services/gpio;../src/ASF/common/services/ioport;../src;../src/config;../src/ASF/xmega/drivers/cpu;../src/ASF/xmega/drivers/nvm;../src/ASF/common/services/clock;../src/ASF/common/services/twi;../src/ASF/xmega/drivers/twi"/>
         <property key="extra-warnings" value="false"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>
@@ -1005,7 +1016,7 @@
         <property key="optimization-level" value="-Os"/>
         <property key="pack-struct" value="true"/>
         <property key="preprocessor-macros"
-                  value="BOOTLOADER;BOARD=USER_BOARD;F_CPU=32000000UL;__AVR_ATxmega64A3U__;__AVR_XMEGA__;WDE=3"/>
+                  value="BOOTLOADER;BOARD=STK600_RC064X;F_CPU=32000000UL;__AVR_ATxmega64A3U__;__AVR_XMEGA__;WDE=3"/>
         <property key="preprocessor-macros-undefined" value=""/>
         <property key="save-temps" value="false"/>
         <property key="short-calls" value="false"/>
@@ -1050,17 +1061,23 @@
         <property key="v-printf" value="false"/>
       </AVR-LD>
       <AtmelIceTool>
-        <property key="AutoSelectMemRanges" value="manual"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="event.recorder.debugger.behavior" value="Running"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"
                   value="Press to select which tool pack to use"/>
         <property key="firmware.update.action" value="firmware.update.use.latest"/>
         <property key="freeze.timers" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
@@ -1069,7 +1086,7 @@
         <property key="memories.eeprom" value="true"/>
         <property key="memories.exclude.configurationmemory" value="true"/>
         <property key="memories.flashdata" value="false"/>
-        <property key="memories.id" value="true"/>
+        <property key="memories.id" value="false"/>
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
@@ -1080,9 +1097,9 @@
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.preserveprogram.ranges" value="0-7fff"/>
+        <property key="programoptions.preserveprogramrange" value="true"/>
+        <property key="programoptions.preserveuserid" value="true"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="toolpack.updateoptions"
                   value="toolpack.updateoptions.uselatestoolpack"/>
@@ -1091,17 +1108,23 @@
         <property key="voltagevalue" value=""/>
       </AtmelIceTool>
       <Tool>
-        <property key="AutoSelectMemRanges" value="manual"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
         <property key="communication.activationmode" value="nohv"/>
         <property key="communication.interface" value="pdi"/>
         <property key="communication.speed" value="4.000"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="event.recorder.debugger.behavior" value="Running"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="firmware.path"
                   value="Press to browse for a specific firmware version"/>
         <property key="firmware.toolpack"
                   value="Press to select which tool pack to use"/>
         <property key="firmware.update.action" value="firmware.update.use.latest"/>
         <property key="freeze.timers" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
@@ -1110,7 +1133,7 @@
         <property key="memories.eeprom" value="true"/>
         <property key="memories.exclude.configurationmemory" value="true"/>
         <property key="memories.flashdata" value="false"/>
-        <property key="memories.id" value="true"/>
+        <property key="memories.id" value="false"/>
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
@@ -1121,9 +1144,9 @@
         <property key="programoptions.preservedataflash.ranges" value="0-7ff"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programoptions.preserveeeprom.ranges" value="0-7ff"/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.preserveprogram.ranges" value="0-7fff"/>
+        <property key="programoptions.preserveprogramrange" value="true"/>
+        <property key="programoptions.preserveuserid" value="true"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="toolpack.updateoptions"
                   value="toolpack.updateoptions.uselatestoolpack"/>

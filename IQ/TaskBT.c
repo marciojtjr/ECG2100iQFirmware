@@ -449,7 +449,6 @@ BEGIN_TASK(TaskBT)
 					if(!strncmp("ka", extracted_command, 2)) {
 						// If we get a keep alive command, reset the timer, connection is still active
 						keepAliveTimer = 0;
-						print_usb("[BT] Keep alive received\r\n");
 					}					
 					else if(!strncmp("do", extracted_command, 2) && (waitingForFirstCommand)) {
 						print_usb("[BT] 'do' command - sending Hello\r\n");
@@ -669,7 +668,9 @@ BEGIN_TASK(TaskBT)
 					BTBufPhase ^= 1;
 					}
 				}
-			    osYIELD;	// let other stuff run
+                //print_usb(".");
+                osWAIT(1);
+			    //osYIELD;	// let other stuff run
 		    }
 	    }
 
