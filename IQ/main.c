@@ -136,9 +136,9 @@ int main(void){
 	Seg7DP(0);
 
 	FastClock();
-
+	
 	temp_int=10000;
-	while(temp_int--);	// wait for things to settle
+	while(temp_int--){};	// wait for things to settle
 
 	if(SP_ApplicationCRC() == EE_Rd(EE_APP_CRC)){ // if the application is valid, see if we should run it
 		if(!USBPresent()){	// if we're not being powered by USB, there's no way to update, so go to the app

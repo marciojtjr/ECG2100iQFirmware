@@ -15,6 +15,7 @@
 #include "eeprom.h"
 #include "eeprom_driver.h"
 #include "TaskWatchDog.h"
+#include "taskCC.h"
 
 #include <math.h>
 
@@ -230,14 +231,9 @@ void StartAcq(unsigned char state){
 	DisableBuffering();
 	InitADCs();
 
+	//There is no VOICE mode any longer
 	if(state == ACQ_IRQ_VOICE){
-		// we've got all channels on ADCB available for voice
-		// might as well use them to try to lower the noise floor on the voice input a little
-		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);	// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_MIC, 0);
-		ADC_Ch_InputMux_Config(&ADCB.CH1, ADC_CH_MIC, 0);
-		ADC_Ch_InputMux_Config(&ADCB.CH2, ADC_CH_MIC, 0);
-		ADC_Ch_InputMux_Config(&ADCB.CH3, ADC_CH_MIC, 0);
+		//No voice
 	}
 	else{
 		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_V3, 0);		// set up for ECG measurements across PortA
@@ -248,22 +244,6 @@ void StartAcq(unsigned char state){
 		ADC_Ch_InputMux_Config(&ADCB.CH1, ADC_CH_LL, 0);
 		ADC_Ch_InputMux_Config(&ADCB.CH2, ADC_CH_V1, 0);
 		ADC_Ch_InputMux_Config(&ADCB.CH3, ADC_CH_V2, 0);
-
-		// set up the PWM channels for the eight offset servos
-		/*
-		PORTC.DIRSET = PIN0_bm + PIN1_bm + PIN2_bm + PIN3_bm;	// V6-V3
-		PORTD.DIRSET = PIN0_bm + PIN1_bm + PIN2_bm + PIN3_bm;	// V2-LA
-		TC_SetPeriod( &TCC0, PWM_PERIOD-1 );	// set the TC period for V6-V3
-		TC_SetPeriod( &TCD0, PWM_PERIOD-1 );	// set the TC period for V2-LA
-		TC0_ConfigWGM( &TCC0, TC_WGMODE_SS_gc );	// set single slope mode
-		TC0_ConfigWGM( &TCD0, TC_WGMODE_SS_gc );	// set single slope mode
-		TC0_EnableCCChannels( &TCC0, TC0_CCAEN_bm + TC0_CCBEN_bm + TC0_CCCEN_bm + TC0_CCDEN_bm);	// enable compare channels A-D
-		TC0_EnableCCChannels( &TCD0, TC0_CCAEN_bm + TC0_CCBEN_bm + TC0_CCCEN_bm + TC0_CCDEN_bm);	// enable compare channels A-D
-		TC0_ConfigClockSource( &TCC0, TC_CLKSEL_DIV1_gc );	// start timer by selecting clock source 1x
-		TC0_ConfigClockSource( &TCD0, TC_CLKSEL_DIV1_gc );	// start timer by selecting clock source 1x
-		HIRESC.CTRL = HIRES_HREN_TC0_gc;
-		HIRESD.CTRL = HIRES_HREN_TC0_gc;
-		*/
 	}
 	
 	// start conversions so AcqInterrupt() won't hang waiting for data
@@ -281,12 +261,6 @@ void StopAcq(void){
 //------------------------------------------------------------------------------------------
 // this function is called by the SysTick interrupt
 void AcqInterrupt(){
-	//return; 
-	
-	//static int index;	// keeps track of where we are in buffer stuffing
-	//int VoiceSample;
-	//static int VoiceBaseline;	// centers VoiceSample around zero for good uLaw compression
-
 	if(AcqIrqState != ACQ_IRQ_IDLE){ // only do something if there is something to do
 	// The previous interrupt will have started conversions on the eight ECG leads or the microphone input
 	// That'll be done by now, so we can drive straight into getting the conversion values
@@ -305,12 +279,8 @@ void AcqInterrupt(){
 				#define UPPER_THRESH 65534
 				#define LOWER_THRESH 3200
 				
-				//#define UPPER_THRESH 100000
-				//#define LOWER_THRESH -1
-				//#define UPPER_THRESH 48000
-				//#define LOWER_THRESH 6500
 #ifndef BLUETOOTH
-				if(LFBias()) {
+				if(LFBias()) {	//Port C.4
 #endif
 					LFBiasModelIndex = (LFBiasModelIndex+1) & 3;
 #ifndef BLUETOOTH 
@@ -321,12 +291,6 @@ void AcqInterrupt(){
 #ifdef BLUETOOTH
 				pacerStatus = ((PORT_PACE_DETECT.IN & PACE_DETECT_L1) >> PIN3_bp);
 				if((pacerStatus) && !waitingForLow) {
-					//if(BTEnable && btSpikeIndex == 0xFF) {
-					//	btSpikeIndex =  (M*4)+((LFBiasModelIndex));
-					//}						
-					//else if(BTEnable && btSpikeIndex2 == 0xFF) {
-					//	btSpikeIndex2 = (M*4)+((LFBiasModelIndex));
-					//}
 					if(BTEnable && pacerSpikes[0] == 0xFF) {
 						pacerSpikes[0] = samplesSinceLastPacket; //(M*4)+((LFBiasModelIndex));
 					}						
@@ -335,12 +299,7 @@ void AcqInterrupt(){
 					}
 					else if(BTEnable && pacerSpikes[2] == 0xFF) {
 						pacerSpikes[2] = samplesSinceLastPacket; //(M*4)+((LFBiasModelIndex));
-					}
-
-					//if(BTEnable) {
-					//	BTStatus |= 8;
-						//print_bt("Spike detected! Last spike %d ms ago\r\n", msSinceLastSpike);
-					//}						 
+					}				 
 					waitingForLow = 1;
 #ifdef WORKING
 					msSinceLastSpike = 0;
@@ -358,16 +317,16 @@ void AcqInterrupt(){
 				// rezero any lead that goes out of bounds
 				if(Acc[V3]>UPPER_THRESH){
 					Acc[V3] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V3;
-					PORT_V3_V6.DIRSET = REZERO_V3;
+					PORT_V3_V4.OUTCLR = REZERO_V3;
+					PORT_V3_V4.DIRSET = REZERO_V3;
 				}
 				else if(Acc[V3] < LOWER_THRESH){
 					Acc[V3]=0;
-					PORT_V3_V6.OUTSET = REZERO_V3;
-					PORT_V3_V6.DIRSET = REZERO_V3;
+					PORT_V3_V4.OUTSET = REZERO_V3;
+					PORT_V3_V4.DIRSET = REZERO_V3;
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V3;
+					PORT_V3_V4.DIRCLR = REZERO_V3;
 				}
 				
 				// convert the unsigned values to signed and transfer to the Leads
@@ -376,16 +335,16 @@ void AcqInterrupt(){
 
 				if(Acc[V4]>UPPER_THRESH){
 					Acc[V4] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V4;
-					PORT_V3_V6.DIRSET = REZERO_V4;
+					PORT_V3_V4.OUTCLR = REZERO_V4;
+					PORT_V3_V4.DIRSET = REZERO_V4;
 				}
 				else if(Acc[V4] < LOWER_THRESH){
 					Acc[V4]=0;
-					PORT_V3_V6.OUTSET = REZERO_V4;
-					PORT_V3_V6.DIRSET = REZERO_V4;
+					PORT_V3_V4.OUTSET = REZERO_V4;
+					PORT_V3_V4.DIRSET = REZERO_V4;
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V4;
+					PORT_V3_V4.DIRCLR = REZERO_V4;
 				}
 				
 				Lead[V4] = Acc[V4]-0x8000;
@@ -393,16 +352,16 @@ void AcqInterrupt(){
 
 				if(Acc[V5]>UPPER_THRESH){
 					Acc[V4] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V5;
-					PORT_V3_V6.DIRSET = REZERO_V5;
+					PORT_V5.OUTCLR = REZERO_V5;
+					PORT_V5.DIRSET = REZERO_V5;
 				}
 				else if(Acc[V5] < LOWER_THRESH){
 					Acc[V5]=0;
-					PORT_V3_V6.OUTSET = REZERO_V5;
-					PORT_V3_V6.DIRSET = REZERO_V5;
+					PORT_V5.OUTSET = REZERO_V5;
+					PORT_V5.DIRSET = REZERO_V5;
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V5;
+					PORT_V5.DIRCLR = REZERO_V5;
 				}
 				
 				Lead[V5] = Acc[V5]-0x8000;
@@ -410,16 +369,16 @@ void AcqInterrupt(){
 
 				if(Acc[V6]>UPPER_THRESH){
 					Acc[V6] = 65535;
-					PORT_V3_V6.OUTCLR = REZERO_V6;
-					PORT_V3_V6.DIRSET = REZERO_V6;
+					PORT_V6.OUTCLR = REZERO_V6;
+					PORT_V6.DIRSET = REZERO_V6;
 				}
 				else if(Acc[V6] < LOWER_THRESH){
 					Acc[V6]=0;
-					PORT_V3_V6.OUTSET = REZERO_V6;
-					PORT_V3_V6.DIRSET = REZERO_V6;
+					PORT_V6.OUTSET = REZERO_V6;
+					PORT_V6.DIRSET = REZERO_V6;
 				}
 				else {
-					PORT_V3_V6.DIRCLR = REZERO_V6;
+					PORT_V6.DIRCLR = REZERO_V6;
 				}
 				
 				Lead[V6] = Acc[V6]-0x8000;
@@ -430,11 +389,6 @@ void AcqInterrupt(){
 				Acc[V4] = ADCA.CH1.RES;
 				Acc[V5] = ADCA.CH2.RES;
 				Acc[V6] = ADCA.CH3.RES;
-
-				// now that we've got the ADCA lead values, set ADCA up for RL/VBatt monitoring, which is not decimated
-				//ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_RL_MON, 0);
-				//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);
-				//ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm |ADC_CH1START_bm));
 
 				// continue working on the ADCB conversions while ADCA converts RL/VBatt
 				// rezero any lead that goes out of bounds
@@ -526,70 +480,7 @@ void AcqInterrupt(){
 				Acc[LA] = ADCB.CH0.RES;
 				Acc[LL] = ADCB.CH1.RES;
 				Acc[V1] = ADCB.CH2.RES;
-				Acc[V2] = ADCB.CH3.RES;
-
-				// now that we've got the ADCB lead values, set ADCB up for RA monitoring, which is not decimated
-				//ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_RA_MON, 0);
-				//ADC_Conversions_Start(&ADCB, ADC_CH0START_bm);
-
-				//while(!ADC_Ch_Conversion_Complete(&ADCA.CH1));	// ADCA conversions should be done by now, but wait just in case
-				//RL_Mon = ADCA.CH0.RES;
-				//VBatt  = ADCA.CH1.RES;
-
-#ifdef BLUETOOTH
-				/*
-				int voltage = ((RL_Mon-zeroVolts-delta)/(4095.0f-delta))*3.3f*1000;
-
-				if((voltage >= 750 || voltage <= -750) && !BTLeadOff) {
-					if(leadFailTimer != 500) {
-						leadFailTimer++;
-					}
-					else if(!BTLeadOff) {
-						//print_usb("Lead Off Condition!");
-						BTLeadOff = 1;
-						leadFailTimer = 0;
-					}
-				} else if((voltage < 750 && voltage >-750 && BTLeadOff)) {
-					if(leadFailTimer != 500) {
-						leadFailTimer++;
-					} else {
-						leadFailTimer = 0;
-						BTLeadOff = 0;
-					}
-					//print_usb("Lead back on!");
-				}
-				*/
-#endif
-
-				//while(!ADC_Ch_Conversion_Complete(&ADCB.CH0));	// ADCB probably isn't done yet, wait for it
-				//RA_Mon = ADCB.CH0.RES;
-
-				// now we can restore the input multiplexing to the ECG leads (!!!!! should we reload all the multiplexers?)
-				//ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_V3, 0); // restore mux, we just used this channel to measure RL_MON
-				//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_V4, 0); // restore mux, we just used this channel to measure BATT
-				//ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_LA, 0); // restore mux, we just used this channel to measure RA_MON
-				
-				/*
-						ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_V3, 0);		// set up for ECG measurements across PortA
-						ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_V4, 0);
-						ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_V5, 0);
-						ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_V6, 0);
-						ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_LA, 0);		// set up for ECG measurements across PortB
-						ADC_Ch_InputMux_Config(&ADCB.CH1, ADC_CH_LL, 0);
-						ADC_Ch_InputMux_Config(&ADCB.CH2, ADC_CH_V1, 0);
-						ADC_Ch_InputMux_Config(&ADCB.CH3, ADC_CH_V2, 0);
-				*/
-
-#ifdef WORKING
-				//if(capturePosition != FFT_N) {
-				//	capture[capturePosition++] = Lead[currentFFTLead];
-					//capture[1][capturePosition++] = Lead[currentFFTLead+1];
-					
-					//bfly_buff[0][capturePosition].i = Lead[currentFFTLead];
-					//bfly_buff[0][capturePosition++].r = Lead[currentFFTLead];
-				//}
-#endif
-				
+				Acc[V2] = ADCB.CH3.RES;	
 						
 				AcqIrqState = ACQ_IRQ_ECG; // back to accumulation
 				
@@ -614,14 +505,9 @@ void AcqInterrupt(){
 					LFBiasModel[M][V5][LFBiasModelIndex]=Lead[V5];
 					LFBiasModel[M][V6][LFBiasModelIndex]=Lead[V6];
 					
-					
-					//if(LFBiasEnable) {
 						if(LFBiasModelIndex&1){ 
 							LFBiasTog();
-							//DPLEDTog();
-							// Manually toggle. See what happens.
-							//PORTC.OUTSET = PORTC.OUT ^ PIN4_bm;
-							//PORTC.OUT ^= PIN4_bm;
+
 						}
 					//}
 										
@@ -644,58 +530,6 @@ void AcqInterrupt(){
 				}
 				#endif
 
-				// an ECG sample is ready, figure out where to put it
-
-				/*
-				if(AcqBufferLock == UNLOCKED 
-#ifdef BLUETOOTH
-					&& (BTStatus & 4)
-#endif
-					){	// store samples when the task is ready
-
-					if(index==0){	// we're beginning a new memory page, find a free buffer to put it in
-						if(Buf1.Status == BUF_EMPTY){  
-							Buf1.Status = BUF_FILLING;
-						}
-						else if(Buf2.Status == BUF_EMPTY){
-							Buf2.Status = BUF_FILLING;
-						}
-						else{ // no buffer available, that's a problem
-							SystemError.BUF_OVERRUN=1;
-							while(1){
-								DPLEDTog();
-							}
-							
-						}
-					}
-					if(index<ECG_SAMPLES_PER_PAGE){ // we're currently filling a memory page, figure out which one
-						if(Buf1.Status == BUF_FILLING){
-							PackECG(&Buf1.Data.ECG.Sample[index][0],(unsigned char *)Lead);
-						}
-						else{
-							PackECG(&Buf2.Data.ECG.Sample[index][0],(unsigned char *)Lead);
-						}
-						index++;
-					}
-					if(index>=ECG_SAMPLES_PER_PAGE){ // index == ECG_SAMPLES_PER_PAGE, we've finished this page of memory
-						//if(haveUsbSpike)
-						//	print_bt("We have a USB pacer spike on sample %d out of 21\n", Buf1.Data.ECG.Flag1>>1);
-						
-						if(Buf1.Status == BUF_FILLING){
-							// Pack in the spike index
-							Buf1.Status = BUF_FULL;
-						}
-						else{
-							// Pack in the spike index
-							Buf2.Status = BUF_FULL;
-						}
-						index=0;	// next interrupt will start a new buffer
-					}
-				}
-				else{ //AcqBufferLock == UNLOCKED
-					index=0;
-				}
-				*/
 			}
 
 			//------------------------------------------------------------------------------------------
@@ -718,10 +552,7 @@ void AcqInterrupt(){
 		// Start both converters on all channels for the next Lead/Voice sampling interrupt
 		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm |ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm) );
 		ADC_Conversions_Start(&ADCB, (ADC_CH0START_bm |ADC_CH1START_bm | ADC_CH2START_bm | ADC_CH3START_bm) );
-	}// if(mode)
-	//else{ // we're idle
-	//	index = 0;
-	//}
+	}
 }
 
 //############################################################################################
@@ -766,8 +597,6 @@ osENABLE_TASK(TaskUSB);
 	#define SHORT_BUTTON_TIME 30 // ms
 
 	MainPowerOn();		// keep ourselves on
-	//MainPowerOn();
-	//FlashPowerOn();
 	AnalogPowerOn();
 	GroundUnused();		// ground unused analog input
 
@@ -819,8 +648,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 		
 		ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
 		ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+		//ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+		//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
 		ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
 		ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
 		osWAIT(50);	// wait for power to stabilize
@@ -828,7 +657,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 		osWAIT(1);
 		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
 		osWAIT(1);
-		VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;		
+		//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;		
 
 		// Reset ADC settings
 		InitADCs();
@@ -840,28 +669,23 @@ while(1){	// do something until we complete or abort the acquisition process any
 		GlobalWatchTimer = 0;
 		AcqWatchTimer = 0;
 		
-		vBattDelta = VBatt-3.70f;
-		vBattDelta *= 200.0f;
-		vBattPercent = (int)fmax(0, vBattDelta/10);
+		//This is done in TaskCC now
+		//vBattDelta = VBatt-3.70f;
+		//vBattDelta *= 200.0f;
+		//vBattPercent = (int)fmax(0, vBattDelta/10);
 		
 #ifdef WORKING
 		ButtonTimer = LONG_BUTTON_TIME;
 #endif
 
+		//IF the button is pressed for less than 1 second, we're just blinking on the battery level then shutting off
 		if(ButtonTimer < LONG_BUTTON_TIME) {
+			//if the percentage is greater than 100 because the user is plugging the charger in briefly before the charger
+			//can reach a termination current, we want it to display 9 rather than return > 100 and the math not work out.
+			uint8_t ucLocalBattPerc = cc_get_batt_per();
+			if(ucLocalBattPerc> 99) ucLocalBattPerc = 99;
+			Seg7LP('0' + (ucLocalBattPerc / 10));
 			
-			/*
-			if(VBatt >= 4.10) {
-				QC = 3;
-			} else if(VBatt >= 3.90) {
-				QC = 2;
-			} else {
-				QC = 1;
-			}
-			*/
-			
-			Seg7LP('0'+vBattPercent);
-
 			AbandonTimer = 3000;
 			while(AbandonTimer-- && !ButtonPressed() && !USBPresent()) {
 			//while(1) {
@@ -875,7 +699,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 				osWAIT(1);
 			}
 		}
-
+		//Power button was pressed > 1 second
 		Seg7LP('P');	// tell the user we're empty
 
 		if(VBatt < EE_Rd(EE_LB)/1000.0){
@@ -891,21 +715,9 @@ while(1){	// do something until we complete or abort the acquisition process any
 		}
 		osWAIT(30);	// wait for button to stop bouncing
 		LFBiasOn();
-		
-		if(enableVoice) {
-			StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
-		}
 
-		/*
-		Buf1.Status = BUF_EMPTY; // make the buffers ready
-		Buf2.Status = BUF_EMPTY;
-		*/
-
-		// The button is pressed again, see how long
-		// If the button is pressed for more than VOICE_RECORD_BUTTON_TIME, start recording voice
-		// else shut off
 		ButtonTimer=0;
-			
+		
 		//------------------------------------------------------------------------------------------
 		// Prepare for Lead QC
 
@@ -930,6 +742,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 		LFBiasOn();
 		//AbandonTimer = EE_Rd(EE_ABANDON_TIME)*250L;	// set the abandonment timer
 		LFReady=0;
+		
+		
 
 		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
 
@@ -946,7 +760,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 		}
 		
 		acqState = FSM_PREACQ;
-		
+	
+	//when both BT functions are called, it appears to lock up
 #ifdef BLUETOOTH
 		osENABLE_TASK(TaskBT); // Make sure BT the task is running
 
@@ -955,11 +770,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 
 	   BTOn(); // if BT got killed, turn it back on
 #endif
-		//Seg7LP(0x29+1);
-
-	   //TaskFlashCmd = TF_ERASE_ALL;	// erase everything
-//static unsigned int toggleTimer = 0;
-//static unsigned char currentToggleSetting = CONNECTION_ANDROID;
 
 	   lastCheckState = BTEnable;
 		//print_usb("Hitting main loop\r\n");
@@ -978,65 +788,15 @@ while(1){	// do something until we complete or abort the acquisition process any
 			
 			if(deviceNeedsToTurnOff)
 				break;
-			
-			//Seg7HP('0' + ElapsedMinutes);
-		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
-			//osWAIT(1);
-			//osYIELD;
+
 			if(keepAliveTimer != -1) {
 				keepAliveTimer+=1;
 				if(keepAliveTimer >= 5000) {
 					//print_usb("Timeout from lack of keep alives.\r\n");
 					keepAliveTimer = -1;
 					connectionNeedsReset = 1;
-					//resetAllVariables();
-					//connectionType = CONNECTION_ANDROID;
-					//Seg7HP('r');
 				}
 			}
-			
-			/*
-			if(!BTEnable && readyForCommands) {
-				toggleTimer++;
-				if(toggleTimer >= 10000) {
-					// Change what we're trying to call
-					if(currentToggleSetting == CONNECTION_APPLE) {
-						//print_usb("Toggling to Android\r\n");
-						currentToggleSetting = CONNECTION_ANDROID;
-						print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 2000 RFCOMM\r"); //72243468-25ee-4025-8fe7-1edd2cf13cd2
-						ignoreNextRFCOMM = 1;
-					} else {
-						//print_usb("Toggling to Apple\r\n");
-						currentToggleSetting = CONNECTION_APPLE;
-						//print_bt("SET CONTROL AUTOCALL 00000000-deca-fade-deca-deafdecacaff 2000 IAP\r");
-						//print_bt("SET CONTROL AUTOCALL fecacade-afde-cade-defa-cade00000000 2000 IAP\r");
-						print_bt("SET CONTROL AUTOCALL 1101 2000 IAP\r");
-					}
-					
-					toggleTimer = 0;
-				}
-			}
-			*/
-			
-			
-			// Wait 2 seconds for a command before we decide whether or not the connection is legit
-			// THIS IS A HACK
-			// FOR SOME REASON APPLE CURRENTLY CONNECTS TO RFCOMM CALLS BUT NO DATA TRANSFER CAN BE MADE
-			// THIS IS HOW WE TELL THE DIFFERENCE BETWEEN CLIENTS
-			// NOT EXPECTED TO WORK FOREVER
-			/*
-			if(RFCOMMTimer != -1) {
-				RFCOMMTimer++;
-				if(RFCOMMTimer > 2000) {
-					//print_usb("Timeout from lack of RFCOMM response.\r\n");
-					// We need to reset but start in IAP
-					RFCOMMTimer = -1;
-					connectionNeedsReset = 1;
-					connectionType = CONNECTION_APPLE;
-					//Seg7HP('r');
-				}
-			}
-			*/
 
 			if(connectionNeedsReset) {
 				//print_usb("Connection lost. Resetting...\r\n");
@@ -1081,13 +841,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 					print_bt("SET CONTROL AUTOCALL 1101 1000 IAP\r");
 					//Seg7HP('9');
 				}
-				//else if (lastConnection == CONNECTION_ANDROID) {
-				//else if(connectionType == CONNECTION_ANDROID) {
-					//ignoreNextRFCOMM = 1;
-					//print_bt("SET CONTROL AUTOCALL 72243468-25ee-4025-8fe7-1edd2cf13cd2 1000 RFCOMM\r");
-					//Seg7HP('A');
-				//	print_bt("SET CONTROL AUTOCALL\r");
-				//} 
+
 				else {
 					print_bt("SET CONTROL AUTOCALL\r");
 				}
@@ -1102,8 +856,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 				// Reset ADCs and VBatt
 				ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
 				ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-				ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-				ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+				//ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
+				//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
 				ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
 				ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
 				osWAIT(50);	// wait for power to stabilize
@@ -1111,7 +865,7 @@ while(1){	// do something until we complete or abort the acquisition process any
 				osWAIT(1); // wait for conversions to complete
 				ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
 				osWAIT(1); // wait for conversions to complete
-				VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
+				//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 
 				// Reset ADC settings
 				InitADCs();
@@ -1133,12 +887,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 					if(LFBiasModel[M][i][3]<LFLo)LFLo=LFBiasModel[M][i][3];
 					LFMag=(LFHi-LFLo)>>4;	// this is the magnitude of the reflected signal for this lead
 					
-					// now we look for the maximum and minimum signal magnitudes
-					//if(i==0){ // prime the min/max
-					//	LFMax = LFMin = LFMag;
-					//}
-					//if(LFMag > LFMax)LFMax=LFMag;
-					//if(LFMag < LFMin)LFMin=LFMag;
 					
 					if(LFMag>LFMaxFilt[i]){
 						LFMaxFilt[i]++;
@@ -1161,13 +909,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 					//DPLEDTog();
 				}
 			}				
-				
-				
-				//DPLEDTog();
-				//Seg7LP(0x29+QC);
 
 			if(ButtonPressed()) {
-				//Seg7HP('b');
 				if(ButtonTimer++ >= LONG_BUTTON_TIME) {
 					break;
 				}
@@ -1200,157 +943,6 @@ while(1){	// do something until we complete or abort the acquisition process any
 			MainPowerOff();
 			osWAIT(1);
 		}				
-/*
-	while(1){	// do something until we complete or abort the acquisition process any decision to erase and restart will bring us back here
-		StartAcq(ACQ_IRQ_IDLE); // shut down any acquisition that's already running
-		
-		AnalogPowerOn();
-		
-		acqState = FSM_START;
-		
-		enableVoice = EE_Rd(EE_ENABLE_VOICE);
-		
-		// In case we broke out during BT transmission
-#ifdef BLUETOOTH
-		if(BTEnable) {
-			osDISABLE_TASK(TaskBT);
-			BTOff();
-			BTEnable = 0;
-		}
-#endif
-		
-		// at the top of this loop, we should be empty. if we're not, we erase flash spinning the display
-		// if the button is still pressed after erasing, we wait for it to be released
-
-
-		// verify that the battery voltage is high enough to attempt acquisition
-		InitADCs(); // start the ADCs and then we'll override a few settings
-		ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-		ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-		ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-		ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-		ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-		osWAIT(50);	// wait for power to stabilize
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1); // wait for conversions to complete
-		ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-		osWAIT(1); // wait for conversions to complete
-		VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-		
-		while(ButtonPressed()) {
-			MainPowerOff();
-			osWAIT(1);
-			if(ButtonTimer++ >= LONG_BUTTON_TIME)
-				break;
-		}
-		MainPowerOn();
-
-		if(ButtonTimer < LONG_BUTTON_TIME) {
-			MainPowerOff();
-		}
-
-		acqState = FSM_EMPTY;
-		//Seg7LP('E');	// tell the user we're empty
-
-		if(VBatt < EE_Rd(EE_LB)/1000.0){
-			Seg7LP('L');	// display low battery warning
-			MainPowerOff();
-			while(ButtonPressed()){ // if the button is pressed, hang here
-				osWAIT(1);
-			}
-		}
-		Seg7LP('O');
-
-		LFBiasOff();
-		
-		//if(enableVoice) {
-		//	StartAcq(ACQ_IRQ_VOICE); // tell the acquisition interrupt to do voice, though we won't start buffering just yet
-		//}		 
-		Buf1.Status = BUF_EMPTY; // make the buffers ready
-		Buf2.Status = BUF_EMPTY;
-
-		// make fast copies of the LFBias thresholds
-		B1=EE_Rd(EE_B1);
-		B2=EE_Rd(EE_B2);
-		B3=EE_Rd(EE_B3);
-		LFMaxFilt=B3;
-		LFMinFilt=B1;
-
-		// prepare for LFBiasModel generation by clearing the models and setting the subsample index
-		LFBiasModelIndex=0;
-		M=0;
-		for(i=0;i<=15;i++){ // flush both models
-			for(j=0;j<=3;j++){
-				LFBiasModel[0][i][j]=0;
-			}
-		}
-
-		LFReady=0;
-
-		StartAcq(ACQ_IRQ_ECG);	// switch over to ECG pre-acquisition (buffers will be locked, so nothing is stored)
-
-		// start pre-acquisition here so lead QC can get going, but don't start buffering until the button is pressed
-
-		if(LFReady){
-			LFReady=0;
-		}
-		
-		acqState = FSM_PREACQ;
-		
-		osENABLE_TASK(TaskBT); // Make sure BT the task is running
-
-#ifdef BLUETOOTH
-		BTBufPhase = 0;
-       BTStatus = 0;               // Added by PRV
-#endif
-//#if !defined(COMPARE_VERSION) && defined(BLUETOOTH)
-	   BTOn(); // if BT got killed, turn it back on
-//#endif
-		ButtonTimer = 0;
-
-		while(ButtonPressed()) {
-			osWAIT(1);
-		}
-		
-		do {	// pre-acquire while the button is not pressed	
-		//while(!ButtonPressed() && acqState != FSM_ACQURING) {
-			//osWAIT(1);
-			osYIELD;
-			if(LFReady){	// this will happen every four milliseconds
-				LFReady=0;
-				LFMag=0;
-			}
-			if(ButtonPressed()) {
-				if(ButtonTimer++ >= LONG_BUTTON_TIME) {
-					break;
-				}
-			} else if(!ButtonPressed() && ButtonTimer) {
-				ButtonTimer = 0;
-			}
-			
-		} while(1);
-
-					BTEnable = 0;
-					BTOff();
-					
-					// We're keeping ACQ active because we can go right back to another acquisition process after this
-					//break;
-				
-				
-				osDISABLE_TASK(TaskAcq); // We're done!
-				Flags.AcqActive = 0;
-				AnalogPowerOff();
-				FlashPowerOff();
-				MainPowerOff();
-				Seg7LP(' ');
-				DPLEDOff();
-				
-				while(1){
-					MainPowerOff();
-					osWAIT(1);
-				}				
-				*/
 	} // while(1) back to 'E'
 
 END_TASK

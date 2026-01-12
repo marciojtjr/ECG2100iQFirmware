@@ -32,7 +32,36 @@ LIB_DEP:=
 LINKER_SCRIPT_DEP:=
 
 # Every subdirectory with source files must be described here
-SUBDIRS := 
+SUBDIRS :=  \
+../src/ \
+../src/ASF/ \
+../src/ASF/common/ \
+../src/ASF/common/boards/ \
+../src/ASF/common/services/ \
+../src/ASF/common/services/clock/ \
+../src/ASF/common/services/clock/xmega/ \
+../src/ASF/common/services/gpio/ \
+../src/ASF/common/services/gpio/xmega_gpio/ \
+../src/ASF/common/services/ioport/ \
+../src/ASF/common/services/ioport/xmega/ \
+../src/ASF/common/services/twi/ \
+../src/ASF/common/services/twi/xmega_twi/ \
+../src/ASF/common/utils/ \
+../src/ASF/common/utils/interrupt/ \
+../src/ASF/common/utils/make/ \
+../src/ASF/xmega/ \
+../src/ASF/xmega/boards/ \
+../src/ASF/xmega/boards/stk600/ \
+../src/ASF/xmega/boards/stk600/rc064x/ \
+../src/ASF/xmega/drivers/ \
+../src/ASF/xmega/drivers/cpu/ \
+../src/ASF/xmega/drivers/nvm/ \
+../src/ASF/xmega/drivers/twi/ \
+../src/ASF/xmega/utils/ \
+../src/ASF/xmega/utils/assembler/ \
+../src/ASF/xmega/utils/bit_handling/ \
+../src/ASF/xmega/utils/preprocessor/ \
+../src/config/
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -40,7 +69,14 @@ C_SRCS +=  \
 ../apple.c \
 ../main.c \
 ../serial.c \
+../src/ASF/common/services/clock/xmega/sysclk.c \
+../src/ASF/common/services/ioport/xmega/ioport_compat.c \
+../src/ASF/xmega/boards/stk600/rc064x/init.c \
+../src/ASF/xmega/drivers/nvm/nvm.c \
+../src/ASF/xmega/drivers/twi/twim.c \
+../TaskCC.c \
 ../taskPaceSimu.c \
+../twi_driver.c \
 ../rtos.c \
 ../wdt_driver.c \
 ../clksys_driver.c \
@@ -68,7 +104,9 @@ C_SRCS +=  \
 
 PREPROCESSING_SRCS +=  \
 ../ffft.S \
-../sp_driver.S
+../sp_driver.S \
+../src/ASF/xmega/drivers/cpu/ccp.s \
+../src/ASF/xmega/drivers/nvm/nvm_asm.s
 
 
 ASM_SRCS += 
@@ -80,7 +118,16 @@ ffft.o \
 main.o \
 serial.o \
 sp_driver.o \
+src/ASF/common/services/clock/xmega/sysclk.o \
+src/ASF/common/services/ioport/xmega/ioport_compat.o \
+src/ASF/xmega/boards/stk600/rc064x/init.o \
+src/ASF/xmega/drivers/cpu/ccp.o \
+src/ASF/xmega/drivers/nvm/nvm.o \
+src/ASF/xmega/drivers/nvm/nvm_asm.o \
+src/ASF/xmega/drivers/twi/twim.o \
+TaskCC.o \
 taskPaceSimu.o \
+twi_driver.o \
 rtos.o \
 wdt_driver.o \
 clksys_driver.o \
@@ -111,7 +158,16 @@ ffft.o \
 main.o \
 serial.o \
 sp_driver.o \
+src/ASF/common/services/clock/xmega/sysclk.o \
+src/ASF/common/services/ioport/xmega/ioport_compat.o \
+src/ASF/xmega/boards/stk600/rc064x/init.o \
+src/ASF/xmega/drivers/cpu/ccp.o \
+src/ASF/xmega/drivers/nvm/nvm.o \
+src/ASF/xmega/drivers/nvm/nvm_asm.o \
+src/ASF/xmega/drivers/twi/twim.o \
+TaskCC.o \
 taskPaceSimu.o \
+twi_driver.o \
 rtos.o \
 wdt_driver.o \
 clksys_driver.o \
@@ -142,7 +198,16 @@ ffft.d \
 main.d \
 serial.d \
 sp_driver.d \
+src/ASF/common/services/clock/xmega/sysclk.d \
+src/ASF/common/services/ioport/xmega/ioport_compat.d \
+src/ASF/xmega/boards/stk600/rc064x/init.d \
+src/ASF/xmega/drivers/cpu/ccp.d \
+src/ASF/xmega/drivers/nvm/nvm.d \
+src/ASF/xmega/drivers/nvm/nvm_asm.d \
+src/ASF/xmega/drivers/twi/twim.d \
+TaskCC.d \
 taskPaceSimu.d \
+twi_driver.d \
 rtos.d \
 wdt_driver.d \
 clksys_driver.d \
@@ -173,7 +238,16 @@ ffft.d \
 main.d \
 serial.d \
 sp_driver.d \
+src/ASF/common/services/clock/xmega/sysclk.d \
+src/ASF/common/services/ioport/xmega/ioport_compat.d \
+src/ASF/xmega/boards/stk600/rc064x/init.d \
+src/ASF/xmega/drivers/cpu/ccp.d \
+src/ASF/xmega/drivers/nvm/nvm.d \
+src/ASF/xmega/drivers/nvm/nvm_asm.d \
+src/ASF/xmega/drivers/twi/twim.d \
+TaskCC.d \
 taskPaceSimu.d \
+twi_driver.d \
 rtos.d \
 wdt_driver.d \
 clksys_driver.d \
@@ -233,7 +307,56 @@ LINKER_SCRIPT_DEP+=
 	@echo Finished building: $<
 	
 
+src/ASF/common/services/clock/xmega/sysclk.o: ../src/ASF/common/services/clock/xmega/sysclk.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/common/services/ioport/xmega/ioport_compat.o: ../src/ASF/common/services/ioport/xmega/ioport_compat.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/xmega/boards/stk600/rc064x/init.o: ../src/ASF/xmega/boards/stk600/rc064x/init.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/xmega/drivers/nvm/nvm.o: ../src/ASF/xmega/drivers/nvm/nvm.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/xmega/drivers/twi/twim.o: ../src/ASF/xmega/drivers/twi/twim.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./TaskCC.o: .././TaskCC.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 ./taskPaceSimu.o: .././taskPaceSimu.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./twi_driver.o: .././twi_driver.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DBLUETOOTH=1 -DF_CPU=32000000UL  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -417,6 +540,20 @@ LINKER_SCRIPT_DEP+=
 	
 
 ./sp_driver.o: .././sp_driver.S
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU Assembler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -I "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/xmega/drivers/cpu/ccp.o: ../src/ASF/xmega/drivers/cpu/ccp.s
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU Assembler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -I "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+src/ASF/xmega/drivers/nvm/nvm_asm.o: ../src/ASF/xmega/drivers/nvm/nvm_asm.s
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU Assembler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega64a3u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega64a3u" -Wall -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -gdwarf-2 -std=gnu99 -DBLUETOOTH=1        -DF_CPU=32000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -I "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.68\include"  -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
