@@ -92,13 +92,13 @@ static unsigned char j;
 //------------------------------------------------------------------------------------
 void Hello(int type){
 	if(type == PRINT_USB) {
-		print_usb("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		print_usb("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-%03d\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), HW_SFX);
 	}
 	else if(type == PRINT_BT) {
-		print_bt("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		print_bt("\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-%03d\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), HW_SFX);
 	}
 	else if(type == PRINT_BT_APPLE) {
-		sprintf(AppleBTString, "\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-101\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+		sprintf(AppleBTString, "\r\n\r\nSpaulding Electrocardiograph BV:%d FV:%s HV:%d SN:9-%02d-%02d-%04d-%03d\r\n", (int)EE_Rd(EE_BOOT_VERSION), VERSION, MCU.JTAGUID, (int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), HW_SFX);
 		j = strlen(AppleBTString);
 
 		appleCrc = 0;
@@ -199,28 +199,14 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 						EE_Wr(EE_SERIAL_NUM,start);
 					}
 
-					print_usb("SN:9-%02d-%02d-%04d-101",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000));
+					print_usb("SN:9-%02d-%02d-%04d-%03d",(int)((EE_Rd(EE_SERIAL_NUM)/1000000)%100), (int)((EE_Rd(EE_SERIAL_NUM)/10000)%100), (int)(EE_Rd(EE_SERIAL_NUM)%10000), HW_SFX);
 				}
 				else if(strncmp(cmd, "ba",2 )==0) {
-						AnalogPowerOn();
-						
-						InitADCs(); // start the ADCs and then we'll override a few settings
-						ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-						ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-						ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-						ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-						ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-						ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-						osWAIT(50);	// wait for power to stabilize
-						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-						osWAIT(1); // wait for conversions to complete
-						ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-						osWAIT(1); // wait for conversions to complete
-						VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-
-						AnalogPowerOff();
-										
-						print_usb("Battery voltage: %0.2f\n", VBatt);
+					uint8_t battPerc, fgVal;
+					VBatt = cc_get_batt_volt();	
+					battPerc = cc_get_batt_per();
+					fgVal = cc_get_fg_valid();
+					print_usb("Battery voltage: %0.2f Battery percent: %d Fuel gauge valid:%d\n", VBatt, battPerc, fgVal);
 				}
 
 

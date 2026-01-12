@@ -5,10 +5,19 @@
 #define ENABLE_DEBUG 0	// set non-zero if you want the debug code included
 
 #ifdef BLUETOOTH
-#define VERSION "2.1.9"
+#define VERSION "3.0.1"
 #else
 #define VERSION 1.06
 #endif
+
+#define HW_SFX 201
+
+// -----------------------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------3.0 Production Changelist-----------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------------------------
+// 3.0.1 - Changed SN suffix to 201
+// 3.0.0 - Added fuel gauge functionality, added FG data to BT packet, charged HW to support 2200 HW, added USB debouncing, changed LED functionality, 
+//		   fixed 7 segments to match HW
 
 // -----------------------------------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------2.0 Production Changelist-----------------------------------------------------
@@ -60,7 +69,7 @@
 #define InitButton()	PORTC.DIRCLR = PIN7_bm; PORTC.PIN7CTRL = PORT_OPC_PULLDOWN_gc
 #define ButtonPressed()	(PORTC.IN & PIN7_bm)
 
-#define InitUSBDetect()	PORTB.DIRCLR = PIN3_bm; PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// set USB sense pin to input with pulldown
+#define InitUSBDetect()	PORTB.DIRCLR = PIN3_bm; PORTB.PIN3CTRL = PORT_OPC_PULLDOWN_gc;	// set USB sense pin to input with pulldown
 #ifdef WORKING
 #define USBPresent()	 	!(PORTB.IN & PIN3_bm)		// pin is high if USB is present and awake
 #else
@@ -72,7 +81,8 @@
 
 #define InitRTS() PORTF.DIRCLR = PIN1_bm
 #define RTS() ((PORTF.IN & PIN1_bm) == 0)
-#define BTRTS() (!(PORTA.IN & PIN0_bm))
+#define BTRTS() (!(PORTF.IN & PIN7_bm))
+#define BTCTS() (!(PORTA.IN & PIN0_bm))
 
 #define LFBiasOff()	PORTC.DIRCLR = PIN4_bm;
 #define LFBiasOn()	{ PORTC.DIRSET = PIN4_bm; PORTC.PIN4CTRL = PORT_OPC_TOTEM_gc; }
@@ -95,6 +105,7 @@ typedef struct {
 extern unsigned int DCOffset;
 extern SYS_ERR SystemError;
 extern FLAGS Flags;
+extern volatile unsigned int globalTimerTicks;	//keep track of ticks since powerup
 
 void SetDefaults(void);
 void Error(unsigned char);
@@ -105,7 +116,6 @@ extern unsigned int ElapsedMinutes;
 extern unsigned char inBluetoothUpdateMode;
  
 extern unsigned char continuousMode;
-//extern unsigned short globalTimer;
 
 #endif
 #endif
