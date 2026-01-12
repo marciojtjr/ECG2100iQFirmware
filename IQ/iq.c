@@ -42,7 +42,6 @@
 
 unsigned char inBluetoothUpdateMode = 0;
 unsigned char continuousMode = 0;
-//unsigned short globalTimer = 0;
 
 void (*resetVec)( void ) = 0x0000; // Set up function pointer to the RESET vector.
 
@@ -94,6 +93,12 @@ void RC32MClock(void){
 
 unsigned int ElapsedMinutes;	// keeps track of time since the ECG was recorded, in minutes.
 unsigned int buttonTimer = 0;
+static int iSampleTimestamp = 0;
+static uint8_t firstSample = 0;
+static volatile uint64_t temp_int_long=0;
+
+//For system ticks
+volatile unsigned int globalTimerTicks = 0;	//keep track of ticks since powerup
 
 SYS_ERR SystemError; 	// holds error flags to indicate various errors
 FLAGS Flags;					// holds various flags
@@ -105,7 +110,6 @@ void SetDefaults(void){
  	EE_Wr(EE_B2,80);
  	EE_Wr(EE_B3,40);
 	EE_Wr(EE_TIMEOUT_MINUTES, 15);
- 	//EE_Wr(EE_LAST_CONNECTION_TYPE, CONNECTION_UNKNOWN);
 }
 
 // Flash an error code in the LED for 5 seconds, then reset the CPU
@@ -162,7 +166,16 @@ int main(void){
 		TC1_SetOverflowIntLevel(&TCC1, TC_OVFINTLVL_LO_gc );	// low level interrupt on overflow
 
 		PMIC.CTRL |= PMIC_LOLVLEX_bm + PMIC_MEDLVLEX_bm + PMIC_HILVLEX_bm;
-
+		
+		if(!ButtonPressed())
+		{
+			temp_int_long=300000;
+			while(temp_int_long>0)
+			{
+				temp_int_long--;
+			}	// wait for things to settle
+		}
+		
 		StartScheduler();	// should never return
 
 	  return 0;  // should never get here
@@ -249,6 +262,22 @@ BEGIN_TASK(TaskMain)
 					Seg7LP('C');
 			}
 			if(BatteryIsCharged()){
+				//This addresses PC charging issues where the USB is toggling for 500 ms after power up
+				//If our previous sample was the 1st transition to usb present and battery charging, lets check if its been present for xx ms
+				if(1 == firstSample)
+				{
+					//Have we indicated charged for 25 ms
+					if((globalTimerTicks - iSampleTimestamp) > 25)
+					{
+						cc_set_charge_complete();
+					}
+				}
+				if(0 == firstSample)
+				{
+					iSampleTimestamp = globalTimerTicks;	//grab the time of the first sample
+					firstSample = 1;
+				}
+				
 #ifdef WORKING
 				if(!inBluetoothUpdateMode) {
 #endif
@@ -258,10 +287,12 @@ BEGIN_TASK(TaskMain)
 				}
 #endif
 			}
+			else firstSample = 0;	//Clear firstSample because we're charging
 		}
 		// if we're not powered by USB and TaskAcq is not running, then show 'F'ull or 'E'mpty or "L" while the button is pressed and nothing otherwise
 		// if TaskAcq is running, it will handle the button, the display, and power
 		else if(!Flags.AcqActive){
+			firstSample = 0;
 			if(!ElapsedMinutes){
 				MainPowerOff();	// TaskAcq isn't running and ElapsedMinutes is zero (so even if we've recorded something, we can't maintain it)... so turn off when the button is released
 			}
@@ -269,35 +300,24 @@ BEGIN_TASK(TaskMain)
 				Seg7LP(' ');
 			}
 		}
+		else firstSample = 0;
+		//If the charger is not present, the charge cannot be complete
+		if(!USBPresent() && cc_get_charge_complete()) 
+			cc_clear_charge_complete();
 	} // while(1)
 
 END_TASK
 
-/*
-ISR(TCE1_OVF_vect) {
-	// Our own "interrupt" for BT USART
-	if((BTPortDescriptor.usart->STATUS & USART_DREIF_bm) != 0 && BTRTS()) {
-		USART_DataRegEmptyNotInterrupt(&BTPortDescriptor);
-	}
-	if((BTPortDescriptor.usart->STATUS & USART_RXCIF_bm) != 0) {
-		USART_RXComplete(&BTPortDescriptor);
-		//BTPortDescriptor.usart->STATUS &= ~USART_RXCIF_bm;
-	}
-}
-*/
-
 // 16KHz main interrupt. Drives acquisition and SysTick
 ISR(TCC1_OVF_vect){
-//	DPLEDOn();
 	static char i;
 	AcqInterrupt();
 	
 	
 	if( (i++&0xf)==0){ 
-		//++globalTimer;
+		++globalTimerTicks;
 		SysTick();
 	}
-//	DPLEDOff();
 }
 
 #endif

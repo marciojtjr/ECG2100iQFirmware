@@ -12,7 +12,7 @@
 #include "seg7.h"
 #include "eeprom.h"
 
-#define BOOT_VERSION 3	// the first version was actually 0xffffffff
+#define BOOT_VERSION 4	// the first version was actually 0xffffffff
 
 /*If the code space is critical, user can uncomment the following lines*/
 //#define REMOVE_AVRPROG_SUPPORT
