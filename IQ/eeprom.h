@@ -32,7 +32,8 @@ enum {
 	EE_ENABLE_VOICE,
 	EE_ENABLE_CONTINUOUS,
 	EE_LAST_CONNECTION_TYPE,
-	EE_TIMEOUT_MINUTES
+	EE_TIMEOUT_MINUTES,
+	EE_FG_VALID							//Whether the fuel gauge is valid
 };
 
 #endif

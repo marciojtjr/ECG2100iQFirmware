@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "IQ", "IQ.cproj", "{01E6ED85-3528-4754-89EF-1D2C81CF09BC}"
 EndProject
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Bootloader", "..\Bootloader\Bootloader.cproj", "{6A4FA459-8322-4865-86BB-76372B9CB5FC}"

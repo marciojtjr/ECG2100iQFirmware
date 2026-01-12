@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <util/delay.h>
 
 #ifndef BOOTLOADER
 unsigned char LPChar;	// holds the current 7 segment character
@@ -88,24 +89,24 @@ void Seg7E(char on){
 }
 
 void Seg7F(char on){
-	PORTE.DIRSET = PIN6_bm;
-	PORTE.PIN6CTRL = PORT_OPC_BUSKEEPER_gc;
-	if(on){
-		PORTE.OUTCLR = PIN6_bm;
-	}
-	else{
-		PORTE.OUTSET = PIN6_bm;
-	}
-}
-
-void Seg7G(char on){
 	PORTE.DIRSET = PIN5_bm;
-	PORTE.PIN5CTRL = PORT_OPC_BUSKEEPER_gc;
+	PORTE.PIN6CTRL = PORT_OPC_BUSKEEPER_gc;
 	if(on){
 		PORTE.OUTCLR = PIN5_bm;
 	}
 	else{
 		PORTE.OUTSET = PIN5_bm;
+	}
+}
+
+void Seg7G(char on){
+	PORTE.DIRSET = PIN6_bm;
+	PORTE.PIN5CTRL = PORT_OPC_BUSKEEPER_gc;
+	if(on){
+		PORTE.OUTCLR = PIN6_bm;
+	}
+	else{
+		PORTE.OUTSET = PIN6_bm;
 	}
 }
 

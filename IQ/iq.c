@@ -31,10 +31,11 @@
 #include "rtc_driver.h"
 #include "eeprom.h"
 #include "TaskFlash.h"
-#include "TaskAcq.h"
 #include "TaskWatchDog.h"
 
 #include "taskBT.h"
+#include "taskCC.h"
+#include "taskUSB.h"
 
 #define SYS_FREQ 16000	//Hz
 #define POLL_FREQ 128000
@@ -48,6 +49,12 @@ void (*resetVec)( void ) = 0x0000; // Set up function pointer to the RESET vecto
 void InitUSBUART(void){
 	PORTF.DIRSET = PIN3_bm;  PORTF.PIN3CTRL = PORT_OPC_WIREDAND_gc; // TXD is open collector output
 	PORTF.DIRCLR = PIN2_bm;// RXD is input
+}
+
+void InitTWI(void){
+	PORTC.DIRSET = PIN0_bm | PIN1_bm;  // SDA, SCL as outputs
+	PORTC.PIN0CTRL = PORT_OPC_WIREDANDPULL_gc;  // SDA with pull-up
+	PORTC.PIN1CTRL = PORT_OPC_WIREDANDPULL_gc;  // SCL with pull-up
 }
 
 void SlowClock(void){
@@ -111,25 +118,24 @@ void Error(unsigned char c){
 //main
 
 int main(void){
-	//volatile int stringSize = APPLE_BT_STRING_SIZE;
 	WDT_EnableAndSetTimeout( WDT_PER_2KCLK_gc );
-	
-	PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// fix glitch in bootstrap loaded that enabled pulldown on microphone input rather than USBDetect
+	//pulldown is set in iq.h
+	//PORTB.PIN3CTRL = PORT_OPC_TOTEM_gc;	// fix glitch in bootstrap loaded that enabled pulldown on microphone input rather than USBDetect
 	FastClock();
 	HIGHPOWER_Init();
 	InitSeg7();	// blank the 7 segment display
 	DPLEDOff();
 	AnalogPowerOff();
 	FlashPowerOff();
-	//Seg7HP('P');
 	InitUSBDetect();
 	InitButton();
+	InitTWI();
+	
 	Flags.AcqActive = 0;
 
 	CLK.RTCCTRL = CLK_RTCSRC_RCOSC_gc | CLK_RTCEN_bm;	// start the RTC (clocked at 1024Hz) so we can set registers
 	while(RTC_Busy());	// Wait until RTC is ready.
 	
-	//RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV16_gc );	// Configure RTC wakeup period, clock it at 1Hz
 	RTC_Initialize( RTC_PERIOD, 0, RTC_PERIOD-1, RTC_PRESCALER_DIV1024_gc );
 
 	//------------------------------------------------------------------------------------------
@@ -146,10 +152,6 @@ int main(void){
 	if(EE_Rd(EE_TIMEOUT_MINUTES) > 600) {
 		EE_Wr(EE_TIMEOUT_MINUTES, 15);
 	}
-	
-	//if(EE_Rd(EE_ENABLE_VOICE)>1) {
-	//	EE_Wr(EE_ENABLE_VOICE, 1);
-	//}
 
 	while(1){
 
@@ -158,10 +160,6 @@ int main(void){
 		TC_SetPeriod(&TCC1,F_CPU/SYS_FREQ-1);	// set the TC period
 		TC1_ConfigClockSource(&TCC1, TC_CLKSEL_DIV1_gc );	// start timer by selecting a clock source 1x
 		TC1_SetOverflowIntLevel(&TCC1, TC_OVFINTLVL_LO_gc );	// low level interrupt on overflow
-
-		//TC_SetPeriod(&TCE1, F_CPU/POLL_FREQ-1);
-		//TC1_ConfigClockSource(&TCE1, TC_CLKSEL_DIV1_gc);
-		//TC1_SetOverflowIntLevel(&TCE1, TC_OVFINTLVL_HI_gc);
 
 		PMIC.CTRL |= PMIC_LOLVLEX_bm + PMIC_MEDLVLEX_bm + PMIC_HILVLEX_bm;
 
@@ -189,110 +187,15 @@ BEGIN_TASK(TaskMain)
 
 	//-------------------------------------------------------------------------------------------
 	// First, we handle the power-up condition, where the button was pressed or we were plugged into USB while we were off
-	
-	
-	/*
-	ElapsedMinutes = 0;	// we are powering up, there's no way we can know what the elapsed time is, so zero it
-	if(EE_Rd( (EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full
-		// all we can do is display the "F" message until the button is released. This is also an error condition.
-		// We should never power up full because we never turn off once full. We stay in low power operation tracking elapsed time.
-		// If we power up in a full condition, maybe we were in that mode so long that the battery died or we had some kind of system upset?
-		// Regardless of the reason we were off, it means we don't know the ElapsedMinutes. So powerup zeros it and we let it be.
-		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
-
-		Seg7LP('F');
-		//Seg7LP('0' + state);
-		acqState = FSM_START;
-		
-		//MainPowerOn();
-	}
-	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not. (Now, with Full mode it causes problems. Look into it)
-	*/
-	
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 		osENABLE_TASK(TaskAcq);
-		
-/*
-		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0 || (EE_Rd(EE_VOICE_RECORD_LENGTH) == 0 && EE_Rd(EE_ENABLE_VOICE) == 0)) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
-			
-			buttonTimer = 0;
-			do {
-				Seg7LP('F');
-				//Seg7LP('0' + EE_Rd(EE_TEST));
-				if(++buttonTimer >= 5000) {
-					MainPowerOn();
-					
-					if(TaskFlashCmd == TF_IDLE){
-						FlashPowerOn();
-						TaskFlashCmd = TF_ERASE_ALL;
-						do{
-							osWAIT(100);
-							Seg7HP(0x23);
-							osWAIT(100);
-							Seg7HP(0x24);
-							osWAIT(100);
-							Seg7HP(0x25);
-							osWAIT(100);
-							Seg7HP(0x26);
-							osWAIT(100);
-							Seg7HP(0x21);
-							osWAIT(100);
-							Seg7HP(0x22);
-						}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-						ElapsedMinutes = 0;
-						Seg7HP(' ');
-						FlashPowerOff();
-						MainPowerOff();
-						break;
-					}
-				}									
-				MainPowerOff();
-				osWAIT(1);
-			}while(ButtonPressed());
-			
-			// If we get here, we were plugged into USB while the button was being held, now the button is released but USB will keep us powered
-			// The easiest thing to do is probably to jump to the reset vector (letting the watchdog expire would take us to the bootstrap loader)
-			resetVec();
-		}
-
-		else if( (EE_Rd(EE_VOICE_RECORD_LENGTH)==0) && (EE_Rd(EE_ECG_RECORD_LENGTH)==0) ){	// we're truly empty, enable acquisition
-			osENABLE_TASK(TaskAcq);
-			// TaskAcq is responsible for handling the button. It will also turn off power if acquisition is abandoned.
-			// If acquisition completes successfully, TaskAcq will set ElapsedMinutes = 1 and disable itself
-		}
-
-		else{ // ERROR! Either Voice or ECG has data, but the other buffer is empty. We should never power up in this state. Erase everything, go back to empty, and start acquisition.
-			MainPowerOn();	// keep ourselves on until erase is complete
-			do{
-				osWAIT(10);
-			}while(TaskFlashCmd!=TF_IDLE);	// wait till Flash is ready to go
-
-			TaskFlashCmd = TF_ERASE_ALL;	// erase everything
-
-			do{
-				osWAIT(100);
-				Seg7HP(0x23);
-				osWAIT(100);
-				Seg7HP(0x24);
-				osWAIT(100);
-				Seg7HP(0x25);
-				osWAIT(100);
-				Seg7HP(0x26);
-				osWAIT(100);
-				Seg7HP(0x21);
-				osWAIT(100);
-				Seg7HP(0x22);
-			}while(TaskFlashCmd!=TF_IDLE);		// spin the LED until everything has been erased
-			Seg7HP(' ');
-			osWAIT(250);
-			osENABLE_TASK(TaskAcq);	// now we're empty and ready to acquire
-			Flags.AcqActive = 1;
-		}*/
-	} // if(!USBPresent())
+	}
 
 	else{ // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
 		osENABLE_TASK(TaskUSB);
 	}
+	
+	osENABLE_TASK(TaskCC);
 
 	//-------------------------------------------------------------------------------------------
 	// We've handled all the power up conditions. If we make it this far, it's because:
@@ -307,9 +210,6 @@ BEGIN_TASK(TaskMain)
 
 
 	// if ElapsedMinutes does go to zero, we can turn off. If we're still on USB, we stay at high speed with TaskUSB and TaskFlash running.
-
-	//ElapsedMinutes = 1; // test
-
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	while(1){	// check forever (we'll eventually leave by powering down inside this loop)
@@ -339,68 +239,9 @@ BEGIN_TASK(TaskMain)
 			DPLEDOff();	// in case it was left on by the watchdog task, which no longer runs
 		}
 
-
-/*
-		if(ElapsedMinutes){	// if ElapsedMinutes was set by a successfull acquisition, we must keep advancing it
-
-			MainPowerOn();	// stay on to mark time
-//			AnalogPowerOff();
-
-			// While we are marking time, it's possible that we'll be pluggedinto/unplugged from USB. We have to adjust our clock speed to accommodate that
-
-			if(!USBPresent() && CLKSYS_IsReady(OSC_PLLRDY_bm) && acqState != FSM_FULL_ON ){	// if we're not connected to USB (which supplies power) and we're running fast
-//			MainPowerOn();
-				LOWPOWER_Init();	// enter lowest power operating mode to conserve battery energy
-				SlowClock();
-				AnalogPowerOff();
-				FlashPowerOff();
-				InitUSBDetect();
-				InitButton();
-				osDISABLE_TASK(TaskUSB);
-			}
-
-			if( USBPresent() && !CLKSYS_IsReady(OSC_PLLRDY_bm) ){ // we're on USB power and not running at high speed, switch to high speed
-				acqState = FSM_DONE;
-
-				osENABLE_TASK(TaskUSB);
-				FastClock();
-				FlashPowerOn();
-				HIGHPOWER_Init();
-				InitUSBUART();
-			}
-
-			
-			if(USBPresent() && !osIS_TASK_ENABLED(TaskUSB)) {
-				osENABLE_TASK(TaskUSB);
-
-				// Make REAL sure we're on fast clocks
-				//FastClock();
-				//FlashPowerOn();
-				//HIGHPOWER_Init();
-				InitUSBUART();
-			}
-			
-
-			// now that we're running at the right clock speed for the circumstances, we can take care of ElapsedMinutes
-			if(RTC.INTFLAGS & RTC_OVFIF_bm){	// if the RTC overflowed
-				RTC.INTFLAGS = RTC_OVFIF_bm;		// clear the flag
-				if(ElapsedMinutes<0xffff){
-					ElapsedMinutes++;							// and increment ElapsedMinutes
-				}
-			}
-		}	// if(ElapsedMinutes())
-*/
 		// Now we've got to handle the 7-segment display
 		// If we're powered by USB, we can be 'F'ull, 'C'harging or 'E'mpty
 		if(USBPresent()){
-			/*
-			if(EE_Rd( EE_VOICE_RECORD_LENGTH)!=0 || EE_Rd(EE_ECG_RECORD_LENGTH)!=0){
-#ifdef WORKING
-				if(!inBluetoothUpdateMode) 
-#endif
-					Seg7LP('F');
-			}
-			*/
 			if(BatteryIsCharging()){
 #ifdef WORKING
 				if(!inBluetoothUpdateMode) 
