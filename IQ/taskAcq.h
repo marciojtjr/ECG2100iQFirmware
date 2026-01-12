@@ -28,7 +28,7 @@ void UnPackECG(signed int *out, unsigned char *in);
 // ADC channel assignments for Port A
 #define	ADC_CH_UNUSED_0		ADC_CH_MUXPOS_PIN0_gc
 #define ADC_CH_RL_MON 		ADC_CH_MUXPOS_PIN1_gc
-#define ADC_CH_BATT			ADC_CH_MUXPOS_PIN2_gc
+//#define ADC_CH_BATT			ADC_CH_MUXPOS_PIN2_gc
 #define ADC_CH_V6			ADC_CH_MUXPOS_PIN4_gc
 #define ADC_CH_V5		 	ADC_CH_MUXPOS_PIN5_gc
 #define ADC_CH_V4			ADC_CH_MUXPOS_PIN6_gc
@@ -37,7 +37,7 @@ void UnPackECG(signed int *out, unsigned char *in);
 // ADC channel assignments for Port B
 #define ADC_CH_VREF				ADC_CH_MUXPOS_PIN0_gc
 #define ADC_CH_RA_MON			ADC_CH_MUXPOS_PIN1_gc
-#define ADC_CH_MIC				ADC_CH_MUXPOS_PIN2_gc
+//#define ADC_CH_MIC				ADC_CH_MUXPOS_PIN2_gc
 #define ADC_CH_V2				ADC_CH_MUXPOS_PIN4_gc
 #define ADC_CH_V1				ADC_CH_MUXPOS_PIN5_gc
 #define ADC_CH_LL				ADC_CH_MUXPOS_PIN6_gc
@@ -50,16 +50,22 @@ void UnPackECG(signed int *out, unsigned char *in);
 #define REZERO_V1	PIN1_bm
 #define REZERO_V2	PIN0_bm
 
-#define PORT_V3_V6 PORTC
+#define PORT_V3_V4 PORTC
 #define REZERO_V3	PIN3_bm
 #define REZERO_V4	PIN2_bm
-#define REZERO_V5	PIN1_bm
-#define REZERO_V6	PIN0_bm
+
+#define PORT_V6 PORTA
+#define REZERO_V6	PIN2_bm
+
+#define PORT_V5 PORTB
+#define REZERO_V5	PIN2_bm
 
 #define PORT_PACE_DETECT PORTA
 #define PACE_DETECT_L1 PIN3_bm
 
 #define BT_STRING_LENGTH 110
+
+#define BATTERY_SHUTDOWN_THRESHOLD_PCT 10  // Battery shutdown threshold in percent
 
 extern float VBatt;
 extern int16_t Lead[8];

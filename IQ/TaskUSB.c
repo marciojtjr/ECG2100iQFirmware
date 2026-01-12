@@ -32,7 +32,7 @@
 #include "TaskWatchDog.h"
 #include "taskBT.h"
 #include "taskUSB.h"
-
+#include "taskCC.h"
 #include "apple.h"
 
 #ifdef WORKING
@@ -84,65 +84,10 @@ unsigned char EraseInProgress = 0;
 long int result;
 unsigned char usbConfigured = 0;
 
-/*
-//------------------------------------------------------------------------------------
-// Unpack ECG data using array math
-void UnPackECGA(signed int out[], unsigned char in[]){
-  unsigned char i;	// index into input array
-  unsigned char j;	// index into output array
-
-  for(i=0, j=0; i<12; i+=3){	// unpack the eight channels in four pairs (3 bytes unpack into four bytes (two shorts))
-    out[j++] = ( (in[i  ]<<8) + ( (in[i+1]   )&0xf0) )/16;
-    out[j++] = ( (in[i+2]<<8) + ( (in[i+1]<<4)&0xf0) )/16;
-  }
-}
-
-//------------------------------------------------------------------------------------
-// Unpack ECG data using pointer math
-void UnPackECGP(signed int *out, unsigned char *in){
-	unsigned char i;
-	signed int temp;
-
-	for(i=0;i<4;i++){						// unpack the eight channels in four pairs (3 bytes unpack into four)
-		temp = *in++<<8; 					// high byte of first channel in a pair
-		temp += *in & 0xf0;				// low nibble
-		*out++ = temp>>4;					// scale back to 12 bits
-		temp = (*in++ & 0xf)<<4;	// low nibble of second sample
-		temp += *in++<<8;					// high byte of second channel in a pair
-		*out++ = temp>>4;					// scale back to 12 bits
-	}
-}
-*/
-
 //static unsigned char format;
 //static unsigned int crc;
 static unsigned int i;
 static unsigned char j;
-
-/*
-void Dump(unsigned int i){
-	unsigned char j;
-
-	if(format == FORMAT_DECIMAL){
-		for(j=0;j<12;j++){
-			print_usb("%02X ",Buf1.Data.ECG.Sample[i][j]);
-		}
-		print_usb("\r\n");
-	}
-	else{ // FORMAT_BINARY
-		for(j=0;j<12;j++){
-			if(Debug){
-				put_byte(j);
-				crc(j);
-			}
-			else{
-				put_byte(Buf1.Data.ECG.Sample[i][j]);
-				crc(Buf1.Data.ECG.Sample[i][j]);
-			}
-		}
-	}
-}
-*/
 
 //------------------------------------------------------------------------------------
 void Hello(int type){
@@ -208,11 +153,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 	static char cmd[3];
 	static float data1,data2;
 	static unsigned long start;//, end;
-	//static unsigned char byte;
-	
-	//static float ecgLength;
-	//static unsigned long trueEnd;
-	//static int trueEndPage;
 
 	Hello(PRINT_USB);
 
@@ -223,20 +163,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 		USBWatchTimer = FLASH_WATCH_TIME; // longest command is erase all flash "ea" which can take up to 80 seconds, according to the data sheet.
 
 		AnalogPowerOn();
-
-/*
-	#if ENABLE_DEBUG
-		Verbose = EE_Rd(EE_VERBOSE);
-		Debug = EE_Rd(EE_DEBUG);
-		format = EE_Rd(EE_FORMAT);
-		FlowControl = EE_Rd(EE_FLOW_CONTROL);
-	#else
-		Verbose = 0;
-		Debug = 0;
-		FlowControl = 0;
-		format=FORMAT_BINARY;
-	#endif
-*/
 
 		if(USBPortDescriptor.RxReady){	// we have a command
 			//--------------------------------------------------------------------------
@@ -320,14 +246,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				//-------------------------------------
 				// report the flash CRC
 				else if(strncmp(cmd,"cc",2)==0){
-					/*
-					if(EE_Rd(EE_APP_CRC) == SP_ApplicationCRC()){
-						print_usb("CRC Okay = 0x%08lX", EE_Rd(EE_APP_CRC));
-					}
-					else{
-						print_usb("CRC Fail: Computed = 0x%08lX, EEPROM = 0x%08lX", SP_ApplicationCRC(), EE_Rd(EE_APP_CRC));
-					}
-					*/
+
 				}
 				//-------------------------------------
 				// enable/disable Verbose messages
@@ -545,439 +464,11 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				}
 
 #endif
-
-				//-------------------------------------
-				// Erase All Flash via bulk erase command
-				
-				/*
-				else if(strncmp(cmd,"ea",2)==0){
-					MainPowerOn();			// just in case we lose USB
-					EraseInProgress=1;	// keep auto power off from tripping if we lose USB
-					print_usb("Erasing All Flash\r\n");
-					if(TaskFlashCmd == TF_IDLE){
-						TaskFlashCmd = TF_ERASE_ALL;
-						i=0;
-						do{
-							osWAIT(100);
-							Seg7HP(0x23);
-							osWAIT(100);
-							Seg7HP(0x24);
-							osWAIT(100);
-							Seg7HP(0x25);
-							osWAIT(100);
-							Seg7HP(0x26);
-							osWAIT(100);
-							Seg7HP(0x21);
-							osWAIT(100);
-							Seg7HP(0x22);
-							print_usb(".");
-							if(i++%16==15){
-								print_usb("\r\n");
-							}
-						}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-						ElapsedMinutes = 0;
-						Seg7HP(' ');
-						print_usb("\r\nDone");
-						EraseInProgress=0;	// all auto power off on loss of USB
-					}
-					else{
-						print_usb("Flash Busy");
-					}
-				}
-				*/
-				
-				/*
-				//-------------------------------------
-				// Report length of the voice recording, in seconds
-				else if(strncmp(cmd,"?v",2)==0){
-					if(Verbose){
-						print_usb("Voice record length = %1.1f sec.\r\n", floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 );
-					}
-					else{
-						print_usb("%1.1f\r\n", floor((float)EE_Rd(EE_VOICE_RECORD_LENGTH)*0.016*10.0)/10.0 );
-					}
-				}
-				
-				//-------------------------------------
-				// Report length of the ecg recording, in seconds
-				else if(strncmp(cmd,"?e",2)==0){
-					if(Verbose){
-						print_usb("ECG record length = %1.1f sec.\r\n", floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0 );
-					}
-					else{
-						print_usb("%1.1f\r\n", floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0 );
-					}
-				}
-				
-				//--------------------------------------------------------------------------
-				// read 100ms of voice data
-				// Each page of Flash holds 16ms of voice (16 uLaw bytes/ms)
-				// So we must map the start and end points onto:
-				//	 A starting page and offset
-				//   An ending page and offset
-				//	 A range of complete pages to read
-
-				else if(strncmp(cmd,"rv",2)==0){
-					if(argC){
-						if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of voice
-							if(data1>VOICE_RECORD_LENGTH-BLOCK_LEN*2){
-								data1 = VOICE_RECORD_LENGTH-BLOCK_LEN*2;
-							}
-							data2 = data1;
-						}
-						else{ // argC==2, we were given both a start time and an end time
-							if(data2<data1){	// fix end<start
-								data2 = data1;
-							}
-							else if(data2>VOICE_RECORD_LENGTH-BLOCK_LEN){// fix end bigger than record length
-								data2 = VOICE_RECORD_LENGTH-BLOCK_LEN;
-							}
-							else{
-								data2 = data2;
-							}
-						}
-
-						// truncate times to 100ms resolution
-						start = data1*10;
-						end = data2*10;
-						// convert to milliseconds
-						start*=100;
-						end*=100;
-						// set end to the last milliscond of the 100ms block
-						end+=99;
-
-						// now we've got valid start and end times, convert that into flash page numbers and indexes
-						startPage = start/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
-						startIndex = start%VOICE_MS_PER_PAGE*16;
-						endPage = end/VOICE_MS_PER_PAGE + FLASH_VOICE_START_PAGE;
-						endIndex =  end%VOICE_MS_PER_PAGE*16;
-
-						if(Verbose){
-							print_usb("s%ld e%ld\r\n", start, end);
-							print_usb("Start page  = %d\r\n",startPage);
-							print_usb("Start index = %d\r\n",startIndex);
-							print_usb("End page    = %d\r\n",endPage);
-							print_usb("End index   = %d\r\n",endIndex);
-						}
-
-						crc = 0xffff;
-
-						// dump voice data from startPage
-						FlashPageNumber=startPage;
-						while(TaskFlashCmd != TF_IDLE); // should never happen
-						TaskFlashCmd = TF_READ_BUF1;
-						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-							osYIELD;
-						}
-						for(i=startIndex;i<VOICE_SAMPLES_PER_PAGE;i++){
-							if(Debug){
-								byte = i;
-							}
-							else{
-								byte = Buf1.Data.Byte[i];
-							}
-							crc(byte);
-							if(format == FORMAT_DECIMAL){
-								print_usb("%d,",ulaw2linear(byte));
-								if(i%VOICE_SAMPLES_PER_MS==VOICE_SAMPLES_PER_MS-1){
-									print_usb("\r\n");
-								}
-							}
-							else{ // FORMAT_BINARY
-								put_byte(byte);
-							}
-						}
-						osYIELD;	// mostly to keep the watchdog happy
-						print_verbose("Start Page Done\r\n");
-
-						// dump voice data from full pages between startPage and endPage
-						while(++FlashPageNumber<endPage){
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							for(i=0;i<VOICE_SAMPLES_PER_PAGE;i++){
-								if(Debug){
-									byte = i;
-								}
-								else{
-									byte = Buf1.Data.Byte[i];
-								}
-								crc(byte);
-								if(format == FORMAT_DECIMAL){
-									print_usb("%d,",ulaw2linear(byte));
-									if(i%VOICE_SAMPLES_PER_MS==VOICE_SAMPLES_PER_MS-1){
-										print_usb("\r\n");
-									}
-								}
-								else{ // FORMAT_BINARY
-									put_byte(byte);
-								}
-							}
-							osYIELD;
-							print_verbose("Interior page %d done\r\n",FlashPageNumber);
-						}
-
-						// dump voice data from endPage
-						FlashPageNumber=endPage;
-						while(TaskFlashCmd != TF_IDLE); // should never happen
-						TaskFlashCmd = TF_READ_BUF1;
-						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-							osYIELD;
-						}
-						for(i=0;i<=endIndex+VOICE_SAMPLES_PER_MS-1;i++){
-							if(Debug){
-								byte = i;
-							}
-							else{
-								byte = Buf1.Data.Byte[i];
-							}
-							crc(byte);
-							if(format == FORMAT_DECIMAL){
-								print_usb("%d,",ulaw2linear(byte));
-								if(i%VOICE_SAMPLES_PER_MS==VOICE_SAMPLES_PER_MS-1){
-									print_usb("\r\n");
-								}
-							}
-							else{ // FORMAT_BINARY
-								put_byte(byte);
-							}
-						}
-						osYIELD;
-						if(format == FORMAT_BINARY){
-							put_byte(crc);
-							put_byte(crc>>8);
-						}
-						else{
-							print_usb("%04x", crc);
-						}
-							
-						print_verbose("End page done\r\n");
-					}
-				}
-
-				//--------------------------------------------------------------------------
-				// Read ECG data
-				// Each page of Flash holds 21ms of ECG (12 bytes/sample each ms)
-				// So we must map the start and end points onto:
-				//	 A starting page and offset
-				//   An ending page and offset
-				//	 A range of complete pages to read
-
-				else if(strncmp(cmd,"re",2)==0){
-					if(argC){
-						if(argC==1){	// only a start time was provided, dump one BLOCK_LEN of ECG
-							if(data1>ECG_RECORD_LENGTH-BLOCK_LEN*2){
-								data1 = ECG_RECORD_LENGTH-BLOCK_LEN*2;
-							}
-							data2 = data1;
-						}
-						else if(argC==2){ // we were given both a start time and an end time
-							if(data2<data1){	// fix end<start
-								data2 = data1;
-							}
-							else if(data2>ECG_RECORD_LENGTH-BLOCK_LEN){// fix end bigger than record length
-								data2 = ECG_RECORD_LENGTH-BLOCK_LEN;
-							}
-							else{
-								data2 = data2;
-							}
-						}
-						ecgLength = floor((float)EE_Rd(EE_ECG_RECORD_LENGTH)*0.021*10)/10.0;
-						ecgLength -= 0.1f;
-
-						// truncate times to 100ms resolution
-						start = data1*10;
-						end = data2*10;
-						// convert to milliseconds
-						start*=100;
-						end*=100;
-						// set end to the last milliscond of the 100ms block
-						end+=99;
-
-						if(Verbose && (format == FORMAT_BINARY)){
-							print_usb("s%ld e%ld\r\n", start, end);
-						}
-						// now we've got valid start and end times, convert that into flash page numbers and indexes
-						startPage = start/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-						startIndex = start%ECG_MS_PER_PAGE;
-						endPage = end/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-						endIndex =  end%ECG_MS_PER_PAGE;
-
-						if(Verbose){
-							print_usb("Start page  = %d\r\n",startPage);
-							print_usb("Start index = %d\r\n",startIndex);
-							print_usb("End page    = %d\r\n",endPage);
-							print_usb("End index   = %d\r\n",endIndex);
-						}
-
-						crc = 0xffff;
-
-						// dump ECG data from startPage
-						FlashPageNumber=startPage;
-						while(TaskFlashCmd != TF_IDLE); // should never happen
-						TaskFlashCmd = TF_READ_BUF1;
-						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-							osYIELD;
-						}
-						for(i=startIndex;i<ECG_SAMPLES_PER_PAGE;i++){
-							if(format == FORMAT_DECIMAL){
-								for(j=0;j<12;j++){
-									print_usb("%02X ",Buf1.Data.ECG.Sample[i][j]);
-								}
-								print_usb("\r\n");
-							}
-							else{ // FORMAT_BINARY
-								for(j=0;j<12;j++){
-									if(Debug){
-										put_byte(j);
-										crc(j);
-									}
-									else{
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										crc(Buf1.Data.ECG.Sample[i][j]);
-									}
-								}
-							}
-						}
-						
-						#ifdef BLUETOOTH
-						put_byte(Buf1.Data.ECG.Flag1);
-						crc(Buf1.Data.ECG.Flag1);
-						put_byte(Buf1.Data.ECG.Flag2);
-						crc(Buf1.Data.ECG.Flag2);
-						#endif
-						
-						osYIELD;
-						print_verbose("Start Page Done\r\n");
-
-						// dump ECG data from full pages between startPage and endPage
-						while(++FlashPageNumber<endPage){
-							while(TaskFlashCmd != TF_IDLE); // should never happen
-							TaskFlashCmd = TF_READ_BUF1;
-							while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-								osYIELD;
-							}
-							for(i=0;i<ECG_SAMPLES_PER_PAGE;i++){
-								if(format == FORMAT_DECIMAL){
-									for(j=0;j<12;j++){
-										print_usb("%02X ",Buf1.Data.ECG.Sample[i][j]);
-									}
-									print_usb("\r\n");
-								}
-								else{ // FORMAT_BINARY
-									for(j=0;j<12;j++){
-										if(Debug){
-											put_byte(j);
-											crc(j);
-										}
-										else{
-											put_byte(Buf1.Data.ECG.Sample[i][j]);
-											crc(Buf1.Data.ECG.Sample[i][j]);
-										}
-									}
-								}
-							}
-							
-							#ifdef BLUETOOTH
-							put_byte(Buf1.Data.ECG.Flag1);
-							crc(Buf1.Data.ECG.Flag1);
-							put_byte(Buf1.Data.ECG.Flag2);
-							crc(Buf1.Data.ECG.Flag2);
-							#endif
-							
-							osYIELD;
-							print_verbose("Interior page %d done\r\n",FlashPageNumber);
-						}
-
-						// dump ECG data from endPage
-						FlashPageNumber=endPage;
-						while(TaskFlashCmd != TF_IDLE); // should never happen
-						TaskFlashCmd = TF_READ_BUF1;
-						while(TaskFlashCmd != TF_IDLE){	// wait for read to complete
-							osYIELD;
-						}
-						for(i=0;i<=endIndex;i++){
-							if(format == FORMAT_DECIMAL){
-								for(j=0;j<12;j++){
-									print_usb("%02X ",Buf1.Data.ECG.Sample[i][j]);
-								}
-								print_usb("\r\n");
-							}
-							else{ // FORMAT_BINARY
-								for(j=0;j<12;j++){
-									if(Debug){
-										put_byte(j);
-										crc(j);
-									}
-									else{
-										put_byte(Buf1.Data.ECG.Sample[i][j]);
-										crc(Buf1.Data.ECG.Sample[i][j]);
-									}
-								}
-							}
-							osYIELD;
-						}
-						
-						// If we're at the last page of the request
-						trueEnd = ecgLength*10;
-						trueEnd*=100;
-						trueEnd+=99;
-						trueEndPage = trueEnd/ECG_MS_PER_PAGE + FLASH_ECG_START_PAGE;
-						if(FlashPageNumber == trueEndPage || endIndex == ECG_SAMPLES_PER_PAGE-1) {
-							// Dump the pace detection byte
-							#ifdef BLUETOOTH
-							put_byte(Buf1.Data.ECG.Flag1);
-							crc(Buf1.Data.ECG.Flag1);
-							put_byte(Buf1.Data.ECG.Flag2);
-							crc(Buf1.Data.ECG.Flag2);
-							#endif
-						}
-						
-						if(format == FORMAT_BINARY){
-							put_byte(crc);
-							put_byte(crc>>8);
-						}
-						print_verbose("End page done\r\n");
-					}
-				}
-
-				//-------------------------------------
-				// report the elapsed time in minutes since ECG recording
-				else if(strncmp(cmd,"?t",2)==0){
-					print_usb("%d\r\n", ElapsedMinutes);
-				}
-
-				//-------------------------------------
-				// erase the elapsed time in minutes since ECG recording
-				else if(strncmp(cmd,"et",2)==0){
-					ElapsedMinutes = 0;
-				}
-				else if(!strncmp("v+", cmd, 2)) {
-					EE_Wr(EE_ENABLE_VOICE, 1);
-				}
-				else if(!strncmp("v-", cmd, 2)) {
-					EE_Wr(EE_ENABLE_VOICE, 0);
-				}
-				*/
 				else if(!strncmp("vr", cmd, 2)) {
-					InitADCs(); // start the ADCs and then we'll override a few settings
-					ADC_Reference_Config(&ADCA, ADC_REFSEL_INT1V_gc); 		// temporarily use internal bandgap
-					ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV256_gc);	// 128KSPS @ 32MHZ
-					ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0);// monitor ground
-					ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0);// monitor ground
-					osWAIT(50);	// wait for power to stabilize
-					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-					osWAIT(1); // wait for conversions to complete
-					ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-					osWAIT(1); // wait for conversions to complete
-					
-					VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
-					short battMV = round(VBatt*100);
+					VBatt = cc_get_batt_volt();
+					short battMV = round(VBatt*1000);
 					print_usb("Battery voltage = %0.2f volts, %dmV", VBatt, battMV);
+
 				}
 				else if(!strncmp("to", cmd, 2)) {
 					if(argC){	// if there was a numeric argument, rescan the command string looking for an integer rather than a float
@@ -995,25 +486,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 				else if(!strncmp("bt", cmd, 2)) {
 					print_usb("Entering Bluetooth passthrough mode...\r\n");
 					
-					//osDISABLE_TASK(TaskBT);
-					//BTOff();
-					
-					//iAP2Packet_t packet;
-					/*
-					USART_Rx_Disable(USBPortDescriptor.usart);
-					USART_Tx_Disable(USBPortDescriptor.usart);
-					USART_Format_Set(USBPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-					USART_Baudrate_Set(USBPortDescriptor.usart, 19, -4); //921600 bps
-					USART_Rx_Enable(USBPortDescriptor.usart);
-					USART_Tx_Enable(USBPortDescriptor.usart);
-					
-					USART_Rx_Disable(BTPortDescriptor.usart);
-					USART_Tx_Disable(BTPortDescriptor.usart);
-					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N2
-					USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
-					USART_Rx_Enable(BTPortDescriptor.usart);
-					USART_Tx_Enable(BTPortDescriptor.usart);
-					*/
 					
 					inBluetoothUpdateMode = 1;
 
@@ -1025,12 +497,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					InitButton();
 					USBWatchTimer = 0; // Keep us awake
 					
-					//osWAIT(250);
-					//osWAIT(250);
-					//osWAIT(250);
-					//osWAIT(250);
-					//print_bt("SET PROFILE IAP PROD:\"abc\" MF:\"def\" MDL:\"xyz\" SN:\"#12345\" PROTO:\"com.bluegiga.iwrap\" SEED:\"1234567890\" APP:\"com.spauldingclinical.IQApp\" FW:5.0.0 HW:1.0.0 CAPS:0 RF:0 VCD:05 MODE0 PKT2K\r");				
-					//print_bt("RESET\r");
 					osWAIT(250);
 					osWAIT(250);
 					osWAIT(250);
@@ -1040,42 +506,9 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					//osWAIT(250);	
 					while(!ButtonPressed()) {	
 						if(PORTF.IN & PIN7_bm) {
-							//uart_putchar(&BTPortDescriptor,appleString[0]);
-							//uart_putchar(&BTPortDescriptor,appleString[1]);
-							//uart_putchar(&BTPortDescriptor,appleString[2]);
-							//uart_putchar(&BTPortDescriptor,appleString[3]);
-							//uart_putchar(&BTPortDescriptor,appleString[4]);
-							//uart_putchar(&BTPortDescriptor,appleString[5]);
-							//print_bt("TEST");
-														
+							
 						}
 						
-						
-						//if(BTPortDescriptor.RxReady) {
-							//for(int i = 0; i < RX_BUF_SIZE; i++)
-							//	print_usb("%x ", BTPortDescriptor.RxBuf[i]);
-								
-							//print_usb("%s ", BTPortDescriptor.RxBuf);					
-							
-							//print_usb("\r\n\r\n");
-							
-							//if(iniAPMode) {
-							//	getApplePacket(BTPortDescriptor.RxBuf);
-							//	printApplePacket(recievedPacket);
-							//	checkRecievedPacketAndSendNext();
-							//}
-							
-							//else {
-							//									for(int i = 0; i < RX_BUF_SIZE; i++)
-							//		print_usb("%x ", BTPortDescriptor.RxBuf[i]);
-								
-							//}
-							//memset(BTPortDescriptor.RxBuf, 0, RX_BUF_SIZE);						
-							
-							//BTPortDescriptor.RxReady = 0;
-						//}
-						
-						//print_usb("Connection type = %s\r\n", (connectionType == CONNECTION_APPLE ? "APPLE" : "ANDROID"));
 						osWAIT(1);
 					}
 					print_usb("Exiting Bluetooth passthrough mode...\r\n");
@@ -1209,9 +642,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 						float delta = 4095 * 0.05f;
 						float zeroVolts = 4095.0f/2.0f - delta;
 						int voltage = 0;
-						//int voltage = ((RL_Mon-zeroVolts-delta)/(4095.0f-delta))*3.3f*1000;
-						
-						//VBatt = (ADCB.CH0.RES + ADCB.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 
 						print_usb("\r%d %d %f %d %dmv", ADCB.CH0.RES, ADCA.CH2.RES, delta, voltage, BTLeadOff);
 					}
@@ -1223,12 +653,7 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					acqState = FSM_PREACQ;
 					
 					InitADCs(); // start the ADCs and then we'll override a few settings
-					//ADC_Reference_Config(&ADCB, ADC_REFSEL_VCC_gc); 		    // temporarily use internal bandgap
-					//ADC_Prescaler_Config(&ADCB, ADC_PRESCALER_DIV256_gc);	    // 128KSPS @ 32MHZ
-					//ADC_Ch_InputMux_Config(&ADCB.CH0, ADC_CH_V1, 0);		// monitor battery voltage on ADCA
-					//ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_BATT, 0);		// monitor battery voltage on ADCA
-					//ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_UNUSED_0, 0); // monitor ground
-					//ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_UNUSED_0, 0); // monitor ground
+
 					osWAIT(50);	// wait for power to stabilize
 					USBWatchTimer = 0; // Keep us awak
 
@@ -1238,12 +663,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					BTStatus = 0;
 					BTEnable = 1;
 					BTOn(); // if BT got killed, turn it back on
-					
-					//PORTC.DIRSET = PIN4_bm; PORTC.PIN4CTRL = PORT_OPC_TOTEM_gc;
-				//for(i = 0; i < 1000; i++) {
-					
-					//currentFFTLead = selectedLead;
-					//LFBiasOn();
 					
 					static volatile short min = 0, max = 0;
 					static volatile unsigned char needMinMax = 1;
@@ -1258,7 +677,6 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 						temp[2] = 0 >> 8;
 
 						compressed = (int16_t) ((temp[0] << 4) | ((temp[1] & 0xf0) >> 4));
-						//compressed = (Lead[V3] >> 4);
 
 						if(needMinMax) {
 							min = max = compressed;
@@ -1274,31 +692,18 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 							counter = 0;
 							print_usb("Min = %d, Max = %d, Avg = %lf\r\n", min, max, accumulator);
 						}
-						//wdt_reset();
-						//ADCB.CH2.RES
-						//print_usb("%04x\r\n", Lead[V1]);
-																													
-						//osYIELD;
+
 						osWAIT(1);
 					}
 					
 					StopAcq();
-				//}
-				//ADC_Conversions_Start(&ADCA, (ADC_CH0START_bm | ADC_CH1START_bm | ADC_CH2START_bm| ADC_CH3START_bm) );
-				//osWAIT(1); // wait for conversions to complete
-				//VBatt = (ADCA.CH0.RES + ADCA.CH1.RES - ADCA.CH2.RES - ADCA.CH3.RES)/(8190.0-ADCA.CH2.RES - ADCA.CH3.RES)*4.2;
 			}
 			else if(!strncmp("br", cmd, 2)) {
 					// Change baudrate
 					osDISABLE_TASK(TaskBT);
 					BTOff();
-					//USART_Rx_Disable(BTPortDescriptor.usart);
-					//USART_Tx_Disable(BTPortDescriptor.usart);
 					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, true);	//8N1
 					USART_Baudrate_Set(BTPortDescriptor.usart, (F_CPU/16/BT_BAUD_RATE-1), 0);
-					//USART_Rx_Enable(BTPortDescriptor.usart);
-					//USART_Tx_Enable(BTPortDescriptor.usart);
-					
 					BTOn();
 					
 					for(i = 0; i < 50; i++) {
@@ -1307,13 +712,9 @@ USBPortDescriptor.RxBuf = smallRxBuf;
 					}
 					
 					BTOff();
-					
-					//USART_Rx_Disable(BTPortDescriptor.usart);
-					//USART_Tx_Disable(BTPortDescriptor.usart);
 					USART_Format_Set(BTPortDescriptor.usart, USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc,	false);	//8N1
 					USART_Baudrate_Set(BTPortDescriptor.usart, 19, -4); //921600 bps
-					//USART_Rx_Enable(BTPortDescriptor.usart);
-					//USART_Tx_Enable(BTPortDescriptor.usart);
+
 					
 					osENABLE_TASK(TaskBT);
 				}

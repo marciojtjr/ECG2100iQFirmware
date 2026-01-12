@@ -45,6 +45,8 @@ unsigned char AcqBufferLock = LOCKED;
 #define DisableBuffering() AcqBufferLock = LOCKED;
 
 int lastCheckState;
+static uint64_t lDisplayTimestamp;	//for the button press/display timeout
+static bool bDisplayOn = false;
 
 //uint32_t
 //uint16_t
@@ -102,6 +104,7 @@ unsigned int msSinceLastSpike = 0;
 // return the battery voltage, in mV.
 // If acquisition is running (AcqIrqState != ACQ_IRQ_IDLE) we use the raw battery ADC reading
 // provided by the interrupt routine. If acquisition is NOT running, we'll do a direct ADC conversion here
+/*
 unsigned int MeasureBatt(void){
 	if(AcqIrqState != ACQ_IRQ_IDLE){
 		return(VBatt);
@@ -109,7 +112,7 @@ unsigned int MeasureBatt(void){
 	else{
 		return(1);
 	}
-}
+}*/
 
 //------------------------------------------------------------------------------------------
 // pack an array of eight 16-bit signed ECG samples (of which 12 bits are valid) into 12 bytes
@@ -583,8 +586,8 @@ osENABLE_TASK(TaskUSB);
 	static unsigned int ButtonTimer;
 	//static unsigned int ShutoffTimer;
 	static unsigned char i,j;
-	static float vBattDelta;
-	static int vBattPercent;
+	//static float vBattDelta;
+	//static int vBattPercent;
 	//static unsigned char preAcqButtonReleased = 0;
 
 	#define SHUTOFF_TIME 5000	// milliseconds
@@ -593,6 +596,7 @@ osENABLE_TASK(TaskUSB);
 	#define LONG_BUTTON_TIME 5000 // ms
 #else
 	#define LONG_BUTTON_TIME 1000
+	#define DISPLAY_TIMEOUT_TIME_MS 5000
 #endif
 	#define SHORT_BUTTON_TIME 30 // ms
 
@@ -701,8 +705,10 @@ while(1){	// do something until we complete or abort the acquisition process any
 		}
 		//Power button was pressed > 1 second
 		Seg7LP('P');	// tell the user we're empty
+		bDisplayOn = true;
 
-		if(VBatt < EE_Rd(EE_LB)/1000.0){
+		//If the battery is low, shut down
+		if(cc_get_batt_per() < BATTERY_SHUTDOWN_THRESHOLD_PCT){
 			Seg7LP('L');	// display low battery warning
 			MainPowerOff();
 			while(ButtonPressed()){ // if the button is pressed, hang here
@@ -802,6 +808,8 @@ while(1){	// do something until we complete or abort the acquisition process any
 				//print_usb("Connection lost. Resetting...\r\n");
 				// Reset BT
 				//Seg7LP('r');
+				Seg7LP('P');
+				bDisplayOn = true;
 				DPLEDOff();
 				
 				ElapsedMinutes = 0;
@@ -914,8 +922,25 @@ while(1){	// do something until we complete or abort the acquisition process any
 				if(ButtonTimer++ >= LONG_BUTTON_TIME) {
 					break;
 				}
+				//But if the button is pressed for a quick press, we want to turn on the voltage indicator briefly, only if BT is enabled. Otherwise it should just be a 'P'
+				else if((false == bDisplayOn) && (BTEnable))
+				{
+					//get the timestamp
+					lDisplayTimestamp = globalTimerTicks;
+					//turn on the battery voltage value
+					uint8_t ucLocalBattPerc = cc_get_batt_per();
+					if(ucLocalBattPerc> 99) ucLocalBattPerc = 99;
+						Seg7LP('0' + (ucLocalBattPerc / 10));
+				}
 			} else if(!ButtonPressed() && ButtonTimer) {
 				ButtonTimer = 0;
+			}
+			
+			//lets check the timer to see if we can shut the display off if we're connected
+			if(BTEnable && ((globalTimerTicks - lDisplayTimestamp)>DISPLAY_TIMEOUT_TIME_MS))
+			{
+				Seg7LP(' ');
+				bDisplayOn = false;
 			}
 			
 			lastCheckState = BTEnable;

@@ -49,13 +49,10 @@
 #endif
 #endif
 
-/*
-#ifdef WORKING
-#define __Task6						TaskPaceSimu
+#define __Task6						TaskCC
 #define __Task6_priority			2
 #define __Task6_init				RTR_OFF
-#endif
-*/
+
 
 /*-----------------------------------------------------------------------------------------------------------
  create semaphores here, (up to 15)- there is no semaphore 0 (only 1-15)

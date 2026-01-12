@@ -5,6 +5,7 @@
 #include "rtos.h"
 #include "iq.h"
 #include "TaskWatchDog.h"
+#include "taskUSB.h"
 
 //------------------------------------------------------------------------------------------
 // Maintain the watchdog here. We do it in a task rather than in the scheduler so that if
@@ -32,49 +33,13 @@ BEGIN_TASK(TaskWatchDog)
 	while(1){
 
 		for(i=0;i<10;++i){	//this loop takes one second to run (10 x 100ms)
+			
 			if(USBPresent()) {
 				DPLEDTog();		// toggle the LED decimal point to indicate we're alive
 			}
 			osWAIT(100);
 			wdt_reset();
 		}
-
-		// count down the global timer. As tasks do not run when the IQ is in standby, this will not catch errors in that loops of code
-		// this will, however, hopefully act as the final catch all for errant behaviour that somehow escapes the individual watchdogs
-		/*
-		if(GlobalWatchTimer && !USBPresent()){
-			--GlobalWatchTimer;
-			if(GlobalWatchTimer==0) {
-				Error(1);
-			}
-		}
-
-		// once a second, check all the tasks to make sure they're not hung in while loops
-
-		if(USBWatchTimer){
-			--USBWatchTimer;
-			if(USBWatchTimer==0){
-				Error(2);
-			}
-		}
-
-		if(FlashWatchTimer){
-			--FlashWatchTimer; 
-			if(FlashWatchTimer==0){
-				Error(3);
-			}
-		}
-
-#if !defined(CONTINUOUS_BT) && !defined(CONTINUOUS_USB)
-		if(AcqWatchTimer){
-			--AcqWatchTimer;
-			if(AcqWatchTimer==0){
-				Error(4);
-			}
-		}
-#endif
-		*/
-
 	}
 END_TASK
 #endif
