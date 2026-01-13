@@ -448,6 +448,7 @@ BEGIN_TASK(TaskBT)
 					}
 					if(!strncmp("ka", extracted_command, 2)) {
 						// If we get a keep alive command, reset the timer, connection is still active
+						print_usb("ka\r\n");
 						keepAliveTimer = 0;
 					}					
 					else if(!strncmp("do", extracted_command, 2) && (waitingForFirstCommand)) {
@@ -567,7 +568,12 @@ BEGIN_TASK(TaskBT)
 					else {
 						outBufferPos+=4;
 					}
-					if(outBufferPos == 8) {					
+					if(outBufferPos == 8) {
+						// Log channel data being sent via BT (first sample of 8)
+						//print_usb("BT TX: LA:%d LL:%d V1:%d V2:%d V3:%d V4:%d V5:%d V6:%d\r\n",
+						//	outBuffer[0][0], outBuffer[1][0], outBuffer[2][0], outBuffer[3][0],
+						//	outBuffer[4][0], outBuffer[5][0], outBuffer[6][0], outBuffer[7][0]);
+
 						// Set up the BT spike indexes
 						for(i = 0; i < 3; i ++) {
 							if(pacerSpikes[i] != 0xFF) {

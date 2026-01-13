@@ -95,6 +95,9 @@ unsigned int msSinceLastSpike = 0;
 
 //unsigned int test;
 
+// Forward declaration for spike-filtered value function
+int16_t getValueFiltered(uint8_t leadIndex, int16_t val);
+
 //------------------------------------------------------------------------------------------
 // pack an array of eight 16-bit signed ECG samples (of which 12 bits are valid) into 12 bytes
 // a 16-bit ECG sample array looks like this in memory (low address first)
@@ -644,16 +647,16 @@ ACQ_USB_TEST
 #ifdef WORKING
 					msSinceLastSpike++;
 #endif
-					LFBiasModel[M][LA][LFBiasModelIndex]=Lead[LA];
-					LFBiasModel[M][LL][LFBiasModelIndex]=Lead[LL];
-					LFBiasModel[M][V1][LFBiasModelIndex]=Lead[V1];
+					LFBiasModel[M][LA][LFBiasModelIndex] = getValueFiltered(LA, Lead[LA]);
+					LFBiasModel[M][LL][LFBiasModelIndex] = getValueFiltered(LL, Lead[LL]);
+					LFBiasModel[M][V1][LFBiasModelIndex] = getValueFiltered(V1, Lead[V1]);
 					//print_usb("%d\r\n", Lead[LA]-Lead[LL]);
-					
-					LFBiasModel[M][V2][LFBiasModelIndex]=Lead[V2];
-					LFBiasModel[M][V3][LFBiasModelIndex]=Lead[V3];
-					LFBiasModel[M][V4][LFBiasModelIndex]=Lead[V4]; 
-					LFBiasModel[M][V5][LFBiasModelIndex]=Lead[V5];
-					LFBiasModel[M][V6][LFBiasModelIndex]=Lead[V6];
+
+					LFBiasModel[M][V2][LFBiasModelIndex] = getValueFiltered(V2, Lead[V2]);
+					LFBiasModel[M][V3][LFBiasModelIndex] = getValueFiltered(V3, Lead[V3]);
+					LFBiasModel[M][V4][LFBiasModelIndex] = getValueFiltered(V4, Lead[V4]);
+					LFBiasModel[M][V5][LFBiasModelIndex] = getValueFiltered(V5, Lead[V5]);
+					LFBiasModel[M][V6][LFBiasModelIndex] = getValueFiltered(V6, Lead[V6]);
 					
 					
 					//if(LFBiasEnable) {
@@ -1159,5 +1162,13 @@ while(1){	// do something until we complete or abort the acquisition process any
 	} // while(1) back to 'E'
 
 END_TASK
+// Returns 0 if railed (lead-off) or spike detected, otherwise returns value
+int16_t getValueFiltered(uint8_t leadIndex, int16_t val) {
+	// Reject railed values (lead-off condition)
+	if (val > 32000 || val < -32000) {
+		return 0;
+	}
+	return val;
+}
 
 #endif

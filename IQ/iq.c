@@ -192,113 +192,18 @@ int main(void){
 // This is the only task enabled to run after reset, so we needn't worry about what other tasks are doing until we enable them.
 
 BEGIN_TASK(TaskMain)
-
-	//-------------------------------------------------------------------------------------------
-	// First, we handle the power-up condition, where the button was pressed or we were plugged into USB while we were off
-	
-	
-	/*
-	ElapsedMinutes = 0;	// we are powering up, there's no way we can know what the elapsed time is, so zero it
-	if(EE_Rd( (EE_VOICE_RECORD_LENGTH)!=0) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full
-		// all we can do is display the "F" message until the button is released. This is also an error condition.
-		// We should never power up full because we never turn off once full. We stay in low power operation tracking elapsed time.
-		// If we power up in a full condition, maybe we were in that mode so long that the battery died or we had some kind of system upset?
-		// Regardless of the reason we were off, it means we don't know the ElapsedMinutes. So powerup zeros it and we let it be.
-		// There is also no reason to keep track of elapsed time once this happens, so we can power back down
-
-		//Seg7LP('F');
-		////Seg7LP('0' + state);
-		acqState = FSM_START;
-		
-		//MainPowerOn();
-	}
-	//!!!!! USBSuspend seems to "flicker" at connection, will this cause a problem? probably not. (Now, with Full mode it causes problems. Look into it)
-	*/
 	ConfigureUSBUSART(115200);
-	//osENABLE_TASK(TaskCC);
+	osENABLE_TASK(TaskCC);
 	
 	if(!USBPresent()){ // if we're not on usb, the button powered us up
 		osENABLE_TASK(TaskAcq);
-/*
-		if( (EE_Rd(EE_VOICE_RECORD_LENGTH)!=0 || (EE_Rd(EE_VOICE_RECORD_LENGTH) == 0 && EE_Rd(EE_ENABLE_VOICE) == 0)) && (EE_Rd(EE_ECG_RECORD_LENGTH)!=0) ){	// we're truly full, there's nothing more to do
-			
-			buttonTimer = 0;
-			do {
-				//Seg7LP('F');
-				////Seg7LP('0' + EE_Rd(EE_TEST));
-				if(++buttonTimer >= 5000) {
-					MainPowerOn();
-					
-					if(TaskFlashCmd == TF_IDLE){
-						FlashPowerOn();
-						TaskFlashCmd = TF_ERASE_ALL;
-						do{
-							osWAIT(100);
-							Seg7HP(0x23);
-							osWAIT(100);
-							Seg7HP(0x24);
-							osWAIT(100);
-							Seg7HP(0x25);
-							osWAIT(100);
-							Seg7HP(0x26);
-							osWAIT(100);
-							Seg7HP(0x21);
-							osWAIT(100);
-							Seg7HP(0x22);
-						}while(TaskFlashCmd != TF_IDLE);	// wait for erase to complete
-						ElapsedMinutes = 0;
-						Seg7HP(' ');
-						FlashPowerOff();
-						MainPowerOff();
-						break;
-					}
-				}									
-				MainPowerOff();
-				osWAIT(1);
-			}while(ButtonPressed());
-			
-			// If we get here, we were plugged into USB while the button was being held, now the button is released but USB will keep us powered
-			// The easiest thing to do is probably to jump to the reset vector (letting the watchdog expire would take us to the bootstrap loader)
-			resetVec();
-		}
-
-		else if( (EE_Rd(EE_VOICE_RECORD_LENGTH)==0) && (EE_Rd(EE_ECG_RECORD_LENGTH)==0) ){	// we're truly empty, enable acquisition
-			osENABLE_TASK(TaskAcq);
-			// TaskAcq is responsible for handling the button. It will also turn off power if acquisition is abandoned.
-			// If acquisition completes successfully, TaskAcq will set ElapsedMinutes = 1 and disable itself
-		}
-
-		else{ // ERROR! Either Voice or ECG has data, but the other buffer is empty. We should never power up in this state. Erase everything, go back to empty, and start acquisition.
-			MainPowerOn();	// keep ourselves on until erase is complete
-			do{
-				osWAIT(10);
-			}while(TaskFlashCmd!=TF_IDLE);	// wait till Flash is ready to go
-
-			TaskFlashCmd = TF_ERASE_ALL;	// erase everything
-
-			do{
-				osWAIT(100);
-				Seg7HP(0x23);
-				osWAIT(100);
-				Seg7HP(0x24);
-				osWAIT(100);
-				Seg7HP(0x25);
-				osWAIT(100);
-				Seg7HP(0x26);
-				osWAIT(100);
-				Seg7HP(0x21);
-				osWAIT(100);
-				Seg7HP(0x22);
-			}while(TaskFlashCmd!=TF_IDLE);		// spin the LED until everything has been erased
-			Seg7HP(' ');
-			osWAIT(250);
-			osENABLE_TASK(TaskAcq);	// now we're empty and ready to acquire
-			Flags.AcqActive = 1;
-		}*/
 	} // if(!USBPresent())
 	else { // USBPresent(), so it was a USB connection that powered us up. Enable TaskUSB and TaskFlash. If we have a buffer error condition, the PC will handle it.
+#ifdef ACQ_USB_TEST
 		osENABLE_TASK(TaskAcq);
-		//osENABLE_TASK(TaskUSB);
+#else
+		osENABLE_TASK(TaskUSB);
+#endif
 	}
 	//-------------------------------------------------------------------------------------------
 	// We've handled all the power up conditions. If we make it this far, it's because:
