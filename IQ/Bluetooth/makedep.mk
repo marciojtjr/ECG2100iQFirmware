@@ -6,6 +6,8 @@ apple.c
 
 ffft.S
 
+ltc2959.c
+
 main.c
 
 serial.c
